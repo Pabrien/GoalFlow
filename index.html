@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GoalFlow</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Goal planner</p>
+          <h1>GoalFlow</h1>
+        </div>
+      </header>
+
+      <nav class="screen-tabs" aria-label="画面切替">
+        <button class="screen-tab active" type="button" data-screen-target="home" aria-pressed="true">ホーム</button>
+        <button class="screen-tab" type="button" data-screen-target="goals" aria-pressed="false">目標</button>
+        <button class="screen-tab" type="button" data-screen-target="schedule" aria-pressed="false">スケジュール</button>
+        <button class="screen-tab" type="button" data-screen-target="tasks" aria-pressed="false">タスク</button>
+        <button class="screen-tab" type="button" data-screen-target="today" aria-pressed="false">今日</button>
+      </nav>
+
+      <section class="summary-strip" data-view-panel="home" aria-label="進捗サマリー">
+        <article class="rate-summary">
+          <span id="summaryTodayRate">0%</span>
+          <p>今日の達成率</p>
+          <div class="summary-meter"><span id="todayRateMeter"></span></div>
+        </article>
+        <article class="rate-summary">
+          <span id="summaryWeekRate">0%</span>
+          <p>今週の達成率</p>
+          <div class="summary-meter"><span id="weekRateMeter"></span></div>
+        </article>
+        <article class="rate-summary">
+          <span id="summaryOverallRate">0%</span>
+          <p>全体の達成率</p>
+          <div class="summary-meter"><span id="overallRateMeter"></span></div>
+        </article>
+        <article>
+          <span id="summaryStreak">0</span>
+          <p>連続記録</p>
+        </article>
+      </section>
+
+      <section class="home-dashboard" data-view-panel="home" aria-label="ホームダッシュボード">
+        <section class="panel dashboard-panel wide-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>7日間の積み上げ</h2>
+              <p class="panel-note">完了したタスク数を日別に表示します。</p>
+            </div>
+            <select id="goalFilter" aria-label="表示する目標"></select>
+          </div>
+          <canvas id="progressChart" width="760" height="260" aria-label="過去7日間の達成数"></canvas>
+        </section>
+
+        <section class="panel dashboard-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>全体の達成状況</h2>
+              <p class="panel-note">完了と未完了の割合です。</p>
+            </div>
+          </div>
+          <canvas id="completionPie" width="360" height="260" aria-label="全体の達成率円グラフ"></canvas>
+        </section>
+
+        <section class="panel dashboard-panel wide-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>目標別レポート</h2>
+              <p class="panel-note">どの目標が前に進んでいるかを確認できます。</p>
+            </div>
+          </div>
+          <div class="goal-report" id="goalReport"></div>
+        </section>
+      </section>
+
+      <div class="workspace">
+        <aside class="sidebar" aria-label="目標とタスク">
+          <section class="panel" data-view-panel="goals">
+            <div class="panel-heading">
+              <h2>目標</h2>
+              <div class="panel-actions">
+                <span id="goalCount">0</span>
+                <button class="primary-button" id="openGoalDialog" type="button">目標を追加</button>
+              </div>
+            </div>
+            <div class="goal-list" id="goalList"></div>
+          </section>
+
+          <section class="panel" data-view-panel="tasks">
+            <div class="panel-heading">
+              <h2>保存タスク</h2>
+              <button class="ghost-button" id="openTaskDialog" type="button">追加</button>
+            </div>
+            <div class="task-bank" id="taskBank"></div>
+          </section>
+        </aside>
+
+        <section class="planner" data-view-panel="schedule" aria-label="スケジュールカレンダー">
+          <div class="planner-head">
+            <div>
+              <p class="eyebrow">Drag to schedule</p>
+              <h2 id="weekTitle">今週</h2>
+            </div>
+            <div class="week-controls">
+              <div class="view-switch" aria-label="表示切替">
+                <button class="switch-button active" id="weekView" type="button" aria-pressed="true">週</button>
+                <button class="switch-button" id="monthView" type="button" aria-pressed="false">月</button>
+              </div>
+              <button class="icon-button" id="prevPeriod" type="button" aria-label="前へ" title="前へ">‹</button>
+              <button class="ghost-button" id="todayPeriod" type="button">今週</button>
+              <button class="icon-button" id="nextPeriod" type="button" aria-label="次へ" title="次へ">›</button>
+            </div>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </section>
+
+        <aside class="insights" aria-label="可視化と今日の予定">
+          <section class="panel" data-view-panel="today">
+            <div class="panel-heading">
+              <h2>今日</h2>
+              <span id="todayDate"></span>
+            </div>
+            <div class="today-list" id="todayList"></div>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <dialog id="goalDialog">
+      <form class="dialog-card" id="goalForm">
+        <div class="dialog-head">
+          <h2>目標を作る</h2>
+          <button class="icon-button" data-close-dialog type="button" aria-label="閉じる">×</button>
+        </div>
+        <label>
+          目標名
+          <input name="name" required maxlength="32" placeholder="例：3か月でベンチプレス +10kg" />
+        </label>
+        <label>
+          カテゴリ
+          <select name="category">
+            <option value="筋トレ">筋トレ</option>
+            <option value="勉強">勉強</option>
+            <option value="仕事">仕事</option>
+            <option value="健康">健康</option>
+            <option value="習慣">習慣</option>
+          </select>
+        </label>
+        <label>
+          期限
+          <input name="deadline" type="date" required />
+        </label>
+        <label>
+          目標メモ
+          <textarea name="note" rows="3" maxlength="120" placeholder="達成条件や理由"></textarea>
+        </label>
+        <button class="primary-button" type="submit">保存</button>
+      </form>
+    </dialog>
+
+    <dialog id="taskDialog">
+      <form class="dialog-card" id="taskForm">
+        <div class="dialog-head">
+          <h2>タスクを保存</h2>
+          <button class="icon-button" data-close-dialog type="button" aria-label="閉じる">×</button>
+        </div>
+        <label>
+          タスク名
+          <input name="title" required maxlength="28" placeholder="例：英単語 30個" />
+        </label>
+        <label>
+          紐づける目標
+          <select name="goalId" id="taskGoalSelect"></select>
+        </label>
+        <div class="field-row">
+          <label>
+            所要時間
+            <input name="minutes" type="number" min="5" max="240" step="5" value="30" />
+          </label>
+          <label>
+            単位
+            <select name="durationUnit">
+              <option value="minutes">分</option>
+              <option value="hours">時間</option>
+            </select>
+          </label>
+          <label>
+            リマインド
+            <select name="reminder">
+              <option value="なし">なし</option>
+              <option value="10分前">10分前</option>
+              <option value="30分前">30分前</option>
+              <option value="朝・昼・夜">朝・昼・夜</option>
+              <option value="毎時間">毎時間</option>
+            </select>
+          </label>
+        </div>
+        <button class="primary-button" type="submit">保存</button>
+      </form>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
