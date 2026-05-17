@@ -60,6 +60,9 @@ const idleSleepMs = 1000 * 60 * 12;
 const quietFocusMs = 1000 * 60 * 4;
 let lastInteractionAt = Date.now();
 let idleTimer = null;
+let catBreathTween = null;
+let catTailTween = null;
+let catNyaSound = null;
 
 function createEmptyState() {
   return {
@@ -353,6 +356,7 @@ function toggleScheduledDone(item) {
   if (item.done) {
     updateCatReaction("complete");
     bounceCat();
+    playCatNya();
     showToast("にゃ！ 完了を記録しました。今日の流れが少し前に進みました。");
   }
   render();
@@ -467,6 +471,23 @@ function updateCatReaction(type) {
 }
 
 function bounceCat() {
+  if (window.gsap) {
+    catBreathTween?.pause();
+    window.gsap.fromTo(
+      els.catSprite,
+      { y: 0, scale: 1 },
+      {
+        y: -9,
+        scale: 1.035,
+        duration: 0.22,
+        yoyo: true,
+        repeat: 1,
+        ease: "sine.out",
+        onComplete: () => catBreathTween?.resume(),
+      },
+    );
+    return;
+  }
   els.catSprite.classList.remove("bounce");
   void els.catSprite.offsetWidth;
   els.catSprite.classList.add("bounce");
@@ -474,11 +495,139 @@ function bounceCat() {
 
 function petCat() {
   updateCatReaction("pet");
+  if (window.gsap) {
+    catBreathTween?.pause();
+    window.gsap.fromTo(
+      els.catSprite,
+      { rotation: 0, y: 0, scale: 1 },
+      {
+        rotation: -3,
+        y: -4,
+        scale: 1.025,
+        duration: 0.24,
+        yoyo: true,
+        repeat: 1,
+        ease: "sine.inOut",
+        onComplete: () => catBreathTween?.resume(),
+      },
+    );
+  }
   els.catSprite.classList.remove("pet");
   void els.catSprite.offsetWidth;
   els.catSprite.classList.add("pet");
   showToast("ごろにゃ。AI猫がうれしそうです。");
   render();
+}
+
+function initCatMotion() {
+  if (!window.gsap) {
+    return;
+  }
+  window.gsap.set(els.catSprite, { transformOrigin: "50% 100%", animation: "none" });
+  window.gsap.set(".cat-tail", { transformOrigin: "8px 36px", animation: "none" });
+  catBreathTween = window.gsap.to(els.catSprite, {
+    y: -1.6,
+    scaleX: 0.992,
+    scaleY: 1.018,
+    duration: 2.4,
+    repeat: -1,
+    yoyo: true,
+    ease: "sine.inOut",
+  });
+  catTailTween = window.gsap.to(".cat-tail", {
+    rotation: 7,
+    duration: 3.2,
+    repeat: -1,
+    yoyo: true,
+    ease: "sine.inOut",
+  });
+}
+
+function initCatAudio() {
+  if (!window.Howl) {
+    catNyaSound = {
+      play: playNyaWithWebAudio,
+      stop() {},
+    };
+    return;
+  }
+  catNyaSound = new window.Howl({
+    src: [createNyaDataUri()],
+    volume: 0.16,
+    preload: true,
+  });
+}
+
+function playCatNya() {
+  if (!catNyaSound) return;
+  catNyaSound.stop();
+  catNyaSound.play();
+}
+
+function playNyaWithWebAudio() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+  const context = new AudioContext();
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const now = context.currentTime;
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(720, now);
+  oscillator.frequency.exponentialRampToValueAtTime(980, now + 0.09);
+  oscillator.frequency.exponentialRampToValueAtTime(620, now + 0.23);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.12, now + 0.035);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(now);
+  oscillator.stop(now + 0.25);
+}
+
+function createNyaDataUri() {
+  const sampleRate = 22050;
+  const duration = 0.24;
+  const samples = Math.floor(sampleRate * duration);
+  const dataSize = samples * 2;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+
+  writeString(view, 0, "RIFF");
+  view.setUint32(4, 36 + dataSize, true);
+  writeString(view, 8, "WAVE");
+  writeString(view, 12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(view, 36, "data");
+  view.setUint32(40, dataSize, true);
+
+  for (let i = 0; i < samples; i += 1) {
+    const t = i / sampleRate;
+    const progress = i / samples;
+    const frequency = 720 + Math.sin(progress * Math.PI) * 260 - progress * 140;
+    const envelope = Math.sin(progress * Math.PI);
+    const chirp = Math.sin(2 * Math.PI * frequency * t) + 0.35 * Math.sin(2 * Math.PI * frequency * 1.7 * t);
+    const value = Math.max(-1, Math.min(1, chirp * envelope * 0.42));
+    view.setInt16(44 + i * 2, value * 0x7fff, true);
+  }
+
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return `data:audio/wav;base64,${btoa(binary)}`;
+}
+
+function writeString(view, offset, string) {
+  for (let i = 0; i < string.length; i += 1) {
+    view.setUint8(offset + i, string.charCodeAt(i));
+  }
 }
 
 function isLateNight() {
@@ -1053,5 +1202,7 @@ document.querySelectorAll("[data-close-dialog]").forEach((button) => {
 });
 
 registerVisit();
+initCatMotion();
+initCatAudio();
 scheduleIdleCheck();
 render();

@@ -13,6 +13,8 @@ GoalFlow is a simple goal-based task planner for workouts, study, and habit buil
 - Data is saved in the browser with `localStorage`
 - First-run onboarding guides users through goal -> task -> today
 - Mobile-focused navigation with touch-friendly controls
+- Fixed AI cat companion with GSAP-powered motion when available
+- Small completion sound through Howler when available, with a browser-audio fallback
 
 ## Run Locally
 
