@@ -419,6 +419,13 @@ function updateCatReaction(type) {
     return;
   }
 
+  if (type === "pet") {
+    state.meta.catMood = "pleased";
+    state.meta.catSound = "ごろにゃ";
+    state.meta.catMessage = "なでてくれてうれしい。今日もそばで見守ってるね。";
+    return;
+  }
+
   if (isLateNight()) {
     state.meta.catMood = "sleepy";
     state.meta.catSound = "にゃ...";
@@ -456,6 +463,15 @@ function bounceCat() {
   els.catSprite.classList.remove("bounce");
   void els.catSprite.offsetWidth;
   els.catSprite.classList.add("bounce");
+}
+
+function petCat() {
+  updateCatReaction("pet");
+  els.catSprite.classList.remove("pet");
+  void els.catSprite.offsetWidth;
+  els.catSprite.classList.add("pet");
+  showToast("ごろにゃ。AI猫がうれしそうです。");
+  render();
 }
 
 function isLateNight() {
@@ -953,6 +969,18 @@ els.screenTabs.forEach((tab) => {
 els.goalFilter.addEventListener("change", (event) => {
   selectedGoalId = event.target.value;
   render();
+});
+
+els.catSprite.addEventListener("click", petCat);
+els.catSprite.addEventListener("pointerdown", (event) => {
+  event.stopPropagation();
+  petCat();
+});
+els.catSprite.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    petCat();
+  }
 });
 
 els.startFirstGoal.addEventListener("click", () => {

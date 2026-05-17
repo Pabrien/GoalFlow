@@ -388,8 +388,8 @@ button {
 
 .ai-cat-card {
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 14px;
   align-items: center;
   border-color: rgba(241, 185, 60, 0.45);
   background: #fffdf5;
@@ -397,14 +397,33 @@ button {
 
 .cat-sprite {
   position: relative;
-  width: 78px;
-  height: 72px;
+  width: 116px;
+  height: 104px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
   transform-origin: center bottom;
   animation: cat-breathe 3.6s ease-in-out infinite;
 }
 
+.cat-sprite::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  bottom: 0;
+  left: 14px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(32, 35, 31, 0.1);
+}
+
 .cat-sprite.bounce {
   animation: cat-hop 0.56s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cat-sprite.pet {
+  animation: cat-pet 0.72s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .cat-sprite.sleepy {
@@ -426,92 +445,173 @@ button {
 
 .cat-tail {
   position: absolute;
-  right: -2px;
-  bottom: 9px;
-  width: 26px;
-  height: 38px;
-  border: 5px solid var(--accent-strong);
+  right: 2px;
+  bottom: 20px;
+  width: 34px;
+  height: 44px;
+  border: 10px solid #6f5b61;
   border-left: 0;
   border-bottom: 0;
-  border-radius: 0 28px 0 0;
-  transform-origin: 4px 32px;
+  border-radius: 0 34px 0 0;
+  box-shadow: inset -5px 6px 0 rgba(255, 255, 255, 0.52);
+  transform-origin: 7px 36px;
   animation: tail-sway 3.8s ease-in-out infinite;
 }
 
 .cat-ear {
   position: absolute;
-  top: 5px;
-  width: 28px;
-  height: 32px;
-  border: 2px solid var(--accent-strong);
-  background: #f6cfc5;
+  top: 7px;
+  z-index: 2;
+  width: 36px;
+  height: 42px;
+  border: 3px solid #2d1f26;
+  border-radius: 8px 22px 8px 22px;
+  background: linear-gradient(135deg, #6f5b61 25%, #ffb8c0 26% 72%, #fff0f2 73%);
   transform: rotate(45deg);
 }
 
 .cat-ear.left {
-  left: 12px;
+  left: 15px;
+  transform: rotate(-18deg) skewY(8deg);
 }
 
 .cat-ear.right {
-  right: 12px;
+  right: 15px;
+  transform: rotate(18deg) skewY(-8deg);
 }
 
-.cat-face {
+.cat-head {
   position: absolute;
-  right: 5px;
-  bottom: 0;
-  left: 5px;
-  height: 58px;
-  border: 2px solid var(--accent-strong);
-  border-radius: 28px 28px 24px 24px;
-  background: #fff8ea;
+  z-index: 3;
+  top: 18px;
+  right: 6px;
+  left: 6px;
+  height: 62px;
+  border: 3px solid #2d1f26;
+  border-radius: 45px 45px 34px 34px;
+  background:
+    radial-gradient(circle at 22% 74%, rgba(255, 141, 153, 0.5) 0 10px, transparent 19px),
+    radial-gradient(circle at 78% 74%, rgba(255, 141, 153, 0.5) 0 10px, transparent 19px),
+    linear-gradient(180deg, #74646a 0 48%, #8c7b80 64%, #fff8f1 100%);
+  box-shadow: inset 9px 8px 0 rgba(255, 255, 255, 0.18);
 }
 
 .cat-eye {
   position: absolute;
-  top: 23px;
-  width: 7px;
-  height: 10px;
+  top: 25px;
+  width: 24px;
+  height: 30px;
   border-radius: 999px;
-  background: var(--accent-strong);
+  background:
+    radial-gradient(circle at 62% 24%, rgba(255, 255, 255, 0.45) 0 5px, transparent 6px),
+    radial-gradient(circle at 57% 43%, rgba(255, 255, 255, 0.38) 0 2px, transparent 3px),
+    radial-gradient(circle at 53% 66%, rgba(255, 255, 255, 0.22) 0 8px, transparent 9px),
+    #25181e;
+  box-shadow: inset -4px 0 0 rgba(255, 255, 255, 0.08), 0 0 0 2px #1f151a;
   transform-origin: center;
   animation: cat-blink 5.6s infinite;
 }
 
 .cat-eye.left {
-  left: 20px;
+  left: 25px;
 }
 
 .cat-eye.right {
-  right: 20px;
+  right: 25px;
+}
+
+.cat-cheek {
+  position: absolute;
+  top: 47px;
+  width: 18px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 126, 139, 0.7);
+  filter: blur(1px);
+}
+
+.cat-cheek.left {
+  left: 12px;
+}
+
+.cat-cheek.right {
+  right: 12px;
 }
 
 .cat-nose {
   position: absolute;
-  top: 34px;
+  top: 43px;
   left: 50%;
-  width: 8px;
-  height: 6px;
+  width: 10px;
+  height: 7px;
   border-radius: 999px;
-  background: var(--red);
+  background: #ff8d99;
   transform: translateX(-50%);
 }
 
 .cat-mouth {
   position: absolute;
-  top: 42px;
+  top: 49px;
   left: 50%;
-  width: 16px;
-  height: 7px;
-  border-bottom: 2px solid var(--accent-strong);
+  width: 24px;
+  height: 12px;
+  border-right: 3px solid #2d1f26;
+  border-bottom: 3px solid #2d1f26;
+  border-left: 3px solid #2d1f26;
   border-radius: 0 0 999px 999px;
   transform: translateX(-50%);
 }
 
+.cat-body {
+  position: absolute;
+  z-index: 1;
+  right: 24px;
+  bottom: 5px;
+  left: 24px;
+  height: 46px;
+  border: 3px solid #2d1f26;
+  border-radius: 24px 24px 18px 18px;
+  background: linear-gradient(180deg, #fffaf4 0 78%, #f1ebe5 100%);
+}
+
+.cat-chest {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 38px;
+  height: 34px;
+  border-radius: 12px 12px 18px 18px;
+  background: #fff;
+  transform: translateX(-50%);
+}
+
+.cat-paw {
+  position: absolute;
+  bottom: -6px;
+  width: 22px;
+  height: 20px;
+  border: 3px solid #2d1f26;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 58%, #ff99a4 0 7px, transparent 8px),
+    radial-gradient(circle at 35% 30%, #ffadba 0 3px, transparent 4px),
+    radial-gradient(circle at 62% 28%, #ffadba 0 3px, transparent 4px),
+    #f6d4d5;
+}
+
+.cat-paw.left {
+  left: -9px;
+}
+
+.cat-paw.right {
+  right: -9px;
+}
+
 .sleep-mark {
   position: absolute;
-  top: -6px;
-  right: -1px;
+  z-index: 4;
+  top: 0;
+  right: 6px;
   color: var(--accent-strong);
   font-size: 14px;
   font-weight: 900;
@@ -549,16 +649,29 @@ button {
     transform: translateY(0) scale(1);
   }
   35% {
-    transform: translateY(-18px) scale(1.04);
+    transform: translateY(-10px) scale(1.035);
   }
   60% {
     transform: translateY(0) scale(0.98);
   }
   80% {
-    transform: translateY(-6px) scale(1.02);
+    transform: translateY(-3px) scale(1.015);
   }
   100% {
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cat-pet {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  35% {
+    transform: translateY(-4px) rotate(-3deg) scale(1.03);
+  }
+  70% {
+    transform: translateY(0) rotate(2deg) scale(1.01);
   }
 }
 
@@ -1283,12 +1396,12 @@ textarea:focus {
   }
 
   .ai-cat-card {
-    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-columns: 100px minmax(0, 1fr);
   }
 
   .cat-sprite {
-    width: 70px;
-    height: 66px;
+    width: 98px;
+    height: 90px;
   }
 
   .topbar,
