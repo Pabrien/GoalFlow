@@ -48,21 +48,9 @@ const els = {
   nextActionButton: document.querySelector("#nextActionButton"),
   buddyTitle: document.querySelector("#buddyTitle"),
   buddyMessage: document.querySelector("#buddyMessage"),
-  catSprite: document.querySelector("#catSprite"),
-  catMood: document.querySelector("#catMood"),
-  catSound: document.querySelector("#catSound"),
-  catMessage: document.querySelector("#catMessage"),
   toast: document.querySelector("#toast"),
   fileWarning: document.querySelector("#fileWarning"),
 };
-
-const idleSleepMs = 1000 * 60 * 12;
-const quietFocusMs = 1000 * 60 * 4;
-let lastInteractionAt = Date.now();
-let idleTimer = null;
-let catBreathTween = null;
-let catTailTween = null;
-let catNyaSound = null;
 
 function createEmptyState() {
   return {
@@ -73,9 +61,6 @@ function createEmptyState() {
       onboardingDismissed: false,
       lastVisitDate: "",
       visitStreak: 0,
-      catMood: "active",
-      catSound: "にゃっ！",
-      catMessage: "今日も来てくれてありがとう。",
     },
   };
 }
@@ -130,9 +115,6 @@ function loadState() {
         onboardingDismissed: Boolean(parsed.meta?.onboardingDismissed),
         lastVisitDate: parsed.meta?.lastVisitDate ?? "",
         visitStreak: Number(parsed.meta?.visitStreak ?? 0),
-        catMood: parsed.meta?.catMood ?? "active",
-        catSound: parsed.meta?.catSound ?? "にゃっ！",
-        catMessage: parsed.meta?.catMessage ?? "今日も来てくれてありがとう。",
       },
     };
   } catch {
@@ -162,8 +144,7 @@ function render() {
   renderSelectors();
   renderScreenTabs();
   renderOnboarding();
-  renderNextAction();
-  renderCat();
+  renderNextAction();
   renderSummary();
   renderChart();
   renderCompletionPie();
@@ -354,10 +335,7 @@ function renderToday() {
 function toggleScheduledDone(item) {
   item.done = !item.done;
   if (item.done) {
-    updateCatReaction("complete");
-    bounceCat();
-    playCatNya();
-    showToast("にゃ！ 完了を記録しました。今日の流れが少し前に進みました。");
+    showToast("完了を記録しました。今日の流れが少し前に進みました。");
   }
   render();
 }
@@ -391,278 +369,6 @@ function renderNextAction() {
   els.nextActionButton.dataset.action = next.action;
   els.buddyTitle.textContent = next.buddyTitle;
   els.buddyMessage.textContent = next.buddyMessage;
-}
-
-function renderCat() {
-  const moodLabels = {
-    active: "見守り中",
-    pleased: "ごきげん",
-    sleepy: "うとうと",
-    focus: "静かに応援中",
-  };
-  els.catSprite.classList.toggle("pleased", state.meta.catMood === "pleased");
-  els.catSprite.classList.toggle("sleepy", state.meta.catMood === "sleepy");
-  els.catSprite.classList.toggle("focus", state.meta.catMood === "focus");
-  els.catMood.textContent = moodLabels[state.meta.catMood] ?? "見守り中";
-  els.catSound.textContent = state.meta.catSound;
-  els.catMessage.textContent = state.meta.catMessage;
-}
-
-function registerVisit() {
-  const todayIso = toISO(today);
-  if (state.meta.lastVisitDate === todayIso) return;
-
-  const yesterdayIso = toISO(addDays(today, -1));
-  state.meta.visitStreak = state.meta.lastVisitDate === yesterdayIso ? state.meta.visitStreak + 1 : 1;
-  state.meta.lastVisitDate = todayIso;
-  updateCatReaction("visit");
-}
-
-function updateCatReaction(type) {
-  const todaysItems = state.scheduled.filter((item) => item.date === toISO(today));
-  const todaysDone = todaysItems.filter((item) => item.done).length;
-  const todayRate = todaysItems.length ? Math.round((todaysDone / todaysItems.length) * 100) : 0;
-
-  if (type === "complete") {
-    state.meta.catMood = "pleased";
-    state.meta.catSound = "にゃ！";
-    state.meta.catMessage = "タスク完了！今の一歩、ちゃんと積み上がったよ。";
-    return;
-  }
-
-  if (type === "pet") {
-    state.meta.catMood = "pleased";
-    state.meta.catSound = "ごろにゃ";
-    state.meta.catMessage = "なでてくれてうれしい。今日もそばで見守ってるね。";
-    return;
-  }
-
-  if (isLateNight()) {
-    state.meta.catMood = "sleepy";
-    state.meta.catSound = "にゃ...";
-    state.meta.catMessage = "夜遅いね。少しだけ整えたら、ちゃんと休もう。";
-    return;
-  }
-
-  if (todayRate >= 100 && todaysItems.length) {
-    state.meta.catMood = "pleased";
-    state.meta.catSound = "にゃあ";
-    state.meta.catMessage = "今日も頑張ってるね。完了がきれいに積み上がってるよ。";
-    return;
-  }
-
-  if (state.meta.visitStreak >= 3) {
-    state.meta.catMood = "active";
-    state.meta.catSound = "にゃっ！";
-    state.meta.catMessage = `${state.meta.visitStreak}日連続で来てくれてありがとう。継続、育ってるね。`;
-    return;
-  }
-
-  if (todaysItems.length) {
-    state.meta.catMood = "focus";
-    state.meta.catSound = "にゃ";
-    state.meta.catMessage = "今日やること、もう置けてるね。まず1つだけ一緒に片づけよう。";
-    return;
-  }
-
-  state.meta.catMood = "active";
-  state.meta.catSound = "にゃっ！";
-  state.meta.catMessage = "今日も来てくれてありがとう。小さな予定を1つ置いてみよう。";
-}
-
-function bounceCat() {
-  if (window.gsap) {
-    catBreathTween?.pause();
-    window.gsap.fromTo(
-      els.catSprite,
-      { y: 0, scale: 1 },
-      {
-        y: -9,
-        scale: 1.035,
-        duration: 0.22,
-        yoyo: true,
-        repeat: 1,
-        ease: "sine.out",
-        onComplete: () => catBreathTween?.resume(),
-      },
-    );
-    return;
-  }
-  els.catSprite.classList.remove("bounce");
-  void els.catSprite.offsetWidth;
-  els.catSprite.classList.add("bounce");
-}
-
-function petCat() {
-  updateCatReaction("pet");
-  if (window.gsap) {
-    catBreathTween?.pause();
-    window.gsap.fromTo(
-      els.catSprite,
-      { rotation: 0, y: 0, scale: 1 },
-      {
-        rotation: -3,
-        y: -4,
-        scale: 1.025,
-        duration: 0.24,
-        yoyo: true,
-        repeat: 1,
-        ease: "sine.inOut",
-        onComplete: () => catBreathTween?.resume(),
-      },
-    );
-  }
-  els.catSprite.classList.remove("pet");
-  void els.catSprite.offsetWidth;
-  els.catSprite.classList.add("pet");
-  showToast("ごろにゃ。AI猫がうれしそうです。");
-  render();
-}
-
-function initCatMotion() {
-  if (!window.gsap) {
-    return;
-  }
-  window.gsap.set(els.catSprite, { transformOrigin: "50% 100%", animation: "none" });
-  window.gsap.set(".cat-tail", { transformOrigin: "8px 36px", animation: "none" });
-  catBreathTween = window.gsap.to(els.catSprite, {
-    y: -1.6,
-    scaleX: 0.992,
-    scaleY: 1.018,
-    duration: 2.4,
-    repeat: -1,
-    yoyo: true,
-    ease: "sine.inOut",
-  });
-  catTailTween = window.gsap.to(".cat-tail", {
-    rotation: 7,
-    duration: 3.2,
-    repeat: -1,
-    yoyo: true,
-    ease: "sine.inOut",
-  });
-}
-
-function initCatAudio() {
-  if (!window.Howl) {
-    catNyaSound = {
-      play: playNyaWithWebAudio,
-      stop() {},
-    };
-    return;
-  }
-  catNyaSound = new window.Howl({
-    src: [createNyaDataUri()],
-    volume: 0.16,
-    preload: true,
-  });
-}
-
-function playCatNya() {
-  if (!catNyaSound) return;
-  catNyaSound.stop();
-  catNyaSound.play();
-}
-
-function playNyaWithWebAudio() {
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContext) return;
-  const context = new AudioContext();
-  const oscillator = context.createOscillator();
-  const gain = context.createGain();
-  const now = context.currentTime;
-  oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(720, now);
-  oscillator.frequency.exponentialRampToValueAtTime(980, now + 0.09);
-  oscillator.frequency.exponentialRampToValueAtTime(620, now + 0.23);
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.12, now + 0.035);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
-  oscillator.connect(gain);
-  gain.connect(context.destination);
-  oscillator.start(now);
-  oscillator.stop(now + 0.25);
-}
-
-function createNyaDataUri() {
-  const sampleRate = 22050;
-  const duration = 0.24;
-  const samples = Math.floor(sampleRate * duration);
-  const dataSize = samples * 2;
-  const buffer = new ArrayBuffer(44 + dataSize);
-  const view = new DataView(buffer);
-
-  writeString(view, 0, "RIFF");
-  view.setUint32(4, 36 + dataSize, true);
-  writeString(view, 8, "WAVE");
-  writeString(view, 12, "fmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, 1, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 2, true);
-  view.setUint16(32, 2, true);
-  view.setUint16(34, 16, true);
-  writeString(view, 36, "data");
-  view.setUint32(40, dataSize, true);
-
-  for (let i = 0; i < samples; i += 1) {
-    const t = i / sampleRate;
-    const progress = i / samples;
-    const frequency = 720 + Math.sin(progress * Math.PI) * 260 - progress * 140;
-    const envelope = Math.sin(progress * Math.PI);
-    const chirp = Math.sin(2 * Math.PI * frequency * t) + 0.35 * Math.sin(2 * Math.PI * frequency * 1.7 * t);
-    const value = Math.max(-1, Math.min(1, chirp * envelope * 0.42));
-    view.setInt16(44 + i * 2, value * 0x7fff, true);
-  }
-
-  let binary = "";
-  const bytes = new Uint8Array(buffer);
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return `data:audio/wav;base64,${btoa(binary)}`;
-}
-
-function writeString(view, offset, string) {
-  for (let i = 0; i < string.length; i += 1) {
-    view.setUint8(offset + i, string.charCodeAt(i));
-  }
-}
-
-function isLateNight() {
-  const hour = today.getHours();
-  return hour >= 23 || hour < 5;
-}
-
-function markInteraction() {
-  lastInteractionAt = Date.now();
-  if (state.meta.catMood === "sleepy" && !isLateNight()) {
-    updateCatReaction("visit");
-    render();
-  }
-  scheduleIdleCheck();
-}
-
-function scheduleIdleCheck() {
-  window.clearTimeout(idleTimer);
-  idleTimer = window.setTimeout(() => {
-    const idleFor = Date.now() - lastInteractionAt;
-    if (idleFor >= idleSleepMs) {
-      state.meta.catMood = "sleepy";
-      state.meta.catSound = "にゃ...";
-      state.meta.catMessage = "少し休憩中。戻ってきたら、また一緒に進めよう。";
-      render();
-      return;
-    }
-    if (idleFor >= quietFocusMs) {
-      state.meta.catMood = "focus";
-      state.meta.catSound = "にゃ";
-      state.meta.catMessage = "集中してるみたい。静かに見守ってるね。";
-      render();
-    }
-    scheduleIdleCheck();
-  }, quietFocusMs);
 }
 
 function getNextAction(todaysItems, todaysDone) {
@@ -1127,18 +833,6 @@ els.goalFilter.addEventListener("change", (event) => {
   render();
 });
 
-els.catSprite.addEventListener("click", petCat);
-els.catSprite.addEventListener("pointerdown", (event) => {
-  event.stopPropagation();
-  petCat();
-});
-els.catSprite.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" || event.key === " ") {
-    event.preventDefault();
-    petCat();
-  }
-});
-
 els.startFirstGoal.addEventListener("click", () => {
   activeScreen = "goals";
   render();
@@ -1197,12 +891,4 @@ document.querySelectorAll("[data-close-dialog]").forEach((button) => {
   });
 });
 
-["pointerdown", "keydown", "scroll"].forEach((eventName) => {
-  window.addEventListener(eventName, markInteraction, { passive: true });
-});
-
-registerVisit();
-initCatMotion();
-initCatAudio();
-scheduleIdleCheck();
 render();
