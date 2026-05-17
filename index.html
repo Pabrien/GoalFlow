@@ -81,6 +81,26 @@
         </article>
       </section>
 
+      <section class="flow-focus" data-view-panel="home" aria-label="次の一手">
+        <article class="next-step-card">
+          <p class="eyebrow">Next flow</p>
+          <h2 id="nextActionTitle">次の一手</h2>
+          <p id="nextActionBody">GoalFlowが、目標から今日やることまでの流れを案内します。</p>
+          <button class="primary-button" id="nextActionButton" type="button">始める</button>
+        </article>
+        <article class="buddy-card">
+          <p class="eyebrow">Momentum</p>
+          <h2 id="buddyTitle">今日の流れ</h2>
+          <p id="buddyMessage">小さく始めて、完了を1つ残しましょう。</p>
+          <div class="flow-roadmap" aria-label="GoalFlowの流れ">
+            <span>目標</span>
+            <span>今日</span>
+            <span>進捗</span>
+            <span>継続</span>
+          </div>
+        </article>
+      </section>
+
       <section class="home-dashboard" data-view-panel="home" aria-label="ホームダッシュボード">
         <section class="empty-start" id="emptyStart">
           <div>
@@ -248,6 +268,8 @@
         <button class="primary-button" type="submit">保存</button>
       </form>
     </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="./app.js"></script>
   </body>

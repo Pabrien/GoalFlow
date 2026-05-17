@@ -27,6 +27,9 @@ Many to-do apps focus on reminders only. GoalFlow is designed around goals first
 - Keep first-run onboarding focused on one goal, one task, and today's action
 - Make empty states encouraging and action-oriented
 - Emphasize the loop: goal -> today's task -> visible progress -> continued motivation
+- Add "next step" guidance so users always know what to do next
+- Build small moments of completion feedback to make habit-building feel rewarding
+- Strengthen the companion-like tone without making the UI noisy
 
 ## Next Ideas
 
@@ -35,3 +38,4 @@ Many to-do apps focus on reminders only. GoalFlow is designed around goals first
 - Task editing
 - Calendar export
 - Cloud sync and account login
+- AI-assisted goal breakdown

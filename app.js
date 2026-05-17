@@ -43,6 +43,12 @@ const els = {
   emptyStart: document.querySelector("#emptyStart"),
   emptyCreateGoal: document.querySelector("#emptyCreateGoal"),
   saveStatus: document.querySelector("#saveStatus"),
+  nextActionTitle: document.querySelector("#nextActionTitle"),
+  nextActionBody: document.querySelector("#nextActionBody"),
+  nextActionButton: document.querySelector("#nextActionButton"),
+  buddyTitle: document.querySelector("#buddyTitle"),
+  buddyMessage: document.querySelector("#buddyMessage"),
+  toast: document.querySelector("#toast"),
 };
 
 function createEmptyState() {
@@ -132,6 +138,7 @@ function render() {
   renderSelectors();
   renderScreenTabs();
   renderOnboarding();
+  renderNextAction();
   renderSummary();
   renderChart();
   renderCompletionPie();
@@ -271,6 +278,7 @@ function scheduledElement(item, isCompact = false) {
   `;
   node.querySelector('[data-action="done"]').addEventListener("click", () => {
     item.done = !item.done;
+    if (item.done) showToast("完了を記録しました。今日の流れが少し前に進みました。");
     render();
   });
   node.querySelector('[data-action="time"]').addEventListener("click", () => {
@@ -324,6 +332,73 @@ function renderOnboarding() {
   const shouldShow = activeScreen === "home" && !state.meta.onboardingDismissed && state.goals.length === 0;
   els.onboarding.hidden = !shouldShow;
   els.emptyStart.hidden = state.goals.length > 0;
+}
+
+function renderNextAction() {
+  const todaysItems = state.scheduled.filter((item) => item.date === toISO(today));
+  const todaysDone = todaysItems.filter((item) => item.done).length;
+  const next = getNextAction(todaysItems, todaysDone);
+  els.nextActionTitle.textContent = next.title;
+  els.nextActionBody.textContent = next.body;
+  els.nextActionButton.textContent = next.button;
+  els.nextActionButton.dataset.action = next.action;
+  els.buddyTitle.textContent = next.buddyTitle;
+  els.buddyMessage.textContent = next.buddyMessage;
+}
+
+function getNextAction(todaysItems, todaysDone) {
+  if (!state.goals.length) {
+    return {
+      title: "最初の目標を作成",
+      body: "GoalFlowは目標から逆算するアプリです。まずは続けたい理由がある目標を1つだけ作りましょう。",
+      button: "目標を作る",
+      action: "createGoal",
+      buddyTitle: "はじめの一歩",
+      buddyMessage: "大きな計画より、続けたい理由が1つあるだけで十分です。",
+    };
+  }
+
+  if (!state.tasks.length) {
+    return {
+      title: "今日やれるサイズに分ける",
+      body: "目標を作れました。次は15分から30分で終わる小さなタスクを保存しましょう。",
+      button: "タスクを追加",
+      action: "createTask",
+      buddyTitle: "逆算を始める",
+      buddyMessage: "目標があるなら、次は今日できる形に小さくします。",
+    };
+  }
+
+  if (!todaysItems.length) {
+    return {
+      title: "今日やることを追加",
+      body: "保存タスクを今日に入れると、予定ではなく行動に変わります。タスク画面の「今日へ」からすぐ追加できます。",
+      button: "タスクを見る",
+      action: "openTasks",
+      buddyTitle: "今日に落とす",
+      buddyMessage: "目標は遠くても、今日の1つなら動かせます。",
+    };
+  }
+
+  if (todaysDone < todaysItems.length) {
+    return {
+      title: "今日の1つを完了する",
+      body: `今日は${todaysItems.length}件中${todaysDone}件完了です。まず1件だけ終わらせて、流れを作りましょう。`,
+      button: "今日を見る",
+      action: "openToday",
+      buddyTitle: "あと少し",
+      buddyMessage: "完璧より記録です。1つ完了すると、明日の自分が楽になります。",
+    };
+  }
+
+  return {
+    title: "今日の流れは完了",
+    body: "今日のタスクは完了しています。余力があれば明日の自分に渡すタスクを1つだけ用意しましょう。",
+    button: "スケジュールを見る",
+    action: "openSchedule",
+    buddyTitle: "いい継続です",
+    buddyMessage: "完了が記録に変わりました。この小さい積み上げがGoalFlowの中心です。",
+  };
 }
 
 function renderScreenTabs() {
@@ -502,6 +577,7 @@ function scheduleTask(taskId, date) {
   const task = state.tasks.find((candidate) => candidate.id === taskId);
   if (!task) return;
   state.scheduled.push(makeSchedule(task, date, suggestTime(date), false));
+  if (date === toISO(today)) showToast("今日の予定に追加しました。あとは1つ完了するだけです。");
   render();
 }
 
@@ -744,10 +820,45 @@ els.emptyCreateGoal.addEventListener("click", () => {
   openGoalDialog();
 });
 
+els.nextActionButton.addEventListener("click", () => {
+  const action = els.nextActionButton.dataset.action;
+  if (action === "createGoal") {
+    activeScreen = "goals";
+    render();
+    openGoalDialog();
+  }
+  if (action === "createTask") {
+    activeScreen = "tasks";
+    render();
+    els.openTaskDialog.click();
+  }
+  if (action === "openTasks") {
+    activeScreen = "tasks";
+    render();
+  }
+  if (action === "openToday") {
+    activeScreen = "today";
+    render();
+  }
+  if (action === "openSchedule") {
+    activeScreen = "schedule";
+    render();
+  }
+});
+
 els.dismissOnboarding.addEventListener("click", () => {
   state.meta.onboardingDismissed = true;
   render();
 });
+
+function showToast(message) {
+  els.toast.textContent = message;
+  els.toast.classList.add("show");
+  window.clearTimeout(showToast.timer);
+  showToast.timer = window.setTimeout(() => {
+    els.toast.classList.remove("show");
+  }, 2600);
+}
 
 document.querySelectorAll("[data-close-dialog]").forEach((button) => {
   button.addEventListener("click", () => {
