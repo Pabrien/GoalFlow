@@ -53,6 +53,7 @@ const els = {
   catSound: document.querySelector("#catSound"),
   catMessage: document.querySelector("#catMessage"),
   toast: document.querySelector("#toast"),
+  fileWarning: document.querySelector("#fileWarning"),
 };
 
 const idleSleepMs = 1000 * 60 * 12;
@@ -144,6 +145,7 @@ function saveState() {
 }
 
 function render() {
+  renderFileWarning();
   document.body.dataset.viewMode = viewMode;
   document.body.dataset.activeScreen = activeScreen;
   document.body.dataset.hasGoals = String(state.goals.length > 0);
@@ -164,6 +166,11 @@ function render() {
   renderCompletionPie();
   renderGoalReport();
   saveState();
+}
+
+function renderFileWarning() {
+  if (!els.fileWarning) return;
+  els.fileWarning.hidden = window.location.protocol !== "file:";
 }
 
 function renderGoals() {

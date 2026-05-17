@@ -16,7 +16,7 @@ GoalFlow is a simple goal-based task planner for workouts, study, and habit buil
 
 ## Run Locally
 
-Open `index.html` directly in a browser, or run a local server:
+Run a local server:
 
 ```sh
 npm run dev
@@ -27,6 +27,8 @@ Then open:
 ```txt
 http://127.0.0.1:4173/index.html
 ```
+
+Avoid opening `index.html` with a `file://` URL while developing. Some browser environments restrict local file behavior, which can make interactions or saved state feel broken.
 
 ## Project Structure
 
