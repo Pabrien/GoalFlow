@@ -49,10 +49,16 @@ const els = {
   buddyTitle: document.querySelector("#buddyTitle"),
   buddyMessage: document.querySelector("#buddyMessage"),
   catSprite: document.querySelector("#catSprite"),
+  catMood: document.querySelector("#catMood"),
   catSound: document.querySelector("#catSound"),
   catMessage: document.querySelector("#catMessage"),
   toast: document.querySelector("#toast"),
 };
+
+const idleSleepMs = 1000 * 60 * 12;
+const quietFocusMs = 1000 * 60 * 4;
+let lastInteractionAt = Date.now();
+let idleTimer = null;
 
 function createEmptyState() {
   return {
@@ -63,6 +69,7 @@ function createEmptyState() {
       onboardingDismissed: false,
       lastVisitDate: "",
       visitStreak: 0,
+      catMood: "active",
       catSound: "にゃっ！",
       catMessage: "今日も来てくれてありがとう。",
     },
@@ -119,6 +126,7 @@ function loadState() {
         onboardingDismissed: Boolean(parsed.meta?.onboardingDismissed),
         lastVisitDate: parsed.meta?.lastVisitDate ?? "",
         visitStreak: Number(parsed.meta?.visitStreak ?? 0),
+        catMood: parsed.meta?.catMood ?? "active",
         catSound: parsed.meta?.catSound ?? "にゃっ！",
         catMessage: parsed.meta?.catMessage ?? "今日も来てくれてありがとう。",
       },
@@ -375,6 +383,16 @@ function renderNextAction() {
 }
 
 function renderCat() {
+  const moodLabels = {
+    active: "見守り中",
+    pleased: "ごきげん",
+    sleepy: "うとうと",
+    focus: "静かに応援中",
+  };
+  els.catSprite.classList.toggle("pleased", state.meta.catMood === "pleased");
+  els.catSprite.classList.toggle("sleepy", state.meta.catMood === "sleepy");
+  els.catSprite.classList.toggle("focus", state.meta.catMood === "focus");
+  els.catMood.textContent = moodLabels[state.meta.catMood] ?? "見守り中";
   els.catSound.textContent = state.meta.catSound;
   els.catMessage.textContent = state.meta.catMessage;
 }
@@ -395,29 +413,41 @@ function updateCatReaction(type) {
   const todayRate = todaysItems.length ? Math.round((todaysDone / todaysItems.length) * 100) : 0;
 
   if (type === "complete") {
+    state.meta.catMood = "pleased";
     state.meta.catSound = "にゃ！";
     state.meta.catMessage = "タスク完了！今の一歩、ちゃんと積み上がったよ。";
     return;
   }
 
+  if (isLateNight()) {
+    state.meta.catMood = "sleepy";
+    state.meta.catSound = "にゃ...";
+    state.meta.catMessage = "夜遅いね。少しだけ整えたら、ちゃんと休もう。";
+    return;
+  }
+
   if (todayRate >= 100 && todaysItems.length) {
+    state.meta.catMood = "pleased";
     state.meta.catSound = "にゃあ";
     state.meta.catMessage = "今日も頑張ってるね。完了がきれいに積み上がってるよ。";
     return;
   }
 
   if (state.meta.visitStreak >= 3) {
+    state.meta.catMood = "active";
     state.meta.catSound = "にゃっ！";
     state.meta.catMessage = `${state.meta.visitStreak}日連続で来てくれてありがとう。継続、育ってるね。`;
     return;
   }
 
   if (todaysItems.length) {
+    state.meta.catMood = "focus";
     state.meta.catSound = "にゃ";
     state.meta.catMessage = "今日やること、もう置けてるね。まず1つだけ一緒に片づけよう。";
     return;
   }
 
+  state.meta.catMood = "active";
   state.meta.catSound = "にゃっ！";
   state.meta.catMessage = "今日も来てくれてありがとう。小さな予定を1つ置いてみよう。";
 }
@@ -426,6 +456,41 @@ function bounceCat() {
   els.catSprite.classList.remove("bounce");
   void els.catSprite.offsetWidth;
   els.catSprite.classList.add("bounce");
+}
+
+function isLateNight() {
+  const hour = today.getHours();
+  return hour >= 23 || hour < 5;
+}
+
+function markInteraction() {
+  lastInteractionAt = Date.now();
+  if (state.meta.catMood === "sleepy" && !isLateNight()) {
+    updateCatReaction("visit");
+    render();
+  }
+  scheduleIdleCheck();
+}
+
+function scheduleIdleCheck() {
+  window.clearTimeout(idleTimer);
+  idleTimer = window.setTimeout(() => {
+    const idleFor = Date.now() - lastInteractionAt;
+    if (idleFor >= idleSleepMs) {
+      state.meta.catMood = "sleepy";
+      state.meta.catSound = "にゃ...";
+      state.meta.catMessage = "少し休憩中。戻ってきたら、また一緒に進めよう。";
+      render();
+      return;
+    }
+    if (idleFor >= quietFocusMs) {
+      state.meta.catMood = "focus";
+      state.meta.catSound = "にゃ";
+      state.meta.catMessage = "集中してるみたい。静かに見守ってるね。";
+      render();
+    }
+    scheduleIdleCheck();
+  }, quietFocusMs);
 }
 
 function getNextAction(todaysItems, todaysDone) {
@@ -948,5 +1013,10 @@ document.querySelectorAll("[data-close-dialog]").forEach((button) => {
   });
 });
 
+["pointerdown", "keydown", "scroll"].forEach((eventName) => {
+  window.addEventListener(eventName, markInteraction, { passive: true });
+});
+
 registerVisit();
+scheduleIdleCheck();
 render();
