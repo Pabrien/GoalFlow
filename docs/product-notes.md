@@ -30,6 +30,7 @@ Many to-do apps focus on reminders only. GoalFlow is designed around goals first
 - Add "next step" guidance so users always know what to do next
 - Build small moments of completion feedback to make habit-building feel rewarding
 - Strengthen the companion-like tone without making the UI noisy
+- Add an AI cat companion that reacts to visits, progress, and task completion
 
 ## Next Ideas
 
@@ -39,3 +40,4 @@ Many to-do apps focus on reminders only. GoalFlow is designed around goals first
 - Calendar export
 - Cloud sync and account login
 - AI-assisted goal breakdown
+- Smarter AI cat messages based on goal type, time of day, and missed streaks

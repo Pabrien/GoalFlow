@@ -335,13 +335,14 @@ button {
 
 .flow-focus {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(240px, 0.8fr) minmax(220px, 0.7fr);
   gap: 14px;
   margin-bottom: 14px;
 }
 
 .next-step-card,
-.buddy-card {
+.buddy-card,
+.ai-cat-card {
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -383,6 +384,114 @@ button {
   color: var(--accent-strong);
   font-size: 12px;
   font-weight: 900;
+}
+
+.ai-cat-card {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  border-color: rgba(241, 185, 60, 0.45);
+  background: #fffdf5;
+}
+
+.cat-sprite {
+  position: relative;
+  width: 78px;
+  height: 72px;
+  transform-origin: center bottom;
+}
+
+.cat-sprite.bounce {
+  animation: cat-hop 0.56s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cat-ear {
+  position: absolute;
+  top: 5px;
+  width: 28px;
+  height: 32px;
+  border: 2px solid var(--accent-strong);
+  background: #f6cfc5;
+  transform: rotate(45deg);
+}
+
+.cat-ear.left {
+  left: 12px;
+}
+
+.cat-ear.right {
+  right: 12px;
+}
+
+.cat-face {
+  position: absolute;
+  right: 5px;
+  bottom: 0;
+  left: 5px;
+  height: 58px;
+  border: 2px solid var(--accent-strong);
+  border-radius: 28px 28px 24px 24px;
+  background: #fff8ea;
+}
+
+.cat-eye {
+  position: absolute;
+  top: 23px;
+  width: 7px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+}
+
+.cat-eye.left {
+  left: 20px;
+}
+
+.cat-eye.right {
+  right: 20px;
+}
+
+.cat-nose {
+  position: absolute;
+  top: 34px;
+  left: 50%;
+  width: 8px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--red);
+  transform: translateX(-50%);
+}
+
+.cat-bubble strong {
+  display: block;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.cat-bubble p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@keyframes cat-hop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-18px) scale(1.04);
+  }
+  60% {
+    transform: translateY(0) scale(0.98);
+  }
+  80% {
+    transform: translateY(-6px) scale(1.02);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
 }
 
 .home-dashboard {
@@ -1049,6 +1158,15 @@ textarea:focus {
 
   .flow-roadmap {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ai-cat-card {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .cat-sprite {
+    width: 70px;
+    height: 66px;
   }
 
   .topbar,

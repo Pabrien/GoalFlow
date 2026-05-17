@@ -48,6 +48,9 @@ const els = {
   nextActionButton: document.querySelector("#nextActionButton"),
   buddyTitle: document.querySelector("#buddyTitle"),
   buddyMessage: document.querySelector("#buddyMessage"),
+  catSprite: document.querySelector("#catSprite"),
+  catSound: document.querySelector("#catSound"),
+  catMessage: document.querySelector("#catMessage"),
   toast: document.querySelector("#toast"),
 };
 
@@ -58,6 +61,10 @@ function createEmptyState() {
     scheduled: [],
     meta: {
       onboardingDismissed: false,
+      lastVisitDate: "",
+      visitStreak: 0,
+      catSound: "にゃっ！",
+      catMessage: "今日も来てくれてありがとう。",
     },
   };
 }
@@ -110,6 +117,10 @@ function loadState() {
       scheduled: Array.isArray(parsed.scheduled) ? parsed.scheduled : [],
       meta: {
         onboardingDismissed: Boolean(parsed.meta?.onboardingDismissed),
+        lastVisitDate: parsed.meta?.lastVisitDate ?? "",
+        visitStreak: Number(parsed.meta?.visitStreak ?? 0),
+        catSound: parsed.meta?.catSound ?? "にゃっ！",
+        catMessage: parsed.meta?.catMessage ?? "今日も来てくれてありがとう。",
       },
     };
   } catch {
@@ -139,6 +150,7 @@ function render() {
   renderScreenTabs();
   renderOnboarding();
   renderNextAction();
+  renderCat();
   renderSummary();
   renderChart();
   renderCompletionPie();
@@ -277,9 +289,7 @@ function scheduledElement(item, isCompact = false) {
     </div>
   `;
   node.querySelector('[data-action="done"]').addEventListener("click", () => {
-    item.done = !item.done;
-    if (item.done) showToast("完了を記録しました。今日の流れが少し前に進みました。");
-    render();
+    toggleScheduledDone(item);
   });
   node.querySelector('[data-action="time"]').addEventListener("click", () => {
     const next = prompt("開始時間を入力してください", item.time);
@@ -310,9 +320,27 @@ function renderToday() {
       const goal = findGoal(item.goalId);
       const node = document.createElement("article");
       node.className = `today-task ${item.done ? "done" : ""}`;
-      node.innerHTML = taskMarkup({ ...task, reminder: item.reminder, minutes: item.minutes }, goal, item.time);
+      node.innerHTML = `
+        ${taskMarkup({ ...task, reminder: item.reminder, minutes: item.minutes }, goal, item.time)}
+        <div class="task-actions">
+          <button class="mini-button" type="button" data-action="done">${item.done ? "戻す" : "完了"}</button>
+        </div>
+      `;
+      node.querySelector('[data-action="done"]').addEventListener("click", () => {
+        toggleScheduledDone(item);
+      });
       els.todayList.append(node);
     });
+}
+
+function toggleScheduledDone(item) {
+  item.done = !item.done;
+  if (item.done) {
+    updateCatReaction("complete");
+    bounceCat();
+    showToast("にゃ！ 完了を記録しました。今日の流れが少し前に進みました。");
+  }
+  render();
 }
 
 function renderSelectors() {
@@ -344,6 +372,60 @@ function renderNextAction() {
   els.nextActionButton.dataset.action = next.action;
   els.buddyTitle.textContent = next.buddyTitle;
   els.buddyMessage.textContent = next.buddyMessage;
+}
+
+function renderCat() {
+  els.catSound.textContent = state.meta.catSound;
+  els.catMessage.textContent = state.meta.catMessage;
+}
+
+function registerVisit() {
+  const todayIso = toISO(today);
+  if (state.meta.lastVisitDate === todayIso) return;
+
+  const yesterdayIso = toISO(addDays(today, -1));
+  state.meta.visitStreak = state.meta.lastVisitDate === yesterdayIso ? state.meta.visitStreak + 1 : 1;
+  state.meta.lastVisitDate = todayIso;
+  updateCatReaction("visit");
+}
+
+function updateCatReaction(type) {
+  const todaysItems = state.scheduled.filter((item) => item.date === toISO(today));
+  const todaysDone = todaysItems.filter((item) => item.done).length;
+  const todayRate = todaysItems.length ? Math.round((todaysDone / todaysItems.length) * 100) : 0;
+
+  if (type === "complete") {
+    state.meta.catSound = "にゃ！";
+    state.meta.catMessage = "タスク完了！今の一歩、ちゃんと積み上がったよ。";
+    return;
+  }
+
+  if (todayRate >= 100 && todaysItems.length) {
+    state.meta.catSound = "にゃあ";
+    state.meta.catMessage = "今日も頑張ってるね。完了がきれいに積み上がってるよ。";
+    return;
+  }
+
+  if (state.meta.visitStreak >= 3) {
+    state.meta.catSound = "にゃっ！";
+    state.meta.catMessage = `${state.meta.visitStreak}日連続で来てくれてありがとう。継続、育ってるね。`;
+    return;
+  }
+
+  if (todaysItems.length) {
+    state.meta.catSound = "にゃ";
+    state.meta.catMessage = "今日やること、もう置けてるね。まず1つだけ一緒に片づけよう。";
+    return;
+  }
+
+  state.meta.catSound = "にゃっ！";
+  state.meta.catMessage = "今日も来てくれてありがとう。小さな予定を1つ置いてみよう。";
+}
+
+function bounceCat() {
+  els.catSprite.classList.remove("bounce");
+  void els.catSprite.offsetWidth;
+  els.catSprite.classList.add("bounce");
 }
 
 function getNextAction(todaysItems, todaysDone) {
@@ -866,4 +948,5 @@ document.querySelectorAll("[data-close-dialog]").forEach((button) => {
   });
 });
 
+registerVisit();
 render();
