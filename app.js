@@ -37,7 +37,24 @@ const els = {
   monthView: document.querySelector("#monthView"),
   todayPeriod: document.querySelector("#todayPeriod"),
   screenTabs: document.querySelectorAll("[data-screen-target]"),
+  onboarding: document.querySelector("#onboarding"),
+  startFirstGoal: document.querySelector("#startFirstGoal"),
+  dismissOnboarding: document.querySelector("#dismissOnboarding"),
+  emptyStart: document.querySelector("#emptyStart"),
+  emptyCreateGoal: document.querySelector("#emptyCreateGoal"),
+  saveStatus: document.querySelector("#saveStatus"),
 };
+
+function createEmptyState() {
+  return {
+    goals: [],
+    tasks: [],
+    scheduled: [],
+    meta: {
+      onboardingDismissed: false,
+    },
+  };
+}
 
 function seedState() {
   const start = getWeekStart(today);
@@ -78,23 +95,33 @@ function seedState() {
 
 function loadState() {
   const saved = localStorage.getItem(storageKey);
-  if (!saved) return seedState();
+  if (!saved) return createEmptyState();
   try {
     const parsed = JSON.parse(saved);
-    if (!parsed.goals?.length) return seedState();
-    return parsed;
+    return {
+      goals: Array.isArray(parsed.goals) ? parsed.goals : [],
+      tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
+      scheduled: Array.isArray(parsed.scheduled) ? parsed.scheduled : [],
+      meta: {
+        onboardingDismissed: Boolean(parsed.meta?.onboardingDismissed),
+      },
+    };
   } catch {
-    return seedState();
+    return createEmptyState();
   }
 }
 
 function saveState() {
   localStorage.setItem(storageKey, JSON.stringify(state));
+  if (els.saveStatus) {
+    els.saveStatus.textContent = `保存済み ${new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}`;
+  }
 }
 
 function render() {
   document.body.dataset.viewMode = viewMode;
   document.body.dataset.activeScreen = activeScreen;
+  document.body.dataset.hasGoals = String(state.goals.length > 0);
   if (!state.goals.some((goal) => goal.id === selectedGoalId)) {
     selectedGoalId = state.goals[0]?.id ?? "";
   }
@@ -104,6 +131,7 @@ function render() {
   renderToday();
   renderSelectors();
   renderScreenTabs();
+  renderOnboarding();
   renderSummary();
   renderChart();
   renderCompletionPie();
@@ -152,7 +180,12 @@ function renderTaskBank() {
     item.className = "bank-task";
     item.draggable = true;
     item.dataset.taskId = task.id;
-    item.innerHTML = taskMarkup(task, goal);
+    item.innerHTML = `
+      ${taskMarkup(task, goal)}
+      <div class="bank-task-actions">
+        <button class="mini-button" type="button" data-action="today">今日へ</button>
+      </div>
+    `;
     item.addEventListener("dragstart", (event) => {
       event.dataTransfer.setData("text/plain", task.id);
       event.dataTransfer.effectAllowed = "copy";
@@ -164,6 +197,11 @@ function renderTaskBank() {
     });
     item.addEventListener("dragend", () => {
       item.classList.remove("dragging");
+    });
+    item.querySelector('[data-action="today"]').addEventListener("click", () => {
+      scheduleTask(task.id, toISO(today));
+      activeScreen = "today";
+      render();
     });
     els.taskBank.append(item);
   });
@@ -282,6 +320,12 @@ function renderSelectors() {
   els.todayPeriod.textContent = viewMode === "month" ? "今月" : "今週";
 }
 
+function renderOnboarding() {
+  const shouldShow = activeScreen === "home" && !state.meta.onboardingDismissed && state.goals.length === 0;
+  els.onboarding.hidden = !shouldShow;
+  els.emptyStart.hidden = state.goals.length > 0;
+}
+
 function renderScreenTabs() {
   els.screenTabs.forEach((tab) => {
     const isActive = tab.dataset.screenTarget === activeScreen;
@@ -312,6 +356,10 @@ function renderChart() {
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = "#fbfcfa";
   ctx.fillRect(0, 0, width, height);
+  if (!state.scheduled.length) {
+    drawEmptyCanvas(ctx, width, height, "目標を作って、今日のタスクを完了するとグラフが育ちます。");
+    return;
+  }
   const days = Array.from({ length: 7 }, (_, index) => addDays(today, index - 6));
   const values = days.map((date) => {
     const iso = toISO(date);
@@ -357,6 +405,10 @@ function renderCompletionPie() {
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = "#fbfcfa";
   ctx.fillRect(0, 0, width, height);
+  if (!total) {
+    drawEmptyCanvas(ctx, width, height, "完了したタスクがここに割合で表示されます。");
+    return;
+  }
 
   ctx.beginPath();
   ctx.moveTo(centerX, centerY);
@@ -426,6 +478,15 @@ function drawLegend(ctx, x, y, color, text) {
   ctx.font = "12px system-ui";
   ctx.textAlign = "left";
   ctx.fillText(text, x + 18, y);
+}
+
+function drawEmptyCanvas(ctx, width, height, text) {
+  ctx.fillStyle = "#fbfcfa";
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = "#6b7066";
+  ctx.font = "14px system-ui";
+  ctx.textAlign = "center";
+  ctx.fillText(text, width / 2, height / 2);
 }
 
 function taskMarkup(task, goal, time = "", isCompact = false) {
@@ -566,18 +627,26 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
-els.openGoalDialog.addEventListener("click", () => {
-  els.goalForm.reset();
-  els.goalForm.elements.namedItem("deadline").value = addDays(today, 30).toISOString().slice(0, 10);
-  els.goalDialog.showModal();
-});
+els.openGoalDialog.addEventListener("click", openGoalDialog);
 
 els.openTaskDialog.addEventListener("click", () => {
+  if (!state.goals.length) {
+    activeScreen = "goals";
+    render();
+    openGoalDialog();
+    return;
+  }
   els.taskForm.reset();
   updateDurationInput();
   renderSelectors();
   els.taskDialog.showModal();
 });
+
+function openGoalDialog() {
+  els.goalForm.reset();
+  els.goalForm.elements.namedItem("deadline").value = addDays(today, 30).toISOString().slice(0, 10);
+  els.goalDialog.showModal();
+}
 
 els.goalForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -590,6 +659,7 @@ els.goalForm.addEventListener("submit", (event) => {
     note: data.get("note").trim(),
   };
   state.goals.push(goal);
+  state.meta.onboardingDismissed = true;
   selectedGoalId = goal.id;
   els.goalDialog.close();
   render();
@@ -659,6 +729,23 @@ els.screenTabs.forEach((tab) => {
 
 els.goalFilter.addEventListener("change", (event) => {
   selectedGoalId = event.target.value;
+  render();
+});
+
+els.startFirstGoal.addEventListener("click", () => {
+  activeScreen = "goals";
+  render();
+  openGoalDialog();
+});
+
+els.emptyCreateGoal.addEventListener("click", () => {
+  activeScreen = "goals";
+  render();
+  openGoalDialog();
+});
+
+els.dismissOnboarding.addEventListener("click", () => {
+  state.meta.onboardingDismissed = true;
   render();
 });
 

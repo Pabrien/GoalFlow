@@ -20,6 +20,14 @@ Many to-do apps focus on reminders only. GoalFlow is designed around goals first
 - Tasks: saved task list and task creation
 - Today: today's scheduled tasks
 
+## Product Priorities
+
+- Persist data locally first, before adding accounts or a database
+- Treat mobile as the primary use case
+- Keep first-run onboarding focused on one goal, one task, and today's action
+- Make empty states encouraging and action-oriented
+- Emphasize the loop: goal -> today's task -> visible progress -> continued motivation
+
 ## Next Ideas
 
 - Real notification integration

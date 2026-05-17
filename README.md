@@ -11,6 +11,8 @@ GoalFlow is a simple goal-based task planner for workouts, study, and habit buil
 - Track today's, weekly, and overall completion rates
 - View progress with bar charts, a completion pie chart, and a goal report table
 - Data is saved in the browser with `localStorage`
+- First-run onboarding guides users through goal -> task -> today
+- Mobile-focused navigation with touch-friendly controls
 
 ## Run Locally
 
@@ -42,4 +44,10 @@ todo-ui/
 
 ## Development Notes
 
-This is currently a dependency-free static prototype. If the app grows, a good next step is moving it to a component-based structure such as Vite + React or Vue.
+This is currently a dependency-free static prototype. Data is persisted locally in the browser, so clearing browser storage will reset the app.
+
+If the app grows, good next steps are:
+
+- Move to a component-based structure such as Vite + React or Vue
+- Add real notification support
+- Add cloud sync and login

@@ -12,8 +12,44 @@
         <div>
           <p class="eyebrow">Goal planner</p>
           <h1>GoalFlow</h1>
+          <p class="product-line">目標から逆算して、今日やることへ落とし込む。</p>
         </div>
+        <div class="save-status" id="saveStatus" aria-live="polite">自動保存</div>
       </header>
+
+      <section class="onboarding" id="onboarding" data-view-panel="home" aria-label="初回チュートリアル">
+        <div>
+          <p class="eyebrow">Start small</p>
+          <h2>最初は3ステップだけ</h2>
+        </div>
+        <ol class="onboarding-steps">
+          <li>
+            <span>1</span>
+            <div>
+              <strong>目標を1つ作る</strong>
+              <p>筋トレ、勉強、習慣など、続けたい理由を残します。</p>
+            </div>
+          </li>
+          <li>
+            <span>2</span>
+            <div>
+              <strong>小さなタスクに分ける</strong>
+              <p>今日できるサイズにすると、続けやすくなります。</p>
+            </div>
+          </li>
+          <li>
+            <span>3</span>
+            <div>
+              <strong>今日に入れて完了する</strong>
+              <p>進捗がグラフに残り、次の一歩が見えます。</p>
+            </div>
+          </li>
+        </ol>
+        <div class="onboarding-actions">
+          <button class="primary-button" id="startFirstGoal" type="button">最初の目標を作る</button>
+          <button class="ghost-button" id="dismissOnboarding" type="button">あとで見る</button>
+        </div>
+      </section>
 
       <nav class="screen-tabs" aria-label="画面切替">
         <button class="screen-tab active" type="button" data-screen-target="home" aria-pressed="true">ホーム</button>
@@ -46,6 +82,15 @@
       </section>
 
       <section class="home-dashboard" data-view-panel="home" aria-label="ホームダッシュボード">
+        <section class="empty-start" id="emptyStart">
+          <div>
+            <p class="eyebrow">GoalFlow method</p>
+            <h2>まず最初の目標を作りましょう</h2>
+            <p>目標を作ると、タスクを保存して、今日の予定に落とし込めます。進捗はここにグラフで残ります。</p>
+          </div>
+          <button class="primary-button" id="emptyCreateGoal" type="button">目標を作る</button>
+        </section>
+
         <section class="panel dashboard-panel wide-panel">
           <div class="panel-heading">
             <div>
