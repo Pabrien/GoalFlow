@@ -9,6 +9,7 @@ let activeScreen = "home";
 let highlightedCompletionId = "";
 let highlightedScheduleDate = "";
 let highlightedScheduleTimer = null;
+let activeTimeEditId = "";
 
 const els = {
   goalList: document.querySelector("#goalList"),
@@ -345,24 +346,38 @@ function renderCalendar() {
 function scheduledElement(item, isCompact = false) {
   const task = state.tasks.find((candidate) => candidate.id === item.taskId) ?? item;
   const goal = findGoal(item.goalId);
+  const isEditingTime = activeTimeEditId === item.id;
   const node = document.createElement("article");
   node.className = `scheduled-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""}`;
   node.innerHTML = `
     ${taskMarkup({ ...task, reminder: item.reminder, minutes: item.minutes }, goal, item.time, isCompact)}
     <div class="task-actions">
       <button class="mini-button" type="button" data-action="done">${item.done ? "戻す" : "完了"}</button>
-      <button class="mini-button time-button" type="button" data-action="time" aria-label="開始時刻を変更">時刻変更</button>
+      <button class="mini-button time-button" type="button" data-action="time" data-editing="${isEditingTime}" aria-label="開始時刻を変更">${
+        isEditingTime ? "閉じる" : "時刻変更"
+      }</button>
       ${trashButton("予定から削除")}
     </div>
+    ${
+      isEditingTime
+        ? `<label class="time-editor">開始時刻<input type="time" value="${escapeHtml(item.time)}" data-time-editor="${escapeHtml(item.id)}" /></label>`
+        : ""
+    }
   `;
   node.querySelector('[data-action="done"]').addEventListener("click", () => {
     toggleScheduledDone(item);
   });
   node.querySelector('[data-action="time"]').addEventListener("click", () => {
-    const next = prompt("開始時刻を変更します。例：19:30", item.time);
-    if (next && /^\d{1,2}:\d{2}$/.test(next)) {
-      item.time = next.padStart(5, "0");
-      showToast(`開始時刻を${item.time}に変更しました。`);
+    activeTimeEditId = isEditingTime ? "" : item.id;
+    render();
+    focusActiveTimeEditor();
+  });
+  const timeInput = node.querySelector("[data-time-editor]");
+  timeInput?.addEventListener("change", () => updateScheduledTime(item, timeInput.value));
+  timeInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") updateScheduledTime(item, timeInput.value);
+    if (event.key === "Escape") {
+      activeTimeEditId = "";
       render();
     }
   });
@@ -708,8 +723,25 @@ function deleteSavedTask(task) {
 
 function deleteScheduledItem(item) {
   state.scheduled = state.scheduled.filter((candidate) => candidate.id !== item.id);
+  if (activeTimeEditId === item.id) activeTimeEditId = "";
   showToast("予定から削除しました。");
   render();
+}
+
+function updateScheduledTime(item, value) {
+  if (!/^\d{2}:\d{2}$/.test(value)) return;
+  item.time = value;
+  activeTimeEditId = "";
+  showToast(`開始時刻を${item.time}に変更しました。`);
+  render();
+}
+
+function focusActiveTimeEditor() {
+  window.setTimeout(() => {
+    const input = [...document.querySelectorAll("[data-time-editor]")].find((candidate) => candidate.dataset.timeEditor === activeTimeEditId);
+    input?.focus();
+    input?.showPicker?.();
+  }, 0);
 }
 
 function scheduleTask(taskId, date) {

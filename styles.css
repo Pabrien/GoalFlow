@@ -1034,6 +1034,7 @@ body.is-scheduling .day-column {
 
 .task-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 10px;
 }
@@ -1134,10 +1135,51 @@ body.is-scheduling .day-column {
   font-size: 10px;
 }
 
+.month-mode .time-button[data-editing="true"]::before {
+  content: "閉じる";
+}
+
 .month-mode .trash-button {
   width: 28px;
   min-width: 28px;
   height: 28px;
+}
+
+.time-editor {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.time-editor input {
+  min-height: 38px;
+  width: 100%;
+  padding: 0 10px;
+  border: 1px solid rgba(20, 108, 99, 0.28);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.time-editor input:focus {
+  outline: 3px solid rgba(20, 108, 99, 0.16);
+}
+
+.month-mode .time-editor {
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 10px;
+}
+
+.month-mode .time-editor input {
+  min-height: 30px;
+  padding: 0 7px;
+  font-size: 12px;
 }
 
 canvas {
