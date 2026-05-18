@@ -507,12 +507,15 @@ async function requestAiPlan() {
     }
     renderAiPlan(data);
   } catch (error) {
-    els.aiPlanStatus.textContent = "未接続";
-    els.aiPlanSummary.textContent =
-      "AIサーバーがまだ接続されていません。VercelにデプロイしてOPENAI_API_KEYを設定すると使えます。";
+    const message = error.message || "AIプランを取得できませんでした。";
+    const isQuotaError = /quota|billing|plan/i.test(message);
+    els.aiPlanStatus.textContent = isQuotaError ? "利用枠エラー" : "未接続";
+    els.aiPlanSummary.textContent = isQuotaError
+      ? "OpenAIの利用枠または課金設定で止まっています。OpenAI PlatformのBillingを確認してください。"
+      : "AIサーバーがまだ接続されていません。VercelにデプロイしてOPENAI_API_KEYを設定すると使えます。";
     els.aiPlanSteps.innerHTML = "";
     const step = document.createElement("li");
-    step.textContent = error.message;
+    step.textContent = message;
     els.aiPlanSteps.append(step);
   } finally {
     els.aiPlanButton.disabled = false;
