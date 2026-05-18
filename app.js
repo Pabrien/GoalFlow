@@ -48,6 +48,7 @@ const els = {
   emptyStart: document.querySelector("#emptyStart"),
   emptyCreateGoal: document.querySelector("#emptyCreateGoal"),
   saveStatus: document.querySelector("#saveStatus"),
+  launchScreen: document.querySelector("#launchScreen"),
   nextActionTitle: document.querySelector("#nextActionTitle"),
   nextActionBody: document.querySelector("#nextActionBody"),
   nextActionButton: document.querySelector("#nextActionButton"),
@@ -1198,5 +1199,9 @@ document.querySelectorAll("[data-close-dialog]").forEach((button) => {
     button.closest("dialog")?.close();
   });
 });
+
+window.setTimeout(() => {
+  els.launchScreen?.remove();
+}, 1900);
 
 render();
