@@ -275,6 +275,7 @@ function createDragPreview(task, goal) {
 
 function startTouchScheduleDrag(event, task, goal, item) {
   if (event.pointerType === "mouse" || event.target.closest("button")) return;
+  event.preventDefault();
   const startX = event.clientX;
   const startY = event.clientY;
   let didStart = false;
@@ -282,16 +283,21 @@ function startTouchScheduleDrag(event, task, goal, item) {
   let currentClientY = event.clientY;
   let preview = null;
 
-  const startDrag = () => {
+  const startDrag = (clientX = startX, clientY = startY) => {
+    if (didStart) return;
     didStart = true;
-    item.setPointerCapture?.(event.pointerId);
+    try {
+      item.setPointerCapture?.(event.pointerId);
+    } catch {
+      // Pointer capture can fail if the browser has already promoted the gesture.
+    }
     document.body.classList.add("is-scheduling");
     item.classList.add("dragging");
     vibrate(6);
     preview = createDragPreview(task, goal);
     preview.classList.add("touch-drag-preview");
     document.body.append(preview);
-    movePreview(startX, startY);
+    movePreview(clientX, clientY);
   };
   const movePreview = (clientX, clientY) => {
     if (!preview) return;
@@ -309,17 +315,16 @@ function startTouchScheduleDrag(event, task, goal, item) {
   const onMove = (moveEvent) => {
     const deltaX = moveEvent.clientX - startX;
     const deltaY = moveEvent.clientY - startY;
-    if (!didStart && Math.hypot(deltaX, deltaY) > 10) {
-      window.clearTimeout(longPressTimer);
-      cleanup(false);
-      return;
+    if (!didStart && Math.hypot(deltaX, deltaY) > 4) {
+      window.clearTimeout(pressTimer);
+      startDrag(moveEvent.clientX, moveEvent.clientY);
     }
     if (!didStart) return;
     moveEvent.preventDefault();
     currentClientY = moveEvent.clientY;
     movePreview(moveEvent.clientX, moveEvent.clientY);
     preview.hidden = true;
-    const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)?.closest(".day-column");
+    const target = getScheduleColumnFromPoint(moveEvent.clientX, moveEvent.clientY);
     preview.hidden = false;
     if (target === currentTarget && currentTarget) {
       setColumnDropTarget(currentTarget, currentClientY);
@@ -328,7 +333,7 @@ function startTouchScheduleDrag(event, task, goal, item) {
     }
   };
   const cleanup = (removeListeners = true) => {
-    window.clearTimeout(longPressTimer);
+    window.clearTimeout(pressTimer);
     if (didStart) {
       document.body.classList.remove("is-scheduling");
       item.classList.remove("dragging");
@@ -336,9 +341,9 @@ function startTouchScheduleDrag(event, task, goal, item) {
     if (currentTarget) clearDropTargets(currentTarget);
     preview?.remove();
     if (removeListeners) {
-      item.removeEventListener("pointermove", onMove);
-      item.removeEventListener("pointerup", onUp);
-      item.removeEventListener("pointercancel", onCancel);
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onCancel);
     }
   };
   const onUp = (upEvent) => {
@@ -347,17 +352,18 @@ function startTouchScheduleDrag(event, task, goal, item) {
       return;
     }
     onMove(upEvent);
-    const date = currentTarget?.dataset.date;
-    const snappedTime = currentTarget ? getTimeFromPoint(upEvent.clientY, currentTarget) : "";
+    const landingTarget = currentTarget ?? getScheduleColumnFromPoint(upEvent.clientX, upEvent.clientY);
+    const date = landingTarget?.dataset.date;
+    const snappedTime = landingTarget ? getTimeFromPoint(upEvent.clientY, landingTarget) : "";
     cleanup();
     if (date) scheduleTask(task.id, date, snappedTime);
   };
   const onCancel = () => cleanup();
 
-  const longPressTimer = window.setTimeout(startDrag, 220);
-  item.addEventListener("pointermove", onMove);
-  item.addEventListener("pointerup", onUp);
-  item.addEventListener("pointercancel", onCancel);
+  const pressTimer = window.setTimeout(() => startDrag(startX, startY), 90);
+  document.addEventListener("pointermove", onMove);
+  document.addEventListener("pointerup", onUp);
+  document.addEventListener("pointercancel", onCancel);
 }
 
 function renderCalendar() {
@@ -401,7 +407,7 @@ function renderCalendar() {
     });
     const list = column.querySelector(".day-tasks");
     const scheduled = state.scheduled.filter((item) => item.date === iso && (!selectedGoalId || item.goalId === selectedGoalId));
-    if (viewMode === "week") {
+    if (viewMode === "week" && !isCompactScheduleLayout()) {
       renderTimeSlots(list, scheduled);
     } else if (scheduled.length) {
       scheduled.forEach((item) => list.append(scheduledElement(item, viewMode === "month")));
@@ -446,8 +452,12 @@ function clearDropTargets(column) {
   column.querySelectorAll(".time-slot.slot-target").forEach((slot) => slot.classList.remove("slot-target"));
 }
 
+function getScheduleColumnFromPoint(clientX, clientY) {
+  return document.elementFromPoint(clientX, clientY)?.closest(".day-column");
+}
+
 function getSlotFromPoint(clientY, column) {
-  if (viewMode !== "week") return null;
+  if (viewMode !== "week" || isCompactScheduleLayout()) return null;
   const slots = [...column.querySelectorAll(".time-slot")];
   if (!slots.length) return null;
   return slots.find((slot) => {
@@ -470,6 +480,10 @@ function parseHour(time) {
 
 function formatHourLabel(hour) {
   return `${String(hour).padStart(2, "0")}:00`;
+}
+
+function isCompactScheduleLayout() {
+  return window.matchMedia("(max-width: 640px)").matches;
 }
 
 function scheduledElement(item, isCompact = false) {

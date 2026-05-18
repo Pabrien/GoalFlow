@@ -2196,3 +2196,198 @@ dialog {
     font-size: 34px;
   }
 }
+
+@media (max-width: 640px) {
+  body[data-active-screen="schedule"] .app-shell {
+    width: min(100% - 12px, 430px);
+  }
+
+  body[data-active-screen="schedule"] .workspace {
+    gap: 8px;
+  }
+
+  body[data-active-screen="schedule"] .sidebar {
+    gap: 8px;
+    min-width: 0;
+  }
+
+  body[data-active-screen="schedule"] [data-view-panel="tasks"] {
+    position: sticky;
+    top: 6px;
+    z-index: 6;
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  body[data-active-screen="schedule"] [data-view-panel="tasks"] .panel-heading {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  body[data-active-screen="schedule"] [data-view-panel="tasks"] .panel-heading h2 {
+    font-size: 15px;
+  }
+
+  body[data-active-screen="schedule"] .task-bank {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 1px 2px 4px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+  }
+
+  body[data-active-screen="schedule"] .bank-task {
+    flex: 0 0 158px;
+    min-width: 0;
+    padding: 8px;
+    scroll-snap-align: start;
+    touch-action: none;
+    user-select: none;
+  }
+
+  body[data-active-screen="schedule"] .bank-task .task-title {
+    font-size: 12px;
+  }
+
+  body[data-active-screen="schedule"] .bank-task .task-meta {
+    display: none;
+  }
+
+  body[data-active-screen="schedule"] .bank-task-actions {
+    margin-top: 6px;
+  }
+
+  body[data-active-screen="schedule"] .bank-task .mini-button,
+  body[data-active-screen="schedule"] .bank-task .trash-button {
+    min-height: 30px;
+    padding: 0 8px;
+  }
+
+  body[data-active-screen="schedule"] .planner {
+    padding: 10px;
+    overflow: visible;
+    border-radius: 14px;
+  }
+
+  body[data-active-screen="schedule"] .planner-head {
+    gap: 8px;
+  }
+
+  body[data-active-screen="schedule"] .planner-head .eyebrow {
+    display: none;
+  }
+
+  body[data-active-screen="schedule"] .planner-head h2 {
+    font-size: 16px;
+  }
+
+  body[data-active-screen="schedule"] .week-controls {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 40px auto 40px;
+    gap: 6px;
+  }
+
+  body[data-active-screen="schedule"] .view-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  body[data-active-screen="schedule"] .switch-button,
+  body[data-active-screen="schedule"] .icon-button,
+  body[data-active-screen="schedule"] .ghost-button {
+    min-height: 38px;
+  }
+
+  body[data-active-screen="schedule"] .calendar-grid,
+  body[data-active-screen="schedule"] .calendar-grid.month-mode {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    min-width: 0;
+    margin-top: 8px;
+  }
+
+  body[data-active-screen="schedule"] .day-column,
+  body[data-active-screen="schedule"] .month-mode .day-column {
+    min-height: clamp(54px, 11vh, 72px);
+    padding: 5px 4px;
+    border-radius: 10px;
+  }
+
+  body[data-active-screen="schedule"] .calendar-grid.month-mode .day-column {
+    min-height: clamp(38px, 7vh, 46px);
+    padding: 3px;
+  }
+
+  body[data-active-screen="schedule"] .calendar-grid.week-mode .day-column {
+    min-height: clamp(82px, 17vh, 118px);
+  }
+
+  body[data-active-screen="schedule"] .day-column.drop-target {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: inset 0 0 0 2px rgba(20, 108, 99, 0.22), 0 10px 22px rgba(20, 108, 99, 0.16);
+  }
+
+  body[data-active-screen="schedule"] .day-head {
+    position: static;
+    padding-bottom: 3px;
+  }
+
+  body[data-active-screen="schedule"] .day-name {
+    font-size: 9px;
+  }
+
+  body[data-active-screen="schedule"] .day-number,
+  body[data-active-screen="schedule"] .month-mode .day-number {
+    font-size: 14px;
+  }
+
+  body[data-active-screen="schedule"] .month-mode .day-name {
+    font-size: 8px;
+  }
+
+  body[data-active-screen="schedule"] .month-mode .day-number {
+    font-size: 12px;
+  }
+
+  body[data-active-screen="schedule"] .day-tasks,
+  body[data-active-screen="schedule"] .month-mode .day-tasks {
+    gap: 3px;
+  }
+
+  body[data-active-screen="schedule"] .scheduled-task,
+  body[data-active-screen="schedule"] .month-mode .scheduled-task {
+    padding: 5px;
+    border-radius: 8px;
+  }
+
+  body[data-active-screen="schedule"] .scheduled-task .task-title,
+  body[data-active-screen="schedule"] .month-mode .scheduled-task .task-title {
+    display: block;
+    font-size: 10px;
+    line-height: 1.15;
+  }
+
+  body[data-active-screen="schedule"] .scheduled-task .task-title span:first-child {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body[data-active-screen="schedule"] .scheduled-task .task-title span:last-child,
+  body[data-active-screen="schedule"] .scheduled-task .task-meta,
+  body[data-active-screen="schedule"] .scheduled-task .task-actions {
+    display: none;
+  }
+
+  body.is-scheduling {
+    overscroll-behavior: none;
+  }
+
+  .touch-drag-preview {
+    width: 118px;
+  }
+}
