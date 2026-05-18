@@ -225,7 +225,7 @@ function renderTaskBank() {
     });
     item.addEventListener("dragend", () => {
       document.body.classList.remove("is-scheduling");
-      document.querySelectorAll(".day-column.drop-target").forEach((column) => column.classList.remove("drop-target"));
+      document.querySelectorAll(".day-column.drop-target").forEach((column) => clearDropTargets(column));
       item.classList.remove("dragging");
     });
     item.addEventListener("pointerdown", (event) => startTouchScheduleDrag(event, task, goal, item));
@@ -261,27 +261,35 @@ function startTouchScheduleDrag(event, task, goal, item) {
   document.body.append(preview);
 
   let currentTarget = null;
+  let currentClientY = event.clientY;
   const movePreview = (clientX, clientY) => {
     preview.style.transform = `translate(${clientX + 14}px, ${clientY + 14}px)`;
   };
   const setTarget = (target) => {
     if (target === currentTarget) return;
-    currentTarget?.classList.remove("drop-target");
+    if (currentTarget) clearDropTargets(currentTarget);
     currentTarget = target;
-    currentTarget?.classList.add("drop-target");
-    if (currentTarget) vibrate(8);
+    if (currentTarget) {
+      setColumnDropTarget(currentTarget, currentClientY);
+      vibrate(8);
+    }
   };
   const onMove = (moveEvent) => {
+    currentClientY = moveEvent.clientY;
     movePreview(moveEvent.clientX, moveEvent.clientY);
     preview.hidden = true;
     const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)?.closest(".day-column");
     preview.hidden = false;
-    setTarget(target);
+    if (target === currentTarget && currentTarget) {
+      setColumnDropTarget(currentTarget, currentClientY);
+    } else {
+      setTarget(target);
+    }
   };
   const cleanup = () => {
     document.body.classList.remove("is-scheduling");
     item.classList.remove("dragging");
-    currentTarget?.classList.remove("drop-target");
+    if (currentTarget) clearDropTargets(currentTarget);
     preview.remove();
     item.removeEventListener("pointermove", onMove);
     item.removeEventListener("pointerup", onUp);
@@ -290,8 +298,9 @@ function startTouchScheduleDrag(event, task, goal, item) {
   const onUp = (upEvent) => {
     onMove(upEvent);
     const date = currentTarget?.dataset.date;
+    const snappedTime = currentTarget ? getTimeFromPoint(upEvent.clientY, currentTarget) : "";
     cleanup();
-    if (date) scheduleTask(task.id, date);
+    if (date) scheduleTask(task.id, date, snappedTime);
   };
   const onCancel = () => cleanup();
 
@@ -323,24 +332,91 @@ function renderCalendar() {
     `;
     column.addEventListener("dragover", (event) => {
       event.preventDefault();
-      column.classList.add("drop-target");
+      setColumnDropTarget(column, event.clientY);
     });
-    column.addEventListener("dragleave", () => column.classList.remove("drop-target"));
+    column.addEventListener("dragleave", (event) => {
+      if (!column.contains(event.relatedTarget)) clearDropTargets(column);
+    });
     column.addEventListener("drop", (event) => {
       event.preventDefault();
       document.body.classList.remove("is-scheduling");
-      column.classList.remove("drop-target");
-      scheduleTask(event.dataTransfer.getData("text/plain"), iso);
+      const snappedTime = getTimeFromPoint(event.clientY, column);
+      clearDropTargets(column);
+      scheduleTask(event.dataTransfer.getData("text/plain"), iso, snappedTime);
     });
     const list = column.querySelector(".day-tasks");
     const scheduled = state.scheduled.filter((item) => item.date === iso && (!selectedGoalId || item.goalId === selectedGoalId));
-    if (!scheduled.length) {
+    if (viewMode === "week") {
+      renderTimeSlots(list, scheduled);
+    } else if (!scheduled.length) {
       list.append(empty("ここへタスクを置く"));
     } else {
       scheduled.forEach((item) => list.append(scheduledElement(item, viewMode === "month")));
     }
     els.calendarGrid.append(column);
   });
+}
+
+function renderTimeSlots(list, scheduled) {
+  list.classList.add("time-grid");
+  const grouped = scheduled.reduce((map, item) => {
+    const hour = parseHour(item.time);
+    if (!map.has(hour)) map.set(hour, []);
+    map.get(hour).push(item);
+    return map;
+  }, new Map());
+
+  for (let hour = 0; hour < 24; hour += 1) {
+    const slot = document.createElement("div");
+    slot.className = "time-slot";
+    slot.dataset.hour = String(hour);
+    slot.innerHTML = `
+      <span class="time-slot-label">${formatHourLabel(hour)}</span>
+      <div class="slot-items"></div>
+    `;
+    const items = grouped.get(hour) ?? [];
+    items
+      .sort((a, b) => a.time.localeCompare(b.time))
+      .forEach((item) => slot.querySelector(".slot-items").append(scheduledElement(item, true)));
+    list.append(slot);
+  }
+}
+
+function setColumnDropTarget(column, clientY) {
+  column.classList.add("drop-target");
+  column.querySelectorAll(".time-slot.slot-target").forEach((slot) => slot.classList.remove("slot-target"));
+  getSlotFromPoint(clientY, column)?.classList.add("slot-target");
+}
+
+function clearDropTargets(column) {
+  column.classList.remove("drop-target");
+  column.querySelectorAll(".time-slot.slot-target").forEach((slot) => slot.classList.remove("slot-target"));
+}
+
+function getSlotFromPoint(clientY, column) {
+  if (viewMode !== "week") return null;
+  const slots = [...column.querySelectorAll(".time-slot")];
+  if (!slots.length) return null;
+  return slots.find((slot) => {
+    const rect = slot.getBoundingClientRect();
+    return clientY >= rect.top && clientY <= rect.bottom;
+  }) ?? slots[clientY < slots[0].getBoundingClientRect().top ? 0 : slots.length - 1];
+}
+
+function getTimeFromPoint(clientY, column) {
+  const slot = getSlotFromPoint(clientY, column);
+  if (!slot) return "";
+  return `${String(Number(slot.dataset.hour)).padStart(2, "0")}:00`;
+}
+
+function parseHour(time) {
+  const hour = Number(String(time || "00:00").split(":")[0]);
+  if (Number.isNaN(hour)) return 0;
+  return Math.max(0, Math.min(23, hour));
+}
+
+function formatHourLabel(hour) {
+  return `${String(hour).padStart(2, "0")}:00`;
 }
 
 function scheduledElement(item, isCompact = false) {
@@ -744,10 +820,11 @@ function focusActiveTimeEditor() {
   }, 0);
 }
 
-function scheduleTask(taskId, date) {
+function scheduleTask(taskId, date, time = "") {
   const task = state.tasks.find((candidate) => candidate.id === taskId);
   if (!task) return;
-  state.scheduled.push(makeSchedule(task, date, suggestTime(date), false));
+  const startTime = time || suggestTime(date);
+  state.scheduled.push(makeSchedule(task, date, startTime, false));
   highlightedScheduleDate = date;
   window.clearTimeout(highlightedScheduleTimer);
   highlightedScheduleTimer = window.setTimeout(() => {
@@ -755,7 +832,7 @@ function scheduleTask(taskId, date) {
     render();
   }, 720);
   vibrate(date === toISO(today) ? 18 : 10);
-  showToast(date === toISO(today) ? "今日の予定に追加しました。あとは1つ完了するだけです。" : "予定に追加しました。");
+  showToast(date === toISO(today) ? `${startTime}に追加しました。あとは1つ完了するだけです。` : `${startTime}に予定を追加しました。`);
   render();
 }
 
