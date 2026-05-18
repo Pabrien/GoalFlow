@@ -354,9 +354,7 @@ function renderCalendar() {
     const scheduled = state.scheduled.filter((item) => item.date === iso && (!selectedGoalId || item.goalId === selectedGoalId));
     if (viewMode === "week") {
       renderTimeSlots(list, scheduled);
-    } else if (!scheduled.length) {
-      list.append(empty("ここへタスクを置く"));
-    } else {
+    } else if (scheduled.length) {
       scheduled.forEach((item) => list.append(scheduledElement(item, viewMode === "month")));
     }
     els.calendarGrid.append(column);
