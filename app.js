@@ -51,6 +51,7 @@ const els = {
   nextActionTitle: document.querySelector("#nextActionTitle"),
   nextActionBody: document.querySelector("#nextActionBody"),
   nextActionButton: document.querySelector("#nextActionButton"),
+  progressSection: document.querySelector("#progressSection"),
   buddyTitle: document.querySelector("#buddyTitle"),
   buddyMessage: document.querySelector("#buddyMessage"),
   toast: document.querySelector("#toast"),
@@ -1123,8 +1124,17 @@ document.querySelectorAll("[data-flow-target]").forEach((button) => {
   button.addEventListener("click", () => {
     activeScreen = button.dataset.flowTarget;
     render();
+    if (button.dataset.flowTarget === "home") {
+      scrollToProgress();
+    }
   });
 });
+
+function scrollToProgress() {
+  window.requestAnimationFrame(() => {
+    els.progressSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
 
 els.goalFilter.addEventListener("change", (event) => {
   selectedGoalId = event.target.value;
