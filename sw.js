@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v1";
+const cacheName = "goalflow-v2-20260518-7day";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260518-ui",
-  "./app.js",
+  "./styles.css?v=20260518-7day",
+  "./app.js?v=20260518-7day",
   "./manifest.webmanifest",
   "./icons/goalflow-icon-512.png",
   "./icons/goalflow-icon.svg",
@@ -25,6 +25,23 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const requestUrl = new URL(event.request.url);
+  const shouldRefreshFirst =
+    event.request.mode === "navigate" || [".html", ".css", ".js", ".webmanifest"].some((suffix) => requestUrl.pathname.endsWith(suffix));
+
+  if (shouldRefreshFirst) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(cacheName).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request)),
+    );
+    return;
+  }
+
   event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
 });
 

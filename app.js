@@ -1285,9 +1285,12 @@ async function showNotification(title, body) {
 
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {
-      showToast("オフライン準備に失敗しました。");
-    });
+    navigator.serviceWorker
+      .register("./sw.js?v=20260518-7day")
+      .then((registration) => registration.update())
+      .catch(() => {
+        showToast("オフライン準備に失敗しました。");
+      });
   });
 }
 
