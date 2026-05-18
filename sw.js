@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v4-20260518-5week-day";
+const cacheName = "goalflow-v5-20260518-todayhint";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260518-5week-day",
-  "./app.js?v=20260518-5week-day",
+  "./styles.css?v=20260518-todayhint",
+  "./app.js?v=20260518-todayhint",
   "./manifest.webmanifest",
   "./icons/goalflow-icon-512.png",
   "./icons/goalflow-icon.svg",

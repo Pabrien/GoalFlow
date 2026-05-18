@@ -645,6 +645,19 @@ function renderSelectors() {
   els.weekView.setAttribute("aria-pressed", String(viewMode === "week"));
   els.monthView.setAttribute("aria-pressed", String(viewMode === "month"));
   els.todayPeriod.textContent = "今日へ";
+  const todayIsVisible = isTodayVisibleInSchedule();
+  els.todayPeriod.classList.toggle("needs-attention", !todayIsVisible);
+  els.todayPeriod.setAttribute("aria-label", todayIsVisible ? "今日を表示中" : "今日へ戻る");
+  els.todayPeriod.title = todayIsVisible ? "今日を表示中" : "今日へ戻る";
+}
+
+function isTodayVisibleInSchedule() {
+  const todayIso = toISO(today);
+  if (viewMode === "month") {
+    const days = isCompactMonthView() ? getCompactMonthDays(monthCursor) : getMonthDays(monthCursor);
+    return days.some((date) => toISO(date) === todayIso);
+  }
+  return Array.from({ length: 7 }, (_, index) => toISO(addDays(weekStart, index))).includes(todayIso);
 }
 
 function renderOnboarding() {
@@ -1339,7 +1352,7 @@ async function showNotification(title, body) {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260518-5week-day")
+      .register("./sw.js?v=20260518-todayhint")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");

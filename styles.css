@@ -285,6 +285,32 @@ button {
   font-weight: 700;
 }
 
+#todayPeriod {
+  color: var(--muted);
+  border-color: rgba(229, 231, 235, 0.9);
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: none;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+#todayPeriod.needs-attention {
+  color: var(--accent-strong);
+  border-color: rgba(29, 127, 95, 0.42);
+  background: var(--accent-soft);
+  box-shadow: 0 8px 22px rgba(29, 127, 95, 0.14);
+  animation: today-return-nudge 1.8s ease-in-out infinite;
+}
+
+@keyframes today-return-nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-1px);
+  }
+}
+
 .icon-button {
   width: 40px;
   display: inline-grid;
@@ -2056,6 +2082,13 @@ body {
   border-color: #cbd5e1;
   background: #f8fafc;
   transform: translateY(-1px);
+}
+
+#todayPeriod.needs-attention {
+  color: var(--accent-strong);
+  border-color: rgba(29, 127, 95, 0.42);
+  background: var(--accent-soft);
+  box-shadow: 0 8px 22px rgba(29, 127, 95, 0.14);
 }
 
 .buddy-card {
