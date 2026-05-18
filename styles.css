@@ -2354,8 +2354,8 @@ dialog {
 
   body[data-active-screen="schedule"] .calendar-grid.month-mode.compact-month-mode {
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    width: min(100%, 360px);
-    gap: 4px;
+    width: min(100%, 248px);
+    gap: 3px;
   }
 
   body[data-active-screen="schedule"] .day-column,

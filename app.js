@@ -373,14 +373,18 @@ function startTouchScheduleDrag(event, task, goal, item) {
 function renderCalendar() {
   const compactMonth = isCompactMonthView();
   const days =
-    viewMode === "month" && !compactMonth ? getMonthDays(monthCursor) : Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
-  els.weekTitle.textContent = viewMode === "month" && !compactMonth ? formatMonthTitle(monthCursor) : `${formatDate(days[0])} - ${formatDate(days[6])}`;
+    viewMode === "month"
+      ? compactMonth
+        ? getCompactMonthDays(monthCursor)
+        : getMonthDays(monthCursor)
+      : Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  els.weekTitle.textContent = viewMode === "month" ? formatMonthTitle(monthCursor) : `${formatDate(days[0])} - ${formatDate(days[6])}`;
   els.calendarGrid.className = `calendar-grid ${viewMode === "month" ? "month-mode" : "week-mode"} ${compactMonth ? "compact-month-mode" : ""}`;
   els.calendarGrid.innerHTML = "";
   days.forEach((date) => {
     const iso = toISO(date);
     const column = document.createElement("section");
-    const isOutsideMonth = viewMode === "month" && !compactMonth && date.getMonth() !== monthCursor.getMonth();
+    const isOutsideMonth = viewMode === "month" && date.getMonth() !== monthCursor.getMonth();
     column.className = `day-column ${iso === toISO(today) ? "today" : ""} ${isOutsideMonth ? "outside-month" : ""} ${
       iso === highlightedScheduleDate ? "schedule-confirm" : ""
     }`;
@@ -494,6 +498,11 @@ function isCompactScheduleLayout() {
 
 function isCompactMonthView() {
   return viewMode === "month" && isCompactScheduleLayout();
+}
+
+function getCompactMonthDays(date) {
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+  return Array.from({ length: 35 }, (_, index) => addDays(firstDay, index));
 }
 
 function scheduledElement(item, isCompact = false) {
@@ -1154,8 +1163,8 @@ els.taskForm.elements.namedItem("durationUnit").addEventListener("change", updat
 
 document.querySelector("#prevPeriod").addEventListener("click", () => {
   if (isCompactMonthView()) {
-    weekStart = addDays(weekStart, -7);
-    monthCursor = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
+    monthCursor = addMonths(monthCursor, -1);
+    weekStart = getWeekStart(monthCursor);
   } else if (viewMode === "month") {
     monthCursor = addMonths(monthCursor, -1);
   } else {
@@ -1166,8 +1175,8 @@ document.querySelector("#prevPeriod").addEventListener("click", () => {
 
 document.querySelector("#nextPeriod").addEventListener("click", () => {
   if (isCompactMonthView()) {
-    weekStart = addDays(weekStart, 7);
-    monthCursor = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
+    monthCursor = addMonths(monthCursor, 1);
+    weekStart = getWeekStart(monthCursor);
   } else if (viewMode === "month") {
     monthCursor = addMonths(monthCursor, 1);
   } else {
@@ -1286,7 +1295,7 @@ async function showNotification(title, body) {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260518-7day")
+      .register("./sw.js?v=20260518-5week")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");
