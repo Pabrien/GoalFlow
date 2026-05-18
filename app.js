@@ -221,6 +221,7 @@ function renderTaskBank() {
       event.dataTransfer.effectAllowed = "copy";
       document.body.classList.add("is-scheduling");
       item.classList.add("dragging");
+      vibrate(6);
       const preview = createDragPreview(task, goal);
       document.body.append(preview);
       event.dataTransfer.setDragImage(preview, 18, 18);
@@ -256,8 +257,9 @@ function startTouchScheduleDrag(event, task, goal, item) {
   if (event.pointerType === "mouse" || event.target.closest("button")) return;
   event.preventDefault();
   item.setPointerCapture?.(event.pointerId);
-  document.body.classList.add("is-scheduling");
-  item.classList.add("dragging");
+    document.body.classList.add("is-scheduling");
+    item.classList.add("dragging");
+    vibrate(6);
 
   const preview = createDragPreview(task, goal);
   preview.classList.add("touch-drag-preview");
@@ -465,6 +467,7 @@ function scheduledElement(item, isCompact = false) {
     activeTimeEditId = "";
     document.body.classList.add("is-scheduling");
     node.classList.add("dragging");
+    vibrate(6);
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("application/x-goalflow-scheduled", item.id);
     event.dataTransfer.setData("text/plain", item.taskId);
