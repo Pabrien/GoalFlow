@@ -92,7 +92,18 @@
           <span class="today-focus-pill">今日やること</span>
           <h2 id="nextActionTitle">次の一手</h2>
           <p id="nextActionBody">GoalFlowが、目標から今日やることまでの流れを案内します。</p>
-          <button class="primary-button" id="nextActionButton" type="button">始める</button>
+          <div class="next-action-buttons">
+            <button class="primary-button" id="nextActionButton" type="button">始める</button>
+            <button class="ghost-button ai-plan-button" id="aiPlanButton" type="button">AIで今日を組む</button>
+          </div>
+          <div class="ai-plan-result" id="aiPlanResult" hidden>
+            <div class="ai-plan-head">
+              <strong id="aiPlanTitle">今日のAIプラン</strong>
+              <span id="aiPlanStatus"></span>
+            </div>
+            <p id="aiPlanSummary"></p>
+            <ol id="aiPlanSteps"></ol>
+          </div>
         </article>
         <article class="buddy-card">
           <p class="eyebrow">Momentum</p>

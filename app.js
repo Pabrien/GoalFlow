@@ -47,6 +47,12 @@ const els = {
   nextActionTitle: document.querySelector("#nextActionTitle"),
   nextActionBody: document.querySelector("#nextActionBody"),
   nextActionButton: document.querySelector("#nextActionButton"),
+  aiPlanButton: document.querySelector("#aiPlanButton"),
+  aiPlanResult: document.querySelector("#aiPlanResult"),
+  aiPlanTitle: document.querySelector("#aiPlanTitle"),
+  aiPlanStatus: document.querySelector("#aiPlanStatus"),
+  aiPlanSummary: document.querySelector("#aiPlanSummary"),
+  aiPlanSteps: document.querySelector("#aiPlanSteps"),
   buddyTitle: document.querySelector("#buddyTitle"),
   buddyMessage: document.querySelector("#buddyMessage"),
   toast: document.querySelector("#toast"),
@@ -434,6 +440,104 @@ function getNextAction(todaysItems, todaysDone) {
     buddyTitle: "いい継続です",
     buddyMessage: "完了が記録に変わりました。この小さい積み上げがGoalFlowの中心です。",
   };
+}
+
+function buildAiPlanPayload() {
+  const todayIso = toISO(today);
+  const lastSevenDays = Array.from({ length: 7 }, (_, index) => {
+    const date = toISO(addDays(today, index - 6));
+    const scheduled = state.scheduled.filter((item) => item.date === date);
+    return {
+      date,
+      total: scheduled.length,
+      done: scheduled.filter((item) => item.done).length,
+    };
+  });
+  return {
+    today: todayIso,
+    goals: state.goals.map((goal) => ({
+      id: goal.id,
+      name: goal.name,
+      category: goal.category,
+      deadline: goal.deadline,
+      note: goal.note,
+    })),
+    savedTasks: state.tasks.map((task) => ({
+      id: task.id,
+      goalId: task.goalId,
+      title: task.title,
+      minutes: task.minutes,
+      reminder: task.reminder,
+    })),
+    todayItems: state.scheduled
+      .filter((item) => item.date === todayIso)
+      .map((item) => ({
+        id: item.id,
+        goalId: item.goalId,
+        title: item.title,
+        time: item.time,
+        minutes: item.minutes,
+        done: item.done,
+      })),
+    recentProgress: lastSevenDays,
+  };
+}
+
+function getAiEndpoint() {
+  return localStorage.getItem("goalflow-ai-endpoint") || "/api/ai-plan";
+}
+
+async function requestAiPlan() {
+  if (!els.aiPlanButton) return;
+  els.aiPlanButton.disabled = true;
+  els.aiPlanResult.hidden = false;
+  els.aiPlanTitle.textContent = "今日のAIプラン";
+  els.aiPlanStatus.textContent = "作成中";
+  els.aiPlanSummary.textContent = "今日やることを整理しています。";
+  els.aiPlanSteps.innerHTML = "";
+  try {
+    const response = await fetch(getAiEndpoint(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildAiPlanPayload()),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error || "AIプランを取得できませんでした。");
+    }
+    renderAiPlan(data);
+  } catch (error) {
+    els.aiPlanStatus.textContent = "未接続";
+    els.aiPlanSummary.textContent =
+      "AIサーバーがまだ接続されていません。VercelにデプロイしてOPENAI_API_KEYを設定すると使えます。";
+    els.aiPlanSteps.innerHTML = "";
+    const step = document.createElement("li");
+    step.textContent = error.message;
+    els.aiPlanSteps.append(step);
+  } finally {
+    els.aiPlanButton.disabled = false;
+  }
+}
+
+function renderAiPlan(plan) {
+  els.aiPlanStatus.textContent = "提案";
+  els.aiPlanTitle.textContent = plan.title || "今日のAIプラン";
+  els.aiPlanSummary.textContent = plan.summary || "今日の一歩を小さく整えました。";
+  els.aiPlanSteps.innerHTML = "";
+  (Array.isArray(plan.steps) ? plan.steps : []).slice(0, 5).forEach((step) => {
+    const item = document.createElement("li");
+    const title = document.createElement("strong");
+    const detail = document.createElement("span");
+    title.textContent = step.title || "小さく進める";
+    detail.textContent = step.reason ? `${step.minutes ?? 15}分 - ${step.reason}` : `${step.minutes ?? 15}分`;
+    item.append(title, detail);
+    els.aiPlanSteps.append(item);
+  });
+  if (!els.aiPlanSteps.children.length) {
+    const item = document.createElement("li");
+    item.textContent = "今日は一番小さいタスクを1つだけ完了しましょう。";
+    els.aiPlanSteps.append(item);
+  }
 }
 
 function renderScreenTabs() {
@@ -887,6 +991,8 @@ els.nextActionButton.addEventListener("click", () => {
     render();
   }
 });
+
+els.aiPlanButton?.addEventListener("click", requestAiPlan);
 
 els.dismissOnboarding.addEventListener("click", () => {
   state.meta.onboardingDismissed = true;

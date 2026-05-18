@@ -440,6 +440,88 @@ button {
   font-weight: 900;
 }
 
+.next-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.ai-plan-button {
+  border-color: rgba(20, 108, 99, 0.28);
+  background: #ffffff;
+  color: var(--accent-strong);
+}
+
+.ai-plan-button:disabled {
+  cursor: progress;
+  opacity: 0.68;
+}
+
+.ai-plan-result {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid rgba(20, 108, 99, 0.24);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.ai-plan-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ai-plan-head strong {
+  font-size: 14px;
+}
+
+.ai-plan-head span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.ai-plan-result p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ai-plan-result ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.ai-plan-result li {
+  padding-left: 2px;
+}
+
+.ai-plan-result li strong,
+.ai-plan-result li span {
+  display: block;
+}
+
+.ai-plan-result li span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .next-step-card p:not(.eyebrow),
 .buddy-card p:not(.eyebrow) {
   margin: 8px 0 14px;
