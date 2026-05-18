@@ -174,16 +174,20 @@ function renderGoals() {
     const card = document.createElement("article");
     card.className = `goal-card ${goal.id === selectedGoalId ? "active" : ""}`;
     card.innerHTML = `
-      <button type="button">
-        <span class="goal-title"><span>${escapeHtml(goal.name)}</span><span class="tag">${escapeHtml(goal.category)}</span></span>
-        <p class="goal-meta">期限 ${formatDate(goal.deadline)}・${done}/${total} 完了</p>
-        <div class="progress-track"><div class="progress-fill" style="width: ${percent}%"></div></div>
-      </button>
+      <div class="goal-card-head">
+        <button type="button" class="goal-select">
+          <span class="goal-title"><span>${escapeHtml(goal.name)}</span><span class="tag">${escapeHtml(goal.category)}</span></span>
+          <p class="goal-meta">期限 ${formatDate(goal.deadline)}・${done}/${total} 完了</p>
+        </button>
+        ${trashButton("目標を削除")}
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width: ${percent}%"></div></div>
     `;
-    card.querySelector("button").addEventListener("click", () => {
+    card.querySelector(".goal-select").addEventListener("click", () => {
       selectedGoalId = goal.id;
       render();
     });
+    card.querySelector('[data-action="delete"]').addEventListener("click", () => deleteGoal(goal));
     els.goalList.append(card);
   });
 }
@@ -205,6 +209,7 @@ function renderTaskBank() {
       ${taskMarkup(task, goal)}
       <div class="bank-task-actions">
         <button class="mini-button" type="button" data-action="today">今日へ</button>
+        ${trashButton("保存タスクを削除")}
       </div>
     `;
     item.addEventListener("dragstart", (event) => {
@@ -228,6 +233,7 @@ function renderTaskBank() {
       activeScreen = "today";
       render();
     });
+    item.querySelector('[data-action="delete"]').addEventListener("click", () => deleteSavedTask(task));
     els.taskBank.append(item);
   });
 }
@@ -346,7 +352,7 @@ function scheduledElement(item, isCompact = false) {
     <div class="task-actions">
       <button class="mini-button" type="button" data-action="done">${item.done ? "戻す" : "完了"}</button>
       <button class="mini-button" type="button" data-action="time">時間</button>
-      <button class="mini-button" type="button" data-action="remove">削除</button>
+      ${trashButton("予定から削除")}
     </div>
   `;
   node.querySelector('[data-action="done"]').addEventListener("click", () => {
@@ -359,10 +365,7 @@ function scheduledElement(item, isCompact = false) {
       render();
     }
   });
-  node.querySelector('[data-action="remove"]').addEventListener("click", () => {
-    state.scheduled = state.scheduled.filter((candidate) => candidate.id !== item.id);
-    render();
-  });
+  node.querySelector('[data-action="delete"]').addEventListener("click", () => deleteScheduledItem(item));
   return node;
 }
 
@@ -385,11 +388,13 @@ function renderToday() {
         ${taskMarkup({ ...task, reminder: item.reminder, minutes: item.minutes }, goal, item.time)}
         <div class="task-actions">
           <button class="mini-button" type="button" data-action="done">${item.done ? "戻す" : "完了"}</button>
+          ${trashButton("今日の予定から削除")}
         </div>
       `;
       node.querySelector('[data-action="done"]').addEventListener("click", () => {
         toggleScheduledDone(item);
       });
+      node.querySelector('[data-action="delete"]').addEventListener("click", () => deleteScheduledItem(item));
       els.todayList.append(node);
     });
 }
@@ -667,6 +672,43 @@ function taskMarkup(task, goal, time = "", isCompact = false) {
     <div class="task-title"><span>${escapeHtml(task.title)}</span>${time ? `<span>${escapeHtml(time)}</span>` : ""}</div>
     <p class="task-meta">${escapeHtml(meta)}</p>
   `;
+}
+
+function trashButton(label) {
+  return `
+    <button class="trash-button" type="button" data-action="delete" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">
+      <span aria-hidden="true"></span>
+    </button>
+  `;
+}
+
+function deleteGoal(goal) {
+  const ok = window.confirm(`「${goal.name}」を削除しますか？\n紐づく保存タスクと予定も削除されます。`);
+  if (!ok) return;
+  state.goals = state.goals.filter((candidate) => candidate.id !== goal.id);
+  state.tasks = state.tasks.filter((task) => task.goalId !== goal.id);
+  state.scheduled = state.scheduled.filter((item) => item.goalId !== goal.id);
+  selectedGoalId = state.goals[0]?.id ?? "";
+  showToast("目標を削除しました。");
+  render();
+}
+
+function deleteSavedTask(task) {
+  const relatedCount = state.scheduled.filter((item) => item.taskId === task.id).length;
+  const message = relatedCount
+    ? `「${task.title}」を削除しますか？\nカレンダー上の同じ予定 ${relatedCount}件も削除されます。`
+    : `「${task.title}」を削除しますか？`;
+  if (!window.confirm(message)) return;
+  state.tasks = state.tasks.filter((candidate) => candidate.id !== task.id);
+  state.scheduled = state.scheduled.filter((item) => item.taskId !== task.id);
+  showToast("保存タスクを削除しました。");
+  render();
+}
+
+function deleteScheduledItem(item) {
+  state.scheduled = state.scheduled.filter((candidate) => candidate.id !== item.id);
+  showToast("予定から削除しました。");
+  render();
 }
 
 function scheduleTask(taskId, date) {

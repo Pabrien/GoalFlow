@@ -673,13 +673,20 @@ body[data-active-screen="today"] .insights {
   background: var(--accent-soft);
 }
 
-.goal-card button {
+.goal-card .goal-select {
   width: 100%;
   padding: 0;
   border: 0;
   background: transparent;
   color: inherit;
   text-align: left;
+}
+
+.goal-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36px;
+  gap: 8px;
+  align-items: start;
 }
 
 .goal-title,
@@ -721,6 +728,7 @@ body[data-active-screen="today"] .insights {
 
 .bank-task-actions {
   display: flex;
+  gap: 6px;
   justify-content: flex-end;
   margin-top: 10px;
 }
@@ -1046,10 +1054,81 @@ body.is-scheduling .day-column {
   font-weight: 800;
 }
 
+.trash-button {
+  position: relative;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(209, 92, 92, 0.24);
+  border-radius: 8px;
+  background: #fff;
+  color: #a33b3b;
+  cursor: pointer;
+  transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.trash-button::before,
+.trash-button::after,
+.trash-button span::before,
+.trash-button span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  background: currentColor;
+  transform: translateX(-50%);
+}
+
+.trash-button::before {
+  top: 10px;
+  width: 14px;
+  height: 2px;
+  border-radius: 99px;
+}
+
+.trash-button::after {
+  top: 7px;
+  width: 8px;
+  height: 2px;
+  border-radius: 99px 99px 0 0;
+}
+
+.trash-button span::before {
+  top: 13px;
+  width: 12px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-top: 0;
+  border-radius: 0 0 3px 3px;
+  background: transparent;
+}
+
+.trash-button span::after {
+  top: 15px;
+  width: 2px;
+  height: 8px;
+  border-radius: 99px;
+  box-shadow: -4px 0 0 currentColor, 4px 0 0 currentColor;
+}
+
+.trash-button:hover,
+.trash-button:focus-visible {
+  border-color: rgba(209, 92, 92, 0.44);
+  background: #fff4f2;
+  box-shadow: 0 8px 18px rgba(163, 59, 59, 0.12);
+  transform: translateY(-1px);
+}
+
 .month-mode .mini-button {
   min-height: 24px;
   padding: 0 6px;
   font-size: 10px;
+}
+
+.month-mode .trash-button {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
 }
 
 canvas {
