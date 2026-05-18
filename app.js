@@ -444,6 +444,10 @@ function getNextAction(todaysItems, todaysDone) {
 
 function buildAiPlanPayload() {
   const todayIso = toISO(today);
+  const todayItems = state.scheduled.filter((item) => item.date === todayIso);
+  const completedTodayItems = todayItems.filter((item) => item.done);
+  const incompleteTodayItems = todayItems.filter((item) => !item.done);
+  const scheduledTaskIds = new Set(state.scheduled.map((item) => item.taskId).filter(Boolean));
   const lastSevenDays = Array.from({ length: 7 }, (_, index) => {
     const date = toISO(addDays(today, index - 6));
     const scheduled = state.scheduled.filter((item) => item.date === date);
@@ -453,8 +457,27 @@ function buildAiPlanPayload() {
       done: scheduled.filter((item) => item.done).length,
     };
   });
+  const recentTotals = lastSevenDays.reduce(
+    (totals, day) => ({
+      total: totals.total + day.total,
+      done: totals.done + day.done,
+      missedDays: totals.missedDays + (day.total > 0 && day.done === 0 ? 1 : 0),
+    }),
+    { total: 0, done: 0, missedDays: 0 },
+  );
+  const mapScheduledItem = (item) => ({
+    id: item.id,
+    goalId: item.goalId,
+    goalName: findGoal(item.goalId)?.name || "",
+    title: item.title,
+    time: item.time,
+    minutes: item.minutes,
+    done: item.done,
+  });
   return {
     today: todayIso,
+    currentHour: today.getHours(),
+    isLateNight: today.getHours() >= 22 || today.getHours() < 5,
     goals: state.goals.map((goal) => ({
       id: goal.id,
       name: goal.name,
@@ -467,19 +490,44 @@ function buildAiPlanPayload() {
       goalId: task.goalId,
       title: task.title,
       minutes: task.minutes,
-      reminder: task.reminder,
-    })),
-    todayItems: state.scheduled
-      .filter((item) => item.date === todayIso)
-      .map((item) => ({
-        id: item.id,
-        goalId: item.goalId,
-        title: item.title,
-        time: item.time,
-        minutes: item.minutes,
-        done: item.done,
+        reminder: task.reminder,
       })),
+    todayItems: todayItems.map(mapScheduledItem),
+    incompleteTodayItems: incompleteTodayItems.map(mapScheduledItem),
+    completedTodayItems: completedTodayItems.map(mapScheduledItem),
+    unscheduledSavedTasks: state.tasks
+      .filter((task) => !scheduledTaskIds.has(task.id))
+      .map((task) => ({
+        id: task.id,
+        goalId: task.goalId,
+        goalName: findGoal(task.goalId)?.name || "",
+        title: task.title,
+        minutes: task.minutes,
+        reminder: task.reminder,
+      })),
+    goalProgress: state.goals.map((goal) => {
+      const items = state.scheduled.filter((item) => item.goalId === goal.id);
+      const done = items.filter((item) => item.done).length;
+      const daysLeft = goal.deadline ? Math.ceil((new Date(`${goal.deadline}T00:00:00`) - today) / 86400000) : null;
+      return {
+        id: goal.id,
+        name: goal.name,
+        scheduled: items.length,
+        done,
+        completionRate: items.length ? Math.round((done / items.length) * 100) : 0,
+        daysLeft,
+      };
+    }),
     recentProgress: lastSevenDays,
+    signals: {
+      todayTotal: todayItems.length,
+      todayDone: completedTodayItems.length,
+      todayRemaining: incompleteTodayItems.length,
+      todayCompletionRate: todayItems.length ? Math.round((completedTodayItems.length / todayItems.length) * 100) : 0,
+      recentCompletionRate: recentTotals.total ? Math.round((recentTotals.done / recentTotals.total) * 100) : 0,
+      recentMissedDays: recentTotals.missedDays,
+      currentStreak: calcStreak(),
+    },
   };
 }
 
@@ -525,14 +573,14 @@ async function requestAiPlan() {
 function renderAiPlan(plan) {
   els.aiPlanStatus.textContent = "提案";
   els.aiPlanTitle.textContent = plan.title || "今日のAIプラン";
-  els.aiPlanSummary.textContent = plan.summary || "今日の一歩を小さく整えました。";
+  els.aiPlanSummary.textContent = [plan.summary, plan.insight, plan.nudge].filter(Boolean).join(" ");
   els.aiPlanSteps.innerHTML = "";
   (Array.isArray(plan.steps) ? plan.steps : []).slice(0, 5).forEach((step) => {
     const item = document.createElement("li");
     const title = document.createElement("strong");
     const detail = document.createElement("span");
     title.textContent = step.title || "小さく進める";
-    detail.textContent = step.reason ? `${step.minutes ?? 15}分 - ${step.reason}` : `${step.minutes ?? 15}分`;
+    detail.textContent = [step.minutes ? `${step.minutes}分` : "15分", step.source, step.reason].filter(Boolean).join(" - ");
     item.append(title, detail);
     els.aiPlanSteps.append(item);
   });
