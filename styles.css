@@ -1380,3 +1380,441 @@ body[data-active-screen="schedule"] .workspace {
     grid-template-columns: 1fr;
   }
 }
+
+/* 2026 visual refresh: calmer workspace, stronger today focus, lighter rewards. */
+:root {
+  --bg: #f7f8fb;
+  --ink: #16181d;
+  --muted: #69707d;
+  --line: #e5e7eb;
+  --panel: rgba(255, 255, 255, 0.88);
+  --accent: #1d7f5f;
+  --accent-strong: #126044;
+  --accent-soft: #e8f7ee;
+  --blue: #2563eb;
+  --yellow: #ffc83d;
+  --red: #ef6351;
+  --surface: #ffffff;
+  --surface-soft: #f2f4f8;
+  --shadow: 0 20px 52px rgba(20, 24, 33, 0.08);
+  --shadow-soft: 0 8px 24px rgba(20, 24, 33, 0.06);
+}
+
+body {
+  background:
+    linear-gradient(180deg, #ffffff 0, #f7f8fb 260px),
+    var(--bg);
+}
+
+.app-shell {
+  width: min(1360px, calc(100% - 40px));
+  padding: 26px 0 34px;
+}
+
+.topbar {
+  min-height: 92px;
+  padding: 18px 20px;
+  border: 1px solid rgba(229, 231, 235, 0.86);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.topbar h1 {
+  font-size: clamp(34px, 4vw, 58px);
+  font-weight: 900;
+}
+
+.product-line {
+  max-width: 620px;
+  color: #5f6673;
+}
+
+.eyebrow {
+  color: var(--blue);
+  font-size: 11px;
+}
+
+.save-status {
+  border-color: rgba(29, 127, 95, 0.22);
+  background: #f0fbf4;
+  color: var(--accent-strong);
+}
+
+.screen-tabs {
+  position: sticky;
+  top: 10px;
+  z-index: 10;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto 16px;
+  padding: 6px;
+  border: 1px solid rgba(229, 231, 235, 0.9);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(16px);
+}
+
+.screen-tab {
+  min-height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #5f6673;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.screen-tab:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.screen-tab.active {
+  background: #16181d;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.summary-strip {
+  gap: 12px;
+}
+
+.summary-strip article,
+.panel,
+.planner,
+.onboarding,
+.empty-start,
+.next-step-card,
+.buddy-card {
+  border: 1px solid rgba(229, 231, 235, 0.88);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(14px);
+}
+
+.summary-strip article {
+  padding: 16px 18px;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.summary-strip article:hover,
+.goal-card:hover,
+.bank-task:hover,
+.today-task:hover,
+.scheduled-task:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.rate-summary {
+  border-top: 0;
+}
+
+.today-summary {
+  border-color: rgba(29, 127, 95, 0.26);
+  background:
+    linear-gradient(135deg, #ffffff 0%, #effbf4 58%, #fff8df 100%);
+}
+
+.today-summary::after {
+  content: "NOW";
+  background: #16181d;
+}
+
+.summary-strip span {
+  font-size: 30px;
+  letter-spacing: 0;
+}
+
+.summary-meter {
+  background: #edf0f4;
+}
+
+.summary-meter span,
+.report-progress span,
+.progress-fill {
+  background: linear-gradient(90deg, var(--accent), #58cc7a);
+}
+
+.flow-focus {
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 16px;
+}
+
+.next-step-card {
+  min-height: 250px;
+  padding: 24px;
+  border-color: rgba(29, 127, 95, 0.24);
+  background:
+    linear-gradient(135deg, #ffffff 0%, #eefbf4 54%, #fff8df 100%);
+}
+
+.next-step-card::after {
+  content: none;
+}
+
+.next-step-card h2 {
+  max-width: 760px;
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 920;
+}
+
+.today-focus-pill {
+  min-height: 30px;
+  background: #16181d;
+  box-shadow: 0 10px 24px rgba(22, 24, 29, 0.16);
+}
+
+.next-action-buttons {
+  gap: 10px;
+}
+
+.primary-button,
+.ghost-button,
+.icon-button,
+.switch-button,
+.mini-button {
+  border-radius: 11px;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+}
+
+.primary-button {
+  background: #16181d;
+  box-shadow: 0 12px 24px rgba(22, 24, 29, 0.16);
+}
+
+.primary-button:hover {
+  background: #2a2d35;
+  transform: translateY(-1px);
+}
+
+.ghost-button,
+.icon-button,
+.mini-button {
+  background: #fff;
+  border-color: #e5e7eb;
+}
+
+.ghost-button:hover,
+.icon-button:hover,
+.mini-button:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.ai-plan-button {
+  border-color: rgba(37, 99, 235, 0.22);
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.ai-plan-result {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.ai-plan-head span {
+  background: #2563eb;
+}
+
+.buddy-card {
+  padding: 22px;
+}
+
+.flow-roadmap {
+  gap: 8px;
+}
+
+.flow-roadmap button {
+  min-height: 40px;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #2a2d35;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+
+.flow-roadmap button:hover {
+  border-color: rgba(29, 127, 95, 0.32);
+  background: #eefbf4;
+  transform: translateY(-1px);
+}
+
+.home-dashboard,
+.workspace {
+  gap: 16px;
+}
+
+.panel,
+.planner {
+  padding: 18px;
+}
+
+.panel-heading,
+.planner-head {
+  padding-bottom: 4px;
+}
+
+.panel h2,
+.planner-head h2,
+.buddy-card h2 {
+  font-weight: 900;
+}
+
+.goal-card,
+.bank-task,
+.today-task,
+.scheduled-task,
+.empty-state {
+  border-color: #e8ebf0;
+  border-radius: 14px;
+  background: #fff;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.goal-card.active {
+  border-color: rgba(37, 99, 235, 0.28);
+  background: #eff6ff;
+}
+
+.tag {
+  min-height: 25px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.planner {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.calendar-grid {
+  gap: 10px;
+}
+
+.day-column {
+  border-color: #e8ebf0;
+  border-radius: 14px;
+  background: #f9fafb;
+}
+
+.day-column.today {
+  border-color: rgba(255, 200, 61, 0.78);
+  background: #fffbeb;
+}
+
+.day-column.drop-target {
+  border-color: rgba(29, 127, 95, 0.46);
+  background: #ecfdf3;
+}
+
+.today-task {
+  border-left: 0;
+  box-shadow: 0 10px 26px rgba(20, 24, 33, 0.07);
+}
+
+.today-task:not(.done)::before,
+.scheduled-task:not(.done)::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 0;
+  width: 4px;
+  height: calc(100% - 24px);
+  border-radius: 0 999px 999px 0;
+  background: var(--blue);
+}
+
+.scheduled-task.done,
+.today-task.done {
+  border-color: rgba(88, 204, 122, 0.46);
+  background: #edfff3;
+  opacity: 1;
+}
+
+.scheduled-task.done::before,
+.today-task.done::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 0;
+  width: 4px;
+  height: calc(100% - 24px);
+  border-radius: 0 999px 999px 0;
+  background: #58cc7a;
+}
+
+.scheduled-task.just-completed,
+.today-task.just-completed {
+  animation: complete-pop 0.86s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 0 1px rgba(88, 204, 122, 0.4), 0 18px 44px rgba(88, 204, 122, 0.24);
+}
+
+.scheduled-task.just-completed::after,
+.today-task.just-completed::after {
+  background: radial-gradient(circle, rgba(255, 200, 61, 0.48) 0 9%, rgba(88, 204, 122, 0.24) 10% 24%, transparent 48%);
+}
+
+canvas {
+  border-color: #e8ebf0;
+  border-radius: 14px;
+  background: #fff;
+}
+
+input,
+select,
+textarea {
+  border-radius: 12px;
+  border-color: #e5e7eb;
+  background: #fff;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+dialog {
+  border-radius: 18px;
+}
+
+.toast {
+  border-radius: 14px;
+  background: #16181d;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 820px) {
+  .app-shell {
+    width: min(100% - 20px, 760px);
+    padding-top: 12px;
+  }
+
+  .topbar {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .screen-tabs {
+    width: auto;
+    border-radius: 18px;
+  }
+
+  .flow-focus {
+    grid-template-columns: 1fr;
+  }
+
+  .next-step-card {
+    min-height: 0;
+    padding: 20px;
+  }
+
+  .next-step-card h2 {
+    font-size: 34px;
+  }
+}
