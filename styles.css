@@ -1125,6 +1125,15 @@ body.is-scheduling .day-column {
   font-size: 10px;
 }
 
+.month-mode .time-button {
+  font-size: 0;
+}
+
+.month-mode .time-button::before {
+  content: "時刻";
+  font-size: 10px;
+}
+
 .month-mode .trash-button {
   width: 28px;
   min-width: 28px;

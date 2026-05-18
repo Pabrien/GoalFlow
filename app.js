@@ -351,7 +351,7 @@ function scheduledElement(item, isCompact = false) {
     ${taskMarkup({ ...task, reminder: item.reminder, minutes: item.minutes }, goal, item.time, isCompact)}
     <div class="task-actions">
       <button class="mini-button" type="button" data-action="done">${item.done ? "戻す" : "完了"}</button>
-      <button class="mini-button" type="button" data-action="time">時間</button>
+      <button class="mini-button time-button" type="button" data-action="time" aria-label="開始時刻を変更">時刻変更</button>
       ${trashButton("予定から削除")}
     </div>
   `;
@@ -359,9 +359,10 @@ function scheduledElement(item, isCompact = false) {
     toggleScheduledDone(item);
   });
   node.querySelector('[data-action="time"]').addEventListener("click", () => {
-    const next = prompt("開始時間を入力してください", item.time);
+    const next = prompt("開始時刻を変更します。例：19:30", item.time);
     if (next && /^\d{1,2}:\d{2}$/.test(next)) {
       item.time = next.padStart(5, "0");
+      showToast(`開始時刻を${item.time}に変更しました。`);
       render();
     }
   });
