@@ -371,14 +371,16 @@ function startTouchScheduleDrag(event, task, goal, item) {
 }
 
 function renderCalendar() {
-  const days = viewMode === "month" ? getMonthDays(monthCursor) : Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
-  els.weekTitle.textContent = viewMode === "month" ? formatMonthTitle(monthCursor) : `${formatDate(days[0])} - ${formatDate(days[6])}`;
-  els.calendarGrid.className = `calendar-grid ${viewMode === "month" ? "month-mode" : "week-mode"}`;
+  const compactMonth = isCompactMonthView();
+  const days =
+    viewMode === "month" && !compactMonth ? getMonthDays(monthCursor) : Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  els.weekTitle.textContent = viewMode === "month" && !compactMonth ? formatMonthTitle(monthCursor) : `${formatDate(days[0])} - ${formatDate(days[6])}`;
+  els.calendarGrid.className = `calendar-grid ${viewMode === "month" ? "month-mode" : "week-mode"} ${compactMonth ? "compact-month-mode" : ""}`;
   els.calendarGrid.innerHTML = "";
   days.forEach((date) => {
     const iso = toISO(date);
     const column = document.createElement("section");
-    const isOutsideMonth = viewMode === "month" && date.getMonth() !== monthCursor.getMonth();
+    const isOutsideMonth = viewMode === "month" && !compactMonth && date.getMonth() !== monthCursor.getMonth();
     column.className = `day-column ${iso === toISO(today) ? "today" : ""} ${isOutsideMonth ? "outside-month" : ""} ${
       iso === highlightedScheduleDate ? "schedule-confirm" : ""
     }`;
@@ -488,6 +490,10 @@ function formatHourLabel(hour) {
 
 function isCompactScheduleLayout() {
   return window.matchMedia("(max-width: 640px)").matches;
+}
+
+function isCompactMonthView() {
+  return viewMode === "month" && isCompactScheduleLayout();
 }
 
 function scheduledElement(item, isCompact = false) {
@@ -1147,7 +1153,10 @@ els.taskForm.addEventListener("submit", (event) => {
 els.taskForm.elements.namedItem("durationUnit").addEventListener("change", updateDurationInput);
 
 document.querySelector("#prevPeriod").addEventListener("click", () => {
-  if (viewMode === "month") {
+  if (isCompactMonthView()) {
+    weekStart = addDays(weekStart, -7);
+    monthCursor = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
+  } else if (viewMode === "month") {
     monthCursor = addMonths(monthCursor, -1);
   } else {
     weekStart = addDays(weekStart, -7);
@@ -1156,7 +1165,10 @@ document.querySelector("#prevPeriod").addEventListener("click", () => {
 });
 
 document.querySelector("#nextPeriod").addEventListener("click", () => {
-  if (viewMode === "month") {
+  if (isCompactMonthView()) {
+    weekStart = addDays(weekStart, 7);
+    monthCursor = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
+  } else if (viewMode === "month") {
     monthCursor = addMonths(monthCursor, 1);
   } else {
     weekStart = addDays(weekStart, 7);

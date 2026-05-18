@@ -2267,8 +2267,13 @@ dialog {
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .bank-task {
-    flex-basis: 136px;
-    padding: 6px 7px;
+    flex-basis: 108px;
+    padding: 6px;
+  }
+
+  body[data-active-screen="schedule"][data-view-mode="month"] .bank-task .task-title {
+    font-size: 11px;
+    line-height: 1.15;
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .bank-task-actions {
@@ -2342,9 +2347,15 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .calendar-grid.month-mode {
-    width: min(100%, 198px);
+    width: 100%;
     gap: 2px;
     margin: 6px auto 0;
+  }
+
+  body[data-active-screen="schedule"] .calendar-grid.month-mode.compact-month-mode {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    width: min(100%, 360px);
+    gap: 4px;
   }
 
   body[data-active-screen="schedule"] .day-column,
@@ -2361,6 +2372,10 @@ dialog {
     padding: 0;
     aspect-ratio: 1;
     border-radius: 6px;
+  }
+
+  body[data-active-screen="schedule"] .calendar-grid.month-mode.compact-month-mode .day-column {
+    border-radius: 9px;
   }
 
   body[data-active-screen="schedule"] .calendar-grid.week-mode .day-column {
