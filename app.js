@@ -275,19 +275,26 @@ function createDragPreview(task, goal) {
 
 function startTouchScheduleDrag(event, task, goal, item) {
   if (event.pointerType === "mouse" || event.target.closest("button")) return;
-  event.preventDefault();
-  item.setPointerCapture?.(event.pointerId);
+  const startX = event.clientX;
+  const startY = event.clientY;
+  let didStart = false;
+  let currentTarget = null;
+  let currentClientY = event.clientY;
+  let preview = null;
+
+  const startDrag = () => {
+    didStart = true;
+    item.setPointerCapture?.(event.pointerId);
     document.body.classList.add("is-scheduling");
     item.classList.add("dragging");
     vibrate(6);
-
-  const preview = createDragPreview(task, goal);
-  preview.classList.add("touch-drag-preview");
-  document.body.append(preview);
-
-  let currentTarget = null;
-  let currentClientY = event.clientY;
+    preview = createDragPreview(task, goal);
+    preview.classList.add("touch-drag-preview");
+    document.body.append(preview);
+    movePreview(startX, startY);
+  };
   const movePreview = (clientX, clientY) => {
+    if (!preview) return;
     preview.style.transform = `translate(${clientX + 14}px, ${clientY + 14}px)`;
   };
   const setTarget = (target) => {
@@ -300,6 +307,15 @@ function startTouchScheduleDrag(event, task, goal, item) {
     }
   };
   const onMove = (moveEvent) => {
+    const deltaX = moveEvent.clientX - startX;
+    const deltaY = moveEvent.clientY - startY;
+    if (!didStart && Math.hypot(deltaX, deltaY) > 10) {
+      window.clearTimeout(longPressTimer);
+      cleanup(false);
+      return;
+    }
+    if (!didStart) return;
+    moveEvent.preventDefault();
     currentClientY = moveEvent.clientY;
     movePreview(moveEvent.clientX, moveEvent.clientY);
     preview.hidden = true;
@@ -311,16 +327,25 @@ function startTouchScheduleDrag(event, task, goal, item) {
       setTarget(target);
     }
   };
-  const cleanup = () => {
-    document.body.classList.remove("is-scheduling");
-    item.classList.remove("dragging");
+  const cleanup = (removeListeners = true) => {
+    window.clearTimeout(longPressTimer);
+    if (didStart) {
+      document.body.classList.remove("is-scheduling");
+      item.classList.remove("dragging");
+    }
     if (currentTarget) clearDropTargets(currentTarget);
-    preview.remove();
-    item.removeEventListener("pointermove", onMove);
-    item.removeEventListener("pointerup", onUp);
-    item.removeEventListener("pointercancel", onCancel);
+    preview?.remove();
+    if (removeListeners) {
+      item.removeEventListener("pointermove", onMove);
+      item.removeEventListener("pointerup", onUp);
+      item.removeEventListener("pointercancel", onCancel);
+    }
   };
   const onUp = (upEvent) => {
+    if (!didStart) {
+      cleanup();
+      return;
+    }
     onMove(upEvent);
     const date = currentTarget?.dataset.date;
     const snappedTime = currentTarget ? getTimeFromPoint(upEvent.clientY, currentTarget) : "";
@@ -329,7 +354,7 @@ function startTouchScheduleDrag(event, task, goal, item) {
   };
   const onCancel = () => cleanup();
 
-  movePreview(event.clientX, event.clientY);
+  const longPressTimer = window.setTimeout(startDrag, 220);
   item.addEventListener("pointermove", onMove);
   item.addEventListener("pointerup", onUp);
   item.addEventListener("pointercancel", onCancel);

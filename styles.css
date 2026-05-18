@@ -810,7 +810,7 @@ body[data-active-screen="today"] .insights {
 
 .bank-task {
   padding: 11px;
-  touch-action: none;
+  touch-action: pan-y;
   cursor: grab;
   transition: opacity 0.16s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, border-color 0.18s ease;
   will-change: transform;
@@ -1665,6 +1665,51 @@ textarea:focus {
   .planner,
   .summary-strip article {
     padding: 14px;
+  }
+
+  .task-bank,
+  .goal-list,
+  .today-list {
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .bank-task {
+    padding: 8px 9px;
+  }
+
+  .bank-task .task-title {
+    align-items: center;
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .bank-task .task-title span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bank-task .task-meta {
+    margin-top: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+    line-height: 1.25;
+  }
+
+  .bank-task-actions {
+    margin-top: 7px;
+  }
+
+  .bank-task .mini-button,
+  .bank-task .trash-button {
+    min-height: 34px;
+  }
+
+  .touch-drag-preview {
+    width: 126px;
   }
 
   .panel-heading {
