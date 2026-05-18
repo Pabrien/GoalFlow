@@ -2239,12 +2239,40 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .bank-task {
-    flex: 0 0 158px;
+    flex: 0 0 150px;
     min-width: 0;
     padding: 8px;
     scroll-snap-align: start;
     touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
     user-select: none;
+  }
+
+  body[data-active-screen="schedule"] .bank-task * {
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  body[data-active-screen="schedule"][data-view-mode="month"] [data-view-panel="tasks"] {
+    padding: 8px;
+  }
+
+  body[data-active-screen="schedule"][data-view-mode="month"] .task-bank {
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  body[data-active-screen="schedule"][data-view-mode="month"] .bank-task {
+    flex-basis: 136px;
+    padding: 6px 7px;
+  }
+
+  body[data-active-screen="schedule"][data-view-mode="month"] .bank-task-actions {
+    display: none;
   }
 
   body[data-active-screen="schedule"] .bank-task .task-title {
@@ -2269,6 +2297,10 @@ dialog {
     padding: 10px;
     overflow: visible;
     border-radius: 14px;
+  }
+
+  body[data-active-screen="schedule"][data-view-mode="month"] .planner {
+    padding: 8px;
   }
 
   body[data-active-screen="schedule"] .planner-head {
@@ -2309,6 +2341,11 @@ dialog {
     margin-top: 8px;
   }
 
+  body[data-active-screen="schedule"] .calendar-grid.month-mode {
+    gap: 2px;
+    margin-top: 6px;
+  }
+
   body[data-active-screen="schedule"] .day-column,
   body[data-active-screen="schedule"] .month-mode .day-column {
     min-height: clamp(54px, 11vh, 72px);
@@ -2317,8 +2354,9 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .calendar-grid.month-mode .day-column {
-    min-height: clamp(38px, 7vh, 46px);
-    padding: 3px;
+    min-height: clamp(24px, 4.4vh, 28px);
+    padding: 2px;
+    border-radius: 7px;
   }
 
   body[data-active-screen="schedule"] .calendar-grid.week-mode .day-column {
@@ -2345,16 +2383,22 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .month-mode .day-name {
-    font-size: 8px;
+    font-size: 7px;
+    line-height: 1;
   }
 
   body[data-active-screen="schedule"] .month-mode .day-number {
-    font-size: 12px;
+    font-size: 10px;
+    line-height: 1;
   }
 
   body[data-active-screen="schedule"] .day-tasks,
   body[data-active-screen="schedule"] .month-mode .day-tasks {
     gap: 3px;
+  }
+
+  body[data-active-screen="schedule"] .calendar-grid.month-mode .day-tasks {
+    gap: 2px;
   }
 
   body[data-active-screen="schedule"] .scheduled-task,
@@ -2363,11 +2407,24 @@ dialog {
     border-radius: 8px;
   }
 
+  body[data-active-screen="schedule"] .calendar-grid.month-mode .scheduled-task {
+    min-height: 4px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: var(--accent);
+    box-shadow: none;
+  }
+
   body[data-active-screen="schedule"] .scheduled-task .task-title,
   body[data-active-screen="schedule"] .month-mode .scheduled-task .task-title {
     display: block;
     font-size: 10px;
     line-height: 1.15;
+  }
+
+  body[data-active-screen="schedule"] .calendar-grid.month-mode .scheduled-task .task-title {
+    display: none;
   }
 
   body[data-active-screen="schedule"] .scheduled-task .task-title span:first-child {

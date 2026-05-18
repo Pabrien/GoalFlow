@@ -253,6 +253,10 @@ function renderTaskBank() {
       item.classList.remove("dragging");
     });
     item.addEventListener("pointerdown", (event) => startTouchScheduleDrag(event, task, goal, item));
+    item.addEventListener("selectstart", (event) => event.preventDefault());
+    item.addEventListener("contextmenu", (event) => {
+      if (isCompactScheduleLayout()) event.preventDefault();
+    });
     item.querySelector('[data-action="today"]').addEventListener("click", () => {
       scheduleTask(task.id, toISO(today));
       activeScreen = "today";
