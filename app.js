@@ -48,6 +48,7 @@ const els = {
   emptyStart: document.querySelector("#emptyStart"),
   emptyCreateGoal: document.querySelector("#emptyCreateGoal"),
   saveStatus: document.querySelector("#saveStatus"),
+  notifyButton: document.querySelector("#notifyButton"),
   launchScreen: document.querySelector("#launchScreen"),
   nextActionTitle: document.querySelector("#nextActionTitle"),
   nextActionBody: document.querySelector("#nextActionBody"),
@@ -138,6 +139,7 @@ function saveState() {
 
 function render() {
   renderFileWarning();
+  renderNotificationState();
   document.body.dataset.viewMode = viewMode;
   document.body.dataset.activeScreen = activeScreen;
   document.body.dataset.hasGoals = String(state.goals.length > 0);
@@ -162,6 +164,24 @@ function render() {
 function renderFileWarning() {
   if (!els.fileWarning) return;
   els.fileWarning.hidden = window.location.protocol !== "file:";
+}
+
+function renderNotificationState() {
+  if (!els.notifyButton) return;
+  if (!("Notification" in window)) {
+    els.notifyButton.textContent = "通知非対応";
+    els.notifyButton.disabled = true;
+    return;
+  }
+  if (Notification.permission === "granted") {
+    els.notifyButton.textContent = "通知ON";
+    els.notifyButton.classList.add("enabled");
+    els.notifyButton.disabled = false;
+    return;
+  }
+  els.notifyButton.textContent = Notification.permission === "denied" ? "通知ブロック中" : "通知を有効化";
+  els.notifyButton.classList.remove("enabled");
+  els.notifyButton.disabled = Notification.permission === "denied";
 }
 
 function renderGoals() {
@@ -1171,6 +1191,50 @@ els.dismissOnboarding.addEventListener("click", () => {
   state.meta.onboardingDismissed = true;
   render();
 });
+
+els.notifyButton?.addEventListener("click", enableNotifications);
+
+async function enableNotifications() {
+  if (!("Notification" in window)) {
+    showToast("この環境では通知に対応していません。");
+    return;
+  }
+  if (window.location.protocol === "file:") {
+    showToast("通知はローカルサーバーかHTTPSで使えます。");
+    return;
+  }
+  const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+  renderNotificationState();
+  if (permission !== "granted") {
+    showToast("通知が許可されませんでした。");
+    return;
+  }
+  showToast("通知を有効化しました。");
+  showNotification("GoalFlow", "リマインダー通知の準備ができました。");
+}
+
+async function showNotification(title, body) {
+  if (Notification.permission !== "granted") return;
+  const registration = await navigator.serviceWorker?.ready.catch(() => null);
+  if (registration) {
+    registration.showNotification(title, {
+      body,
+      badge: "./icons/goalflow-icon-512.png",
+      icon: "./icons/goalflow-icon-512.png",
+      tag: "goalflow-ready",
+    });
+    return;
+  }
+  new Notification(title, { body, icon: "./icons/goalflow-icon-512.png" });
+}
+
+if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {
+      showToast("オフライン準備に失敗しました。");
+    });
+  });
+}
 
 function showToast(message) {
   els.toast.textContent = message;

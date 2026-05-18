@@ -4,6 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>GoalFlow</title>
+    <meta name="theme-color" content="#146c63" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="GoalFlow" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
     <link rel="stylesheet" href="./styles.css?v=20260518-ui" />
   </head>
   <body>
@@ -22,7 +28,10 @@
           <h1>GoalFlow</h1>
           <p class="product-line">目標から逆算して、今日やることへ落とし込む。</p>
         </div>
-        <div class="save-status" id="saveStatus" aria-live="polite">自動保存</div>
+        <div class="topbar-actions">
+          <button class="notify-button" id="notifyButton" type="button">通知を有効化</button>
+          <div class="save-status" id="saveStatus" aria-live="polite">自動保存</div>
+        </div>
       </header>
 
       <section class="onboarding" id="onboarding" data-view-panel="home" aria-label="初回チュートリアル">

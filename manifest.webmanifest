@@ -1,0 +1,24 @@
+{
+  "name": "GoalFlow",
+  "short_name": "GoalFlow",
+  "description": "目標から逆算して、今日やることへ落とし込むタスク管理アプリ。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f4",
+  "theme_color": "#146c63",
+  "icons": [
+    {
+      "src": "./icons/goalflow-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/goalflow-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

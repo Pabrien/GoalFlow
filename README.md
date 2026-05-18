@@ -13,6 +13,7 @@ GoalFlow is a simple goal-based task planner for workouts, study, and habit buil
 - Data is saved in the browser with `localStorage`
 - First-run onboarding guides users through goal -> task -> today
 - Mobile-focused navigation with touch-friendly controls
+- PWA manifest, app icon, service worker, and notification permission test
 
 ## Run Locally
 
@@ -37,6 +38,9 @@ todo-ui/
   index.html
   styles.css
   app.js
+  manifest.webmanifest
+  sw.js
+  icons/
   docs/
     product-notes.md
   .vscode/
@@ -48,8 +52,10 @@ todo-ui/
 
 This is currently a dependency-free static prototype. Data is persisted locally in the browser, so clearing browser storage will reset the app.
 
+PWA support is included. On iPhone, notifications require adding GoalFlow to the Home Screen and opening it from that icon. The current notification button verifies permission and sends a test notification; real scheduled reminders will need a push backend.
+
 If the app grows, good next steps are:
 
 - Move to a component-based structure such as Vite + React or Vue
-- Add real notification support
+- Add push notification scheduling on a backend
 - Add cloud sync and login
