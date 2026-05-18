@@ -6,6 +6,7 @@ let weekStart = getWeekStart(today);
 let monthCursor = new Date(today.getFullYear(), today.getMonth(), 1);
 let viewMode = "week";
 let activeScreen = "home";
+let highlightedCompletionId = "";
 
 const els = {
   goalList: document.querySelector("#goalList"),
@@ -278,7 +279,7 @@ function scheduledElement(item, isCompact = false) {
   const task = state.tasks.find((candidate) => candidate.id === item.taskId) ?? item;
   const goal = findGoal(item.goalId);
   const node = document.createElement("article");
-  node.className = `scheduled-task ${item.done ? "done" : ""}`;
+  node.className = `scheduled-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""}`;
   node.innerHTML = `
     ${taskMarkup({ ...task, reminder: item.reminder, minutes: item.minutes }, goal, item.time, isCompact)}
     <div class="task-actions">
@@ -318,7 +319,7 @@ function renderToday() {
       const task = state.tasks.find((candidate) => candidate.id === item.taskId) ?? item;
       const goal = findGoal(item.goalId);
       const node = document.createElement("article");
-      node.className = `today-task ${item.done ? "done" : ""}`;
+      node.className = `today-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""}`;
       node.innerHTML = `
         ${taskMarkup({ ...task, reminder: item.reminder, minutes: item.minutes }, goal, item.time)}
         <div class="task-actions">
@@ -335,7 +336,16 @@ function renderToday() {
 function toggleScheduledDone(item) {
   item.done = !item.done;
   if (item.done) {
+    highlightedCompletionId = item.id;
     showToast("完了を記録しました。今日の流れが少し前に進みました。");
+    render();
+    window.setTimeout(() => {
+      if (highlightedCompletionId === item.id) {
+        highlightedCompletionId = "";
+        render();
+      }
+    }, 900);
+    return;
   }
   render();
 }

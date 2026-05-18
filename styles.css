@@ -331,6 +331,26 @@ button {
   border-top: 4px solid var(--accent);
 }
 
+.today-summary {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(20, 108, 99, 0.42);
+  background: linear-gradient(180deg, #ffffff 0%, #eef8f4 100%);
+}
+
+.today-summary::after {
+  content: "今やる";
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
 .summary-strip span {
   display: block;
   font-size: 28px;
@@ -376,14 +396,48 @@ button {
 }
 
 .next-step-card {
-  border-color: rgba(20, 108, 99, 0.28);
-  background: var(--accent-soft);
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(20, 108, 99, 0.42);
+  background:
+    linear-gradient(135deg, rgba(20, 108, 99, 0.14), rgba(255, 255, 255, 0) 46%),
+    var(--accent-soft);
+}
+
+.next-step-card::after {
+  content: "";
+  position: absolute;
+  right: -42px;
+  bottom: -54px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgba(20, 108, 99, 0.11);
+  pointer-events: none;
 }
 
 .next-step-card h2,
 .buddy-card h2 {
   margin: 0;
   font-size: 22px;
+}
+
+.next-step-card h2 {
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.08;
+}
+
+.today-focus-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin-bottom: 10px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .next-step-card p:not(.eyebrow),
@@ -831,9 +885,16 @@ body[data-view-mode="month"] .bank-task .task-meta {
 
 .scheduled-task,
 .today-task {
+  position: relative;
   padding: 10px;
   min-width: 0;
   overflow: hidden;
+}
+
+.today-task {
+  border-left: 5px solid var(--accent);
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(42, 47, 39, 0.08);
 }
 
 .month-mode .scheduled-task {
@@ -868,12 +929,56 @@ body[data-view-mode="month"] .bank-task .task-meta {
 
 .scheduled-task.done,
 .today-task.done {
-  opacity: 0.62;
+  border-color: rgba(20, 108, 99, 0.34);
+  background: #f2faf6;
+  opacity: 0.78;
 }
 
 .scheduled-task.done .task-title,
 .today-task.done .task-title {
   text-decoration: line-through;
+}
+
+.scheduled-task.just-completed,
+.today-task.just-completed {
+  animation: complete-pop 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 0 1px rgba(20, 108, 99, 0.22), 0 0 30px rgba(20, 108, 99, 0.22);
+}
+
+.scheduled-task.just-completed::after,
+.today-task.just-completed::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: radial-gradient(circle, rgba(20, 108, 99, 0.22) 0 8%, transparent 36%);
+  animation: complete-glow 0.78s ease-out;
+  pointer-events: none;
+}
+
+@keyframes complete-pop {
+  0% {
+    transform: scale(1);
+  }
+  38% {
+    transform: scale(1.018);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes complete-glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  36% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.2);
+  }
 }
 
 .task-actions {
