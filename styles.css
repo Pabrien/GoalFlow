@@ -1507,6 +1507,54 @@ dialog::backdrop {
   padding: 18px;
 }
 
+.day-dialog-card {
+  gap: 16px;
+}
+
+.day-dialog-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(54vh, 420px);
+  overflow-y: auto;
+}
+
+.day-dialog-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.day-dialog-item strong,
+.day-dialog-item span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-dialog-item strong {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.day-dialog-item span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.day-dialog-item.done {
+  background: #edfff3;
+  border-color: rgba(88, 204, 122, 0.46);
+}
+
 label {
   display: grid;
   gap: 6px;

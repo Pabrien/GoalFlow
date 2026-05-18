@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260518-5week" />
+    <link rel="stylesheet" href="./styles.css?v=20260518-5week-day" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -191,7 +191,7 @@
                 <button class="switch-button" id="monthView" type="button" aria-pressed="false">月</button>
               </div>
               <button class="icon-button" id="prevPeriod" type="button" aria-label="前へ" title="前へ">‹</button>
-              <button class="ghost-button" id="todayPeriod" type="button">今週</button>
+              <button class="ghost-button" id="todayPeriod" type="button">今日へ</button>
               <button class="icon-button" id="nextPeriod" type="button" aria-label="次へ" title="次へ">›</button>
             </div>
           </div>
@@ -284,8 +284,21 @@
       </form>
     </dialog>
 
+    <dialog id="dayDialog">
+      <section class="dialog-card day-dialog-card" aria-labelledby="dayDialogTitle">
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow">Day plan</p>
+            <h2 id="dayDialogTitle">予定</h2>
+          </div>
+          <button class="icon-button" data-close-dialog type="button" aria-label="閉じる">×</button>
+        </div>
+        <div class="day-dialog-list" id="dayDialogList"></div>
+      </section>
+    </dialog>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-    <script defer src="./app.js?v=20260518-5week"></script>
+
+    <script defer src="./app.js?v=20260518-5week-day"></script>
   </body>
 </html>

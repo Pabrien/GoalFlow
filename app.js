@@ -19,6 +19,9 @@ const els = {
   todayList: document.querySelector("#todayList"),
   goalDialog: document.querySelector("#goalDialog"),
   taskDialog: document.querySelector("#taskDialog"),
+  dayDialog: document.querySelector("#dayDialog"),
+  dayDialogTitle: document.querySelector("#dayDialogTitle"),
+  dayDialogList: document.querySelector("#dayDialogList"),
   goalForm: document.querySelector("#goalForm"),
   taskForm: document.querySelector("#taskForm"),
   openGoalDialog: document.querySelector("#openGoalDialog"),
@@ -415,6 +418,10 @@ function renderCalendar() {
       }
       scheduleTask(event.dataTransfer.getData("text/plain"), iso, snappedTime);
     });
+    column.addEventListener("click", (event) => {
+      if (viewMode !== "month" || document.body.classList.contains("is-scheduling") || event.target.closest(".scheduled-task")) return;
+      openDayDialog(iso);
+    });
     const list = column.querySelector(".day-tasks");
     const scheduled = state.scheduled.filter((item) => item.date === iso && (!selectedGoalId || item.goalId === selectedGoalId));
     if (viewMode === "week" && !isCompactScheduleLayout()) {
@@ -637,7 +644,7 @@ function renderSelectors() {
   els.monthView.classList.toggle("active", viewMode === "month");
   els.weekView.setAttribute("aria-pressed", String(viewMode === "week"));
   els.monthView.setAttribute("aria-pressed", String(viewMode === "month"));
-  els.todayPeriod.textContent = viewMode === "month" ? "今月" : "今週";
+  els.todayPeriod.textContent = "今日へ";
 }
 
 function renderOnboarding() {
@@ -922,6 +929,43 @@ function deleteScheduledItem(item) {
   if (activeScheduleControlId === item.id) activeScheduleControlId = "";
   showToast("予定から削除しました。");
   render();
+}
+
+function openDayDialog(date) {
+  const items = state.scheduled
+    .filter((item) => item.date === date && (!selectedGoalId || item.goalId === selectedGoalId))
+    .sort((a, b) => a.time.localeCompare(b.time));
+  els.dayDialogTitle.textContent = `${formatDateWithWeekday(date)}の予定`;
+  els.dayDialogList.innerHTML = items.length
+    ? items
+        .map((item) => {
+          const goal = findGoal(item.goalId);
+          return `
+            <article class="day-dialog-item ${item.done ? "done" : ""}">
+              <div>
+                <strong>${escapeHtml(item.title)}</strong>
+                <span>${escapeHtml(item.time || "終日")}・${escapeHtml(goal?.name ?? "目標なし")}</span>
+              </div>
+              <button class="mini-button" type="button" data-day-done="${escapeHtml(item.id)}">${item.done ? "戻す" : "完了"}</button>
+            </article>
+          `;
+        })
+        .join("")
+    : `<div class="empty-state">この日の予定はまだありません。</div>`;
+  els.dayDialogList.querySelectorAll("[data-day-done]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const item = state.scheduled.find((candidate) => candidate.id === button.dataset.dayDone);
+      if (!item) return;
+      toggleScheduledDone(item);
+      openDayDialog(date);
+    });
+  });
+  if (!els.dayDialog.open) els.dayDialog.showModal();
+}
+
+function formatDateWithWeekday(dateString) {
+  const date = new Date(`${dateString}T00:00:00`);
+  return `${date.getMonth() + 1}/${date.getDate()}（${["日", "月", "火", "水", "木", "金", "土"][date.getDay()]}）`;
 }
 
 function updateScheduledTime(item, value) {
@@ -1295,7 +1339,7 @@ async function showNotification(title, body) {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260518-5week")
+      .register("./sw.js?v=20260518-5week-day")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");
