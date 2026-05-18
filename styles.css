@@ -935,8 +935,8 @@ body.is-scheduling .day-column {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   gap: 6px;
-  min-height: 48px;
-  padding: 5px 5px 5px 0;
+  min-height: 44px;
+  padding: 4px 5px 4px 0;
   border-bottom: 1px solid rgba(217, 222, 212, 0.78);
   background: linear-gradient(90deg, rgba(20, 108, 99, 0.04), transparent 34%);
   transition: background 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
@@ -956,7 +956,7 @@ body.is-scheduling .day-column {
 
 .slot-items {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -982,15 +982,16 @@ body.is-scheduling .day-column {
 }
 
 .time-grid .scheduled-task {
-  padding: 7px;
-  border-left: 4px solid var(--accent);
+  padding: 5px 6px;
+  border-left: 3px solid var(--accent);
   background: #fbfcfa;
-  box-shadow: 0 6px 16px rgba(42, 47, 39, 0.08);
+  cursor: grab;
+  box-shadow: 0 4px 10px rgba(42, 47, 39, 0.06);
 }
 
 .time-grid .scheduled-task .task-title {
   align-items: center;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.25;
 }
 
@@ -1005,11 +1006,57 @@ body.is-scheduling .day-column {
 }
 
 .time-grid .scheduled-task .task-meta {
-  margin-top: 3px;
+  display: none;
+  margin-top: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 10px;
+}
+
+.time-grid .scheduled-task .task-actions,
+.month-mode .scheduled-task .task-actions {
+  display: none;
+}
+
+.time-grid .scheduled-task:hover,
+.time-grid .scheduled-task:focus,
+.time-grid .scheduled-task:focus-within,
+.time-grid .scheduled-task.active,
+.month-mode .scheduled-task:hover,
+.month-mode .scheduled-task:focus,
+.month-mode .scheduled-task:focus-within,
+.month-mode .scheduled-task.active {
+  z-index: 2;
+  box-shadow: 0 10px 24px rgba(42, 47, 39, 0.14);
+}
+
+.time-grid .scheduled-task:hover .task-meta,
+.time-grid .scheduled-task:focus .task-meta,
+.time-grid .scheduled-task:focus-within .task-meta,
+.time-grid .scheduled-task.active .task-meta,
+.month-mode .scheduled-task:hover .task-meta,
+.month-mode .scheduled-task:focus .task-meta,
+.month-mode .scheduled-task:focus-within .task-meta,
+.month-mode .scheduled-task.active .task-meta {
+  display: block;
+}
+
+.time-grid .scheduled-task:hover .task-actions,
+.time-grid .scheduled-task:focus .task-actions,
+.time-grid .scheduled-task:focus-within .task-actions,
+.time-grid .scheduled-task.active .task-actions,
+.month-mode .scheduled-task:hover .task-actions,
+.month-mode .scheduled-task:focus .task-actions,
+.month-mode .scheduled-task:focus-within .task-actions,
+.month-mode .scheduled-task.active .task-actions {
+  display: flex;
+}
+
+.scheduled-task.dragging {
+  opacity: 0.45;
+  transform: scale(0.97);
+  cursor: grabbing;
 }
 
 .month-mode .scheduled-task {
@@ -1115,7 +1162,28 @@ body.is-scheduling .day-column {
   margin-top: 10px;
 }
 
+.time-grid .scheduled-task .task-actions,
+.month-mode .scheduled-task .task-actions {
+  display: none;
+}
+
+.time-grid .scheduled-task:hover .task-actions,
+.time-grid .scheduled-task:focus .task-actions,
+.time-grid .scheduled-task:focus-within .task-actions,
+.time-grid .scheduled-task.active .task-actions,
+.month-mode .scheduled-task:hover .task-actions,
+.month-mode .scheduled-task:focus .task-actions,
+.month-mode .scheduled-task:focus-within .task-actions,
+.month-mode .scheduled-task.active .task-actions {
+  display: flex;
+}
+
 .month-mode .task-actions {
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.time-grid .task-actions {
   gap: 4px;
   margin-top: 6px;
 }
@@ -1202,7 +1270,17 @@ body.is-scheduling .day-column {
   font-size: 10px;
 }
 
+.time-grid .mini-button {
+  min-height: 24px;
+  padding: 0 6px;
+  font-size: 10px;
+}
+
 .month-mode .time-button {
+  font-size: 0;
+}
+
+.time-grid .time-button {
   font-size: 0;
 }
 
@@ -1211,11 +1289,26 @@ body.is-scheduling .day-column {
   font-size: 10px;
 }
 
+.time-grid .time-button::before {
+  content: "時刻";
+  font-size: 10px;
+}
+
 .month-mode .time-button[data-editing="true"]::before {
   content: "閉じる";
 }
 
+.time-grid .time-button[data-editing="true"]::before {
+  content: "閉じる";
+}
+
 .month-mode .trash-button {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+}
+
+.time-grid .trash-button {
   width: 28px;
   min-width: 28px;
   height: 28px;

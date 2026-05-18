@@ -10,6 +10,7 @@ let highlightedCompletionId = "";
 let highlightedScheduleDate = "";
 let highlightedScheduleTimer = null;
 let activeTimeEditId = "";
+let activeScheduleControlId = "";
 
 const els = {
   goalList: document.querySelector("#goalList"),
@@ -342,6 +343,11 @@ function renderCalendar() {
       document.body.classList.remove("is-scheduling");
       const snappedTime = getTimeFromPoint(event.clientY, column);
       clearDropTargets(column);
+      const scheduledId = event.dataTransfer.getData("application/x-goalflow-scheduled");
+      if (scheduledId) {
+        moveScheduledTask(scheduledId, iso, snappedTime);
+        return;
+      }
       scheduleTask(event.dataTransfer.getData("text/plain"), iso, snappedTime);
     });
     const list = column.querySelector(".day-tasks");
@@ -424,7 +430,12 @@ function scheduledElement(item, isCompact = false) {
   const goal = findGoal(item.goalId);
   const isEditingTime = activeTimeEditId === item.id;
   const node = document.createElement("article");
-  node.className = `scheduled-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""}`;
+  node.className = `scheduled-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""} ${
+    item.id === activeScheduleControlId || isEditingTime ? "active" : ""
+  }`;
+  node.draggable = true;
+  node.tabIndex = 0;
+  node.dataset.scheduledId = item.id;
   node.innerHTML = `
     ${taskMarkup({ ...task, reminder: item.reminder, minutes: item.minutes }, goal, item.time, isCompact)}
     <div class="task-actions">
@@ -440,6 +451,33 @@ function scheduledElement(item, isCompact = false) {
         : ""
     }
   `;
+  node.addEventListener("click", (event) => {
+    if (event.target.closest("button, input")) return;
+    activeScheduleControlId = activeScheduleControlId === item.id ? "" : item.id;
+    render();
+  });
+  node.addEventListener("dragstart", (event) => {
+    if (event.target.closest("button, input")) {
+      event.preventDefault();
+      return;
+    }
+    activeScheduleControlId = "";
+    activeTimeEditId = "";
+    document.body.classList.add("is-scheduling");
+    node.classList.add("dragging");
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("application/x-goalflow-scheduled", item.id);
+    event.dataTransfer.setData("text/plain", item.taskId);
+    const preview = createDragPreview({ ...task, title: item.title, minutes: item.minutes }, goal);
+    document.body.append(preview);
+    event.dataTransfer.setDragImage(preview, 18, 18);
+    requestAnimationFrame(() => preview.remove());
+  });
+  node.addEventListener("dragend", () => {
+    document.body.classList.remove("is-scheduling");
+    document.querySelectorAll(".day-column.drop-target").forEach((column) => clearDropTargets(column));
+    node.classList.remove("dragging");
+  });
   node.querySelector('[data-action="done"]').addEventListener("click", () => {
     toggleScheduledDone(item);
   });
@@ -800,6 +838,7 @@ function deleteSavedTask(task) {
 function deleteScheduledItem(item) {
   state.scheduled = state.scheduled.filter((candidate) => candidate.id !== item.id);
   if (activeTimeEditId === item.id) activeTimeEditId = "";
+  if (activeScheduleControlId === item.id) activeScheduleControlId = "";
   showToast("予定から削除しました。");
   render();
 }
@@ -826,6 +865,8 @@ function scheduleTask(taskId, date, time = "") {
   const startTime = time || suggestTime(date);
   state.scheduled.push(makeSchedule(task, date, startTime, false));
   highlightedScheduleDate = date;
+  activeScheduleControlId = "";
+  activeTimeEditId = "";
   window.clearTimeout(highlightedScheduleTimer);
   highlightedScheduleTimer = window.setTimeout(() => {
     highlightedScheduleDate = "";
@@ -833,6 +874,24 @@ function scheduleTask(taskId, date, time = "") {
   }, 720);
   vibrate(date === toISO(today) ? 18 : 10);
   showToast(date === toISO(today) ? `${startTime}に追加しました。あとは1つ完了するだけです。` : `${startTime}に予定を追加しました。`);
+  render();
+}
+
+function moveScheduledTask(scheduledId, date, time = "") {
+  const item = state.scheduled.find((candidate) => candidate.id === scheduledId);
+  if (!item) return;
+  item.date = date;
+  item.time = time || item.time || suggestTime(date);
+  highlightedScheduleDate = date;
+  activeScheduleControlId = "";
+  activeTimeEditId = "";
+  window.clearTimeout(highlightedScheduleTimer);
+  highlightedScheduleTimer = window.setTimeout(() => {
+    highlightedScheduleDate = "";
+    render();
+  }, 720);
+  vibrate(12);
+  showToast(`${item.time}に移動しました。`);
   render();
 }
 
