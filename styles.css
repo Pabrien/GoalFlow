@@ -1237,10 +1237,10 @@ body.is-scheduling .day-column {
   min-width: 34px;
   height: 34px;
   padding: 0;
-  border: 1px solid rgba(209, 92, 92, 0.24);
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
-  color: #a33b3b;
+  color: #8a9185;
   cursor: pointer;
   transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
 }
@@ -1292,6 +1292,7 @@ body.is-scheduling .day-column {
 .trash-button:focus-visible {
   border-color: rgba(209, 92, 92, 0.44);
   background: #fff4f2;
+  color: #a33b3b;
   box-shadow: 0 8px 18px rgba(163, 59, 59, 0.12);
   transform: translateY(-1px);
 }
