@@ -593,6 +593,38 @@ body[data-active-screen="tasks"] .workspace,
 body[data-active-screen="today"] .workspace {
   grid-template-columns: minmax(0, 900px);
   justify-content: center;
+  align-items: stretch;
+  position: relative;
+  min-height: min(620px, calc(100vh - 190px));
+  padding: 26px;
+  overflow: hidden;
+  border: 1px solid rgba(229, 231, 235, 0.9);
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(239, 251, 244, 0.84) 46%, rgba(248, 250, 252, 0.94) 100%);
+  box-shadow: var(--shadow-soft);
+}
+
+body[data-active-screen="goals"] .workspace::before,
+body[data-active-screen="tasks"] .workspace::before,
+body[data-active-screen="today"] .workspace::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(90deg, rgba(20, 108, 99, 0.08) 0 1px, transparent 1px),
+    linear-gradient(180deg, rgba(47, 105, 200, 0.05) 0 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+body[data-active-screen="goals"] .workspace > *,
+body[data-active-screen="tasks"] .workspace > *,
+body[data-active-screen="today"] .workspace > * {
+  position: relative;
+  z-index: 1;
 }
 
 body[data-active-screen="schedule"] .workspace {
