@@ -828,6 +828,13 @@ els.screenTabs.forEach((tab) => {
   });
 });
 
+document.querySelectorAll("[data-flow-target]").forEach((button) => {
+  button.addEventListener("click", () => {
+    activeScreen = button.dataset.flowTarget;
+    render();
+  });
+});
+
 els.goalFilter.addEventListener("change", (event) => {
   selectedGoalId = event.target.value;
   render();
