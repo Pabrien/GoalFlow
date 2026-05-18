@@ -7,6 +7,8 @@ let monthCursor = new Date(today.getFullYear(), today.getMonth(), 1);
 let viewMode = "week";
 let activeScreen = "home";
 let highlightedCompletionId = "";
+let highlightedScheduleDate = "";
+let highlightedScheduleTimer = null;
 
 const els = {
   goalList: document.querySelector("#goalList"),
@@ -47,12 +49,6 @@ const els = {
   nextActionTitle: document.querySelector("#nextActionTitle"),
   nextActionBody: document.querySelector("#nextActionBody"),
   nextActionButton: document.querySelector("#nextActionButton"),
-  aiPlanButton: document.querySelector("#aiPlanButton"),
-  aiPlanResult: document.querySelector("#aiPlanResult"),
-  aiPlanTitle: document.querySelector("#aiPlanTitle"),
-  aiPlanStatus: document.querySelector("#aiPlanStatus"),
-  aiPlanSummary: document.querySelector("#aiPlanSummary"),
-  aiPlanSteps: document.querySelector("#aiPlanSteps"),
   buddyTitle: document.querySelector("#buddyTitle"),
   buddyMessage: document.querySelector("#buddyMessage"),
   toast: document.querySelector("#toast"),
@@ -214,6 +210,7 @@ function renderTaskBank() {
     item.addEventListener("dragstart", (event) => {
       event.dataTransfer.setData("text/plain", task.id);
       event.dataTransfer.effectAllowed = "copy";
+      document.body.classList.add("is-scheduling");
       item.classList.add("dragging");
       const preview = createDragPreview(task, goal);
       document.body.append(preview);
@@ -221,8 +218,11 @@ function renderTaskBank() {
       requestAnimationFrame(() => preview.remove());
     });
     item.addEventListener("dragend", () => {
+      document.body.classList.remove("is-scheduling");
+      document.querySelectorAll(".day-column.drop-target").forEach((column) => column.classList.remove("drop-target"));
       item.classList.remove("dragging");
     });
+    item.addEventListener("pointerdown", (event) => startTouchScheduleDrag(event, task, goal, item));
     item.querySelector('[data-action="today"]').addEventListener("click", () => {
       scheduleTask(task.id, toISO(today));
       activeScreen = "today";
@@ -242,6 +242,58 @@ function createDragPreview(task, goal) {
   return preview;
 }
 
+function startTouchScheduleDrag(event, task, goal, item) {
+  if (event.pointerType === "mouse" || event.target.closest("button")) return;
+  event.preventDefault();
+  item.setPointerCapture?.(event.pointerId);
+  document.body.classList.add("is-scheduling");
+  item.classList.add("dragging");
+
+  const preview = createDragPreview(task, goal);
+  preview.classList.add("touch-drag-preview");
+  document.body.append(preview);
+
+  let currentTarget = null;
+  const movePreview = (clientX, clientY) => {
+    preview.style.transform = `translate(${clientX + 14}px, ${clientY + 14}px)`;
+  };
+  const setTarget = (target) => {
+    if (target === currentTarget) return;
+    currentTarget?.classList.remove("drop-target");
+    currentTarget = target;
+    currentTarget?.classList.add("drop-target");
+    if (currentTarget) vibrate(8);
+  };
+  const onMove = (moveEvent) => {
+    movePreview(moveEvent.clientX, moveEvent.clientY);
+    preview.hidden = true;
+    const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)?.closest(".day-column");
+    preview.hidden = false;
+    setTarget(target);
+  };
+  const cleanup = () => {
+    document.body.classList.remove("is-scheduling");
+    item.classList.remove("dragging");
+    currentTarget?.classList.remove("drop-target");
+    preview.remove();
+    item.removeEventListener("pointermove", onMove);
+    item.removeEventListener("pointerup", onUp);
+    item.removeEventListener("pointercancel", onCancel);
+  };
+  const onUp = (upEvent) => {
+    onMove(upEvent);
+    const date = currentTarget?.dataset.date;
+    cleanup();
+    if (date) scheduleTask(task.id, date);
+  };
+  const onCancel = () => cleanup();
+
+  movePreview(event.clientX, event.clientY);
+  item.addEventListener("pointermove", onMove);
+  item.addEventListener("pointerup", onUp);
+  item.addEventListener("pointercancel", onCancel);
+}
+
 function renderCalendar() {
   const days = viewMode === "month" ? getMonthDays(monthCursor) : Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
   els.weekTitle.textContent = viewMode === "month" ? formatMonthTitle(monthCursor) : `${formatDate(days[0])} - ${formatDate(days[6])}`;
@@ -251,7 +303,9 @@ function renderCalendar() {
     const iso = toISO(date);
     const column = document.createElement("section");
     const isOutsideMonth = viewMode === "month" && date.getMonth() !== monthCursor.getMonth();
-    column.className = `day-column ${iso === toISO(today) ? "today" : ""} ${isOutsideMonth ? "outside-month" : ""}`;
+    column.className = `day-column ${iso === toISO(today) ? "today" : ""} ${isOutsideMonth ? "outside-month" : ""} ${
+      iso === highlightedScheduleDate ? "schedule-confirm" : ""
+    }`;
     column.dataset.date = iso;
     column.innerHTML = `
       <div class="day-head">
@@ -267,6 +321,7 @@ function renderCalendar() {
     column.addEventListener("dragleave", () => column.classList.remove("drop-target"));
     column.addEventListener("drop", (event) => {
       event.preventDefault();
+      document.body.classList.remove("is-scheduling");
       column.classList.remove("drop-target");
       scheduleTask(event.dataTransfer.getData("text/plain"), iso);
     });
@@ -440,155 +495,6 @@ function getNextAction(todaysItems, todaysDone) {
     buddyTitle: "いい継続です",
     buddyMessage: "完了が記録に変わりました。この小さい積み上げがGoalFlowの中心です。",
   };
-}
-
-function buildAiPlanPayload() {
-  const todayIso = toISO(today);
-  const todayItems = state.scheduled.filter((item) => item.date === todayIso);
-  const completedTodayItems = todayItems.filter((item) => item.done);
-  const incompleteTodayItems = todayItems.filter((item) => !item.done);
-  const scheduledTaskIds = new Set(state.scheduled.map((item) => item.taskId).filter(Boolean));
-  const lastSevenDays = Array.from({ length: 7 }, (_, index) => {
-    const date = toISO(addDays(today, index - 6));
-    const scheduled = state.scheduled.filter((item) => item.date === date);
-    return {
-      date,
-      total: scheduled.length,
-      done: scheduled.filter((item) => item.done).length,
-    };
-  });
-  const recentTotals = lastSevenDays.reduce(
-    (totals, day) => ({
-      total: totals.total + day.total,
-      done: totals.done + day.done,
-      missedDays: totals.missedDays + (day.total > 0 && day.done === 0 ? 1 : 0),
-    }),
-    { total: 0, done: 0, missedDays: 0 },
-  );
-  const mapScheduledItem = (item) => ({
-    id: item.id,
-    goalId: item.goalId,
-    goalName: findGoal(item.goalId)?.name || "",
-    title: item.title,
-    time: item.time,
-    minutes: item.minutes,
-    done: item.done,
-  });
-  return {
-    today: todayIso,
-    currentHour: today.getHours(),
-    isLateNight: today.getHours() >= 22 || today.getHours() < 5,
-    goals: state.goals.map((goal) => ({
-      id: goal.id,
-      name: goal.name,
-      category: goal.category,
-      deadline: goal.deadline,
-      note: goal.note,
-    })),
-    savedTasks: state.tasks.map((task) => ({
-      id: task.id,
-      goalId: task.goalId,
-      title: task.title,
-      minutes: task.minutes,
-        reminder: task.reminder,
-      })),
-    todayItems: todayItems.map(mapScheduledItem),
-    incompleteTodayItems: incompleteTodayItems.map(mapScheduledItem),
-    completedTodayItems: completedTodayItems.map(mapScheduledItem),
-    unscheduledSavedTasks: state.tasks
-      .filter((task) => !scheduledTaskIds.has(task.id))
-      .map((task) => ({
-        id: task.id,
-        goalId: task.goalId,
-        goalName: findGoal(task.goalId)?.name || "",
-        title: task.title,
-        minutes: task.minutes,
-        reminder: task.reminder,
-      })),
-    goalProgress: state.goals.map((goal) => {
-      const items = state.scheduled.filter((item) => item.goalId === goal.id);
-      const done = items.filter((item) => item.done).length;
-      const daysLeft = goal.deadline ? Math.ceil((new Date(`${goal.deadline}T00:00:00`) - today) / 86400000) : null;
-      return {
-        id: goal.id,
-        name: goal.name,
-        scheduled: items.length,
-        done,
-        completionRate: items.length ? Math.round((done / items.length) * 100) : 0,
-        daysLeft,
-      };
-    }),
-    recentProgress: lastSevenDays,
-    signals: {
-      todayTotal: todayItems.length,
-      todayDone: completedTodayItems.length,
-      todayRemaining: incompleteTodayItems.length,
-      todayCompletionRate: todayItems.length ? Math.round((completedTodayItems.length / todayItems.length) * 100) : 0,
-      recentCompletionRate: recentTotals.total ? Math.round((recentTotals.done / recentTotals.total) * 100) : 0,
-      recentMissedDays: recentTotals.missedDays,
-      currentStreak: calcStreak(),
-    },
-  };
-}
-
-function getAiEndpoint() {
-  return localStorage.getItem("goalflow-ai-endpoint") || "/api/ai-plan";
-}
-
-async function requestAiPlan() {
-  if (!els.aiPlanButton) return;
-  els.aiPlanButton.disabled = true;
-  els.aiPlanResult.hidden = false;
-  els.aiPlanTitle.textContent = "今日のAIプラン";
-  els.aiPlanStatus.textContent = "作成中";
-  els.aiPlanSummary.textContent = "今日やることを整理しています。";
-  els.aiPlanSteps.innerHTML = "";
-  try {
-    const response = await fetch(getAiEndpoint(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildAiPlanPayload()),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(data.error || "AIプランを取得できませんでした。");
-    }
-    renderAiPlan(data);
-  } catch (error) {
-    const message = error.message || "AIプランを取得できませんでした。";
-    const isQuotaError = /quota|billing|plan/i.test(message);
-    els.aiPlanStatus.textContent = isQuotaError ? "利用枠エラー" : "未接続";
-    els.aiPlanSummary.textContent = isQuotaError
-      ? "OpenAIの利用枠または課金設定で止まっています。OpenAI PlatformのBillingを確認してください。"
-      : "AIサーバーがまだ接続されていません。VercelにデプロイしてOPENAI_API_KEYを設定すると使えます。";
-    els.aiPlanSteps.innerHTML = "";
-    const step = document.createElement("li");
-    step.textContent = message;
-    els.aiPlanSteps.append(step);
-  } finally {
-    els.aiPlanButton.disabled = false;
-  }
-}
-
-function renderAiPlan(plan) {
-  els.aiPlanStatus.textContent = "提案";
-  els.aiPlanTitle.textContent = plan.title || "今日のAIプラン";
-  els.aiPlanSummary.textContent = [plan.summary, plan.insight, plan.nudge].filter(Boolean).join(" ");
-  els.aiPlanSteps.innerHTML = "";
-  (Array.isArray(plan.steps) ? plan.steps : []).slice(0, 5).forEach((step) => {
-    const item = document.createElement("li");
-    const title = document.createElement("strong");
-    const detail = document.createElement("span");
-    title.textContent = step.title || "小さく進める";
-    detail.textContent = [step.minutes ? `${step.minutes}分` : "15分", step.source, step.reason].filter(Boolean).join(" - ");
-    item.append(title, detail);
-    els.aiPlanSteps.append(item);
-  });
-  if (!els.aiPlanSteps.children.length) {
-    const item = document.createElement("li");
-    item.textContent = "今日は一番小さいタスクを1つだけ完了しましょう。";
-    els.aiPlanSteps.append(item);
-  }
 }
 
 function renderScreenTabs() {
@@ -767,8 +673,19 @@ function scheduleTask(taskId, date) {
   const task = state.tasks.find((candidate) => candidate.id === taskId);
   if (!task) return;
   state.scheduled.push(makeSchedule(task, date, suggestTime(date), false));
-  if (date === toISO(today)) showToast("今日の予定に追加しました。あとは1つ完了するだけです。");
+  highlightedScheduleDate = date;
+  window.clearTimeout(highlightedScheduleTimer);
+  highlightedScheduleTimer = window.setTimeout(() => {
+    highlightedScheduleDate = "";
+    render();
+  }, 720);
+  vibrate(date === toISO(today) ? 18 : 10);
+  showToast(date === toISO(today) ? "今日の予定に追加しました。あとは1つ完了するだけです。" : "予定に追加しました。");
   render();
+}
+
+function vibrate(duration = 8) {
+  if (window.navigator?.vibrate) window.navigator.vibrate(duration);
 }
 
 function makeSchedule(task, date, time, done) {
@@ -1042,8 +959,6 @@ els.nextActionButton.addEventListener("click", () => {
     render();
   }
 });
-
-els.aiPlanButton?.addEventListener("click", requestAiPlan);
 
 els.dismissOnboarding.addEventListener("click", () => {
   state.meta.onboardingDismissed = true;

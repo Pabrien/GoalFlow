@@ -48,17 +48,6 @@ todo-ui/
 
 This is currently a dependency-free static prototype. Data is persisted locally in the browser, so clearing browser storage will reset the app.
 
-## AI Today Planner
-
-The app includes an optional AI planner endpoint for Vercel.
-
-1. Import this repository into Vercel.
-2. Add `OPENAI_API_KEY` in Vercel project environment variables.
-3. Optional: add `OPENAI_MODEL` to override the default model.
-4. Deploy the project and open the Vercel URL.
-
-The GitHub Pages version remains static. It can show the AI button, but a serverless deployment is required for the real AI request because API keys must not be exposed in browser code.
-
 If the app grows, good next steps are:
 
 - Move to a component-based structure such as Vite + React or Vue

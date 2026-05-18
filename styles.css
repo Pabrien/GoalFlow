@@ -447,81 +447,6 @@ button {
   align-items: center;
 }
 
-.ai-plan-button {
-  border-color: rgba(20, 108, 99, 0.28);
-  background: #ffffff;
-  color: var(--accent-strong);
-}
-
-.ai-plan-button:disabled {
-  cursor: progress;
-  opacity: 0.68;
-}
-
-.ai-plan-result {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 10px;
-  margin-top: 14px;
-  padding: 12px;
-  border: 1px solid rgba(20, 108, 99, 0.24);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.74);
-}
-
-.ai-plan-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.ai-plan-head strong {
-  font-size: 14px;
-}
-
-.ai-plan-head span {
-  min-height: 24px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.ai-plan-result p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.ai-plan-result ol {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding-left: 20px;
-}
-
-.ai-plan-result li {
-  padding-left: 2px;
-}
-
-.ai-plan-result li strong,
-.ai-plan-result li span {
-  display: block;
-}
-
-.ai-plan-result li span {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
 .next-step-card p:not(.eyebrow),
 .buddy-card p:not(.eyebrow) {
   margin: 8px 0 14px;
@@ -789,6 +714,7 @@ body[data-active-screen="today"] .insights {
 
 .bank-task {
   padding: 11px;
+  touch-action: none;
   cursor: grab;
   transition: opacity 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
 }
@@ -810,6 +736,13 @@ body[data-view-mode="month"] .bank-task .task-title {
 body[data-view-mode="month"] .bank-task .task-meta {
   margin-top: 4px;
   font-size: 10px;
+}
+
+body.is-scheduling .day-column {
+  border-color: rgba(20, 108, 99, 0.24);
+  background:
+    linear-gradient(rgba(20, 108, 99, 0.03), rgba(20, 108, 99, 0.03)),
+    #fafbf8;
 }
 
 .bank-task:active {
@@ -841,6 +774,14 @@ body[data-view-mode="month"] .bank-task .task-meta {
   color: #fff;
   box-shadow: 0 12px 28px rgba(20, 108, 99, 0.26);
   pointer-events: none;
+}
+
+.touch-drag-preview {
+  top: 0;
+  left: 0;
+  width: 138px;
+  transform: translate(-200px, -200px);
+  transition: transform 0.04s linear;
 }
 
 .drag-preview strong {
@@ -898,7 +839,7 @@ body[data-view-mode="month"] .bank-task .task-meta {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fafbf8;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .month-mode .day-column {
@@ -909,6 +850,14 @@ body[data-view-mode="month"] .bank-task .task-meta {
 .day-column.drop-target {
   border-color: var(--accent);
   background: var(--accent-soft);
+  box-shadow: inset 0 0 0 2px rgba(20, 108, 99, 0.18), 0 16px 34px rgba(20, 108, 99, 0.14);
+  transform: translateY(-2px);
+}
+
+.day-column.schedule-confirm {
+  animation: schedule-land 0.62s cubic-bezier(0.22, 1, 0.36, 1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(20, 108, 99, 0.2), 0 18px 42px rgba(20, 108, 99, 0.18);
 }
 
 .day-column.today {
@@ -1043,6 +992,18 @@ body[data-view-mode="month"] .bank-task .task-meta {
   }
   38% {
     transform: scale(1.018);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes schedule-land {
+  0% {
+    transform: scale(0.992);
+  }
+  42% {
+    transform: scale(1.012);
   }
   100% {
     transform: scale(1);
@@ -1604,22 +1565,6 @@ body {
   border-color: #cbd5e1;
   background: #f8fafc;
   transform: translateY(-1px);
-}
-
-.ai-plan-button {
-  border-color: rgba(37, 99, 235, 0.22);
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.ai-plan-result {
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.ai-plan-head span {
-  background: #2563eb;
 }
 
 .buddy-card {
