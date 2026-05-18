@@ -1124,22 +1124,6 @@ els.screenTabs.forEach((tab) => {
   });
 });
 
-document.querySelectorAll("[data-flow-target]").forEach((button) => {
-  button.addEventListener("click", () => {
-    activeScreen = button.dataset.flowTarget;
-    render();
-    if (button.dataset.flowTarget === "home") {
-      scrollToProgress();
-    }
-  });
-});
-
-function scrollToProgress() {
-  window.requestAnimationFrame(() => {
-    els.progressSection?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-}
-
 els.goalFilter.addEventListener("change", (event) => {
   selectedGoalId = event.target.value;
   render();
