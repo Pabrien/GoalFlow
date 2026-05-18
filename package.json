@@ -4,7 +4,7 @@
   "private": true,
   "description": "Goal-based task planner prototype",
   "scripts": {
-    "dev": "python3 -m http.server 4173",
+    "dev": "python3 -m http.server 4174 --bind 0.0.0.0",
     "check": "node --check app.js"
   }
 }

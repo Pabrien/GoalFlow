@@ -26,7 +26,13 @@ npm run dev
 Then open:
 
 ```txt
-http://127.0.0.1:4173/index.html
+http://127.0.0.1:4174/index.html
+```
+
+To preview on another device on the same Wi-Fi, open the Mac's local IP address with the same port, for example:
+
+```txt
+http://192.168.0.4:4174/index.html
 ```
 
 Avoid opening `index.html` with a `file://` URL while developing. Some browser environments restrict local file behavior, which can make interactions or saved state feel broken.
