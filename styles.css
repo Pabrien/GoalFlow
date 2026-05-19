@@ -2360,7 +2360,7 @@ dialog {
   body[data-active-screen="schedule"] .bank-task {
     min-width: 0;
     padding: 8px;
-    touch-action: none;
+    touch-action: pan-y;
     -webkit-touch-callout: none;
     -webkit-user-drag: none;
     -webkit-user-select: none;
@@ -2393,6 +2393,7 @@ dialog {
     flex-basis: 108px;
     padding: 6px;
     scroll-snap-align: start;
+    touch-action: pan-x;
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .bank-task .task-title {
@@ -2478,7 +2479,7 @@ dialog {
 
   body[data-active-screen="schedule"] .calendar-grid.month-mode.compact-month-mode {
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    width: min(100%, 288px);
+    width: min(100%, 292px);
     gap: 3px;
   }
 

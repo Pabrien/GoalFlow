@@ -283,7 +283,6 @@ function createDragPreview(task, goal) {
 
 function startTouchScheduleDrag(event, task, goal, item) {
   if (event.pointerType === "mouse" || event.target.closest("button")) return;
-  event.preventDefault();
   const startX = event.clientX;
   const startY = event.clientY;
   let didStart = false;
@@ -323,9 +322,10 @@ function startTouchScheduleDrag(event, task, goal, item) {
   const onMove = (moveEvent) => {
     const deltaX = moveEvent.clientX - startX;
     const deltaY = moveEvent.clientY - startY;
-    if (!didStart && Math.hypot(deltaX, deltaY) > 4) {
+    if (!didStart && Math.hypot(deltaX, deltaY) > 12) {
       window.clearTimeout(pressTimer);
-      startDrag(moveEvent.clientX, moveEvent.clientY);
+      cleanup();
+      return;
     }
     if (!didStart) return;
     moveEvent.preventDefault();
@@ -368,7 +368,7 @@ function startTouchScheduleDrag(event, task, goal, item) {
   };
   const onCancel = () => cleanup();
 
-  const pressTimer = window.setTimeout(() => startDrag(startX, startY), 90);
+  const pressTimer = window.setTimeout(() => startDrag(startX, startY), 260);
   document.addEventListener("pointermove", onMove);
   document.addEventListener("pointerup", onUp);
   document.addEventListener("pointercancel", onCancel);
@@ -1419,7 +1419,7 @@ async function showNotification(title, body) {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260519-tabswipe")
+      .register("./sw.js?v=20260519-dragcal")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");
