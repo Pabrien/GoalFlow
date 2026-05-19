@@ -11,6 +11,7 @@ let highlightedScheduleDate = "";
 let highlightedScheduleTimer = null;
 let activeTimeEditId = "";
 let activeScheduleControlId = "";
+const screenOrder = ["home", "goals", "schedule", "today"];
 
 const els = {
   goalList: document.querySelector("#goalList"),
@@ -705,7 +706,7 @@ function getNextAction(todaysItems, todaysDone) {
     return {
       title: "今日やることを追加",
       body: "保存タスクを今日に入れると、予定ではなく行動に変わります。タスク画面の「今日へ」からすぐ追加できます。",
-      button: "タスクを見る",
+      button: "スケジュールで追加",
       action: "openTasks",
       buddyTitle: "今日に落とす",
       buddyMessage: "目標は遠くても、今日の1つなら動かせます。",
@@ -716,7 +717,7 @@ function getNextAction(todaysItems, todaysDone) {
     return {
       title: "今日の1つを完了する",
       body: `今日は${todaysItems.length}件中${todaysDone}件完了です。まず1件だけ終わらせて、流れを作りましょう。`,
-      button: "今日を見る",
+      button: "今日のタスクを見る",
       action: "openToday",
       buddyTitle: "あと少し",
       buddyMessage: "完璧より記録です。1つ完了すると、明日の自分が楽になります。",
@@ -739,6 +740,12 @@ function renderScreenTabs() {
     tab.classList.toggle("active", isActive);
     tab.setAttribute("aria-pressed", String(isActive));
   });
+  centerActiveScreenTab();
+}
+
+function centerActiveScreenTab() {
+  const activeTab = [...els.screenTabs].find((tab) => tab.dataset.screenTarget === activeScreen);
+  activeTab?.scrollIntoView?.({ behavior: "smooth", inline: "center", block: "nearest" });
 }
 
 function renderSummary() {
@@ -1260,9 +1267,69 @@ els.monthView.addEventListener("click", () => {
 
 els.screenTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
-    activeScreen = tab.dataset.screenTarget;
-    render();
+    setActiveScreen(tab.dataset.screenTarget);
   });
+});
+
+function setActiveScreen(screen, direction = 0) {
+  if (!screenOrder.includes(screen) || screen === activeScreen) return;
+  activeScreen = screen;
+  if (direction) {
+    document.body.dataset.tabDirection = String(direction);
+    window.setTimeout(() => delete document.body.dataset.tabDirection, 220);
+  }
+  render();
+}
+
+let tabSwipeStartX = 0;
+let tabSwipeStartY = 0;
+let tabSwipeDeltaX = 0;
+let tabSwipeActive = false;
+
+document.addEventListener(
+  "touchstart",
+  (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (event.touches.length !== 1 || target?.closest("dialog, input, textarea, select, button, .bank-task, .scheduled-task")) return;
+    tabSwipeStartX = event.touches[0].clientX;
+    tabSwipeStartY = event.touches[0].clientY;
+    tabSwipeDeltaX = 0;
+    tabSwipeActive = true;
+  },
+  { passive: true },
+);
+
+document.addEventListener(
+  "touchmove",
+  (event) => {
+    if (!tabSwipeActive) return;
+    const touch = event.touches[0];
+    tabSwipeDeltaX = touch.clientX - tabSwipeStartX;
+    const deltaY = touch.clientY - tabSwipeStartY;
+    if (Math.abs(deltaY) > Math.abs(tabSwipeDeltaX) * 1.15) {
+      tabSwipeActive = false;
+      document.body.style.removeProperty("--tab-swipe-x");
+      return;
+    }
+    document.body.style.setProperty("--tab-swipe-x", `${Math.max(-42, Math.min(42, tabSwipeDeltaX / 4))}px`);
+  },
+  { passive: true },
+);
+
+document.addEventListener("touchend", () => {
+  if (!tabSwipeActive) return;
+  document.body.style.removeProperty("--tab-swipe-x");
+  const currentIndex = screenOrder.indexOf(activeScreen);
+  const nextIndex = tabSwipeDeltaX < -60 ? currentIndex + 1 : tabSwipeDeltaX > 60 ? currentIndex - 1 : currentIndex;
+  tabSwipeActive = false;
+  if (nextIndex !== currentIndex && screenOrder[nextIndex]) {
+    setActiveScreen(screenOrder[nextIndex], Math.sign(nextIndex - currentIndex));
+  }
+});
+
+document.addEventListener("touchcancel", () => {
+  tabSwipeActive = false;
+  document.body.style.removeProperty("--tab-swipe-x");
 });
 
 els.goalFilter.addEventListener("change", (event) => {
@@ -1290,12 +1357,12 @@ els.nextActionButton.addEventListener("click", () => {
     openGoalDialog();
   }
   if (action === "createTask") {
-    activeScreen = "tasks";
+    activeScreen = "schedule";
     render();
     els.openTaskDialog.click();
   }
   if (action === "openTasks") {
-    activeScreen = "tasks";
+    activeScreen = "schedule";
     render();
   }
   if (action === "openToday") {
@@ -1352,7 +1419,7 @@ async function showNotification(title, body) {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260519-calviews")
+      .register("./sw.js?v=20260519-tabswipe")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");

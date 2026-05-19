@@ -1673,7 +1673,7 @@ textarea:focus {
     left: 10px;
     z-index: 20;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
     margin: 0;
     padding: 8px;
@@ -1933,6 +1933,44 @@ body {
   background: rgba(255, 255, 255, 0.9);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(16px);
+  transform: translateX(var(--tab-swipe-x, 0));
+  transition: transform 0.16s ease;
+}
+
+body[data-tab-direction="1"] .workspace,
+body[data-tab-direction="1"] .summary-strip,
+body[data-tab-direction="1"] .flow-focus,
+body[data-tab-direction="1"] .home-dashboard {
+  animation: tab-slide-next 0.22s ease both;
+}
+
+body[data-tab-direction="-1"] .workspace,
+body[data-tab-direction="-1"] .summary-strip,
+body[data-tab-direction="-1"] .flow-focus,
+body[data-tab-direction="-1"] .home-dashboard {
+  animation: tab-slide-prev 0.22s ease both;
+}
+
+@keyframes tab-slide-next {
+  from {
+    opacity: 0.72;
+    transform: translateX(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes tab-slide-prev {
+  from {
+    opacity: 0.72;
+    transform: translateX(-22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .screen-tab {
@@ -2310,20 +2348,18 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .task-bank {
-    display: flex;
+    display: grid;
     gap: 8px;
     margin-top: 8px;
     padding: 1px 2px 4px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
+    max-height: 190px;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
   }
 
   body[data-active-screen="schedule"] .bank-task {
-    flex: 0 0 150px;
     min-width: 0;
     padding: 8px;
-    scroll-snap-align: start;
     touch-action: none;
     -webkit-touch-callout: none;
     -webkit-user-drag: none;
@@ -2343,13 +2379,20 @@ dialog {
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .task-bank {
+    display: flex;
     gap: 6px;
     margin-top: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .bank-task {
+    flex: 0 0 108px;
     flex-basis: 108px;
     padding: 6px;
+    scroll-snap-align: start;
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .bank-task .task-title {
@@ -2461,6 +2504,25 @@ dialog {
 
   body[data-active-screen="schedule"] .calendar-grid.week-mode .day-column {
     min-height: clamp(150px, 28vh, 220px);
+  }
+
+  body[data-active-screen="schedule"] .calendar-grid.week-mode .scheduled-task {
+    display: grid;
+    min-height: 34px;
+    padding: 6px 4px;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+
+  body[data-active-screen="schedule"] .calendar-grid.week-mode .scheduled-task .task-title {
+    display: block;
+    font-size: 10px;
+    line-height: 1.15;
+  }
+
+  body[data-active-screen="schedule"] .calendar-grid.week-mode .scheduled-task .task-title span:last-child,
+  body[data-active-screen="schedule"] .calendar-grid.week-mode .scheduled-task .task-meta {
+    display: none;
   }
 
   body[data-active-screen="schedule"] .day-column.drop-target {

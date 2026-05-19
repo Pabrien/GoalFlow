@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260519-calviews" />
+    <link rel="stylesheet" href="./styles.css?v=20260519-tabswipe" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -72,7 +72,6 @@
         <button class="screen-tab active" type="button" data-screen-target="home" aria-pressed="true">ホーム</button>
         <button class="screen-tab" type="button" data-screen-target="goals" aria-pressed="false">目標</button>
         <button class="screen-tab" type="button" data-screen-target="schedule" aria-pressed="false">スケジュール</button>
-        <button class="screen-tab" type="button" data-screen-target="tasks" aria-pressed="false">タスク</button>
         <button class="screen-tab" type="button" data-screen-target="today" aria-pressed="false">今日</button>
       </nav>
 
@@ -100,7 +99,7 @@
 
       <section class="flow-focus" data-view-panel="home" aria-label="次の一手">
         <article class="next-step-card">
-          <p class="eyebrow">Today focus</p>
+          <p class="eyebrow">今日の集中</p>
           <span class="today-focus-pill">今日やること</span>
           <h2 id="nextActionTitle">次の一手</h2>
           <p id="nextActionBody">GoalFlowが、目標から今日やることまでの流れを案内します。</p>
@@ -201,7 +200,7 @@
         <aside class="insights" aria-label="可視化と今日の予定">
           <section class="panel" data-view-panel="today">
             <div class="panel-heading">
-              <h2>今日</h2>
+              <h2>今日やること</h2>
               <span id="todayDate"></span>
             </div>
             <div class="today-list" id="todayList"></div>
@@ -299,6 +298,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script defer src="./app.js?v=20260519-calviews"></script>
+    <script defer src="./app.js?v=20260519-tabswipe"></script>
   </body>
 </html>
