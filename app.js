@@ -234,14 +234,35 @@ function renderTaskBank() {
     item.className = `bank-task ${armedTaskDragId === task.id ? "armed" : ""}`;
     item.draggable = true;
     item.dataset.taskId = task.id;
+    let nativeDragging = false;
     item.innerHTML = `
       ${taskMarkup(task, goal)}
+      ${
+        armedTaskDragId === task.id
+          ? `
+            <form class="task-edit-form" data-task-edit="${escapeHtml(task.id)}">
+              <label>タスク名<input name="title" required maxlength="28" value="${escapeHtml(task.title)}" /></label>
+              <label>目標<select name="goalId">${taskGoalOptions(task.goalId)}</select></label>
+              <div class="field-row">
+                <label>時間<input name="durationValue" type="number" min="1" max="240" step="1" value="${escapeHtml(task.durationValue ?? task.minutes ?? 30)}" /></label>
+                <label>単位<select name="durationUnit">${durationUnitOptions(task.durationUnit ?? "minutes")}</select></label>
+              </div>
+              <label>リマインド<select name="reminder">${reminderOptions(task.reminder)}</select></label>
+              <div class="task-edit-actions">
+                <button class="mini-button" type="submit">保存</button>
+                <button class="mini-button" type="button" data-action="close-edit">閉じる</button>
+              </div>
+            </form>
+          `
+          : ""
+      }
       <div class="bank-task-actions">
         <button class="mini-button" type="button" data-action="today">今日へ</button>
         ${trashButton("保存タスクを削除")}
       </div>
     `;
     item.addEventListener("dragstart", (event) => {
+      nativeDragging = true;
       event.dataTransfer.setData("text/plain", task.id);
       event.dataTransfer.effectAllowed = "copy";
       document.body.classList.add("is-scheduling");
@@ -256,6 +277,15 @@ function renderTaskBank() {
       document.body.classList.remove("is-scheduling");
       document.querySelectorAll(".day-column.drop-target").forEach((column) => clearDropTargets(column));
       item.classList.remove("dragging");
+      window.setTimeout(() => {
+        nativeDragging = false;
+      }, 0);
+    });
+    item.addEventListener("click", (event) => {
+      if (nativeDragging || event.target.closest("button, input, textarea, select")) return;
+      if (armedTaskDragId === task.id) return;
+      armedTaskDragId = task.id;
+      renderTaskBank();
     });
     item.addEventListener("pointerdown", (event) => startTouchScheduleDrag(event, task, goal, item));
     item.addEventListener("selectstart", (event) => event.preventDefault());
@@ -267,9 +297,33 @@ function renderTaskBank() {
       activeScreen = "today";
       render();
     });
+    item.querySelector("[data-task-edit]")?.addEventListener("submit", (event) => saveTaskEdit(event, task));
+    item.querySelector('[data-action="close-edit"]')?.addEventListener("click", () => {
+      armedTaskDragId = "";
+      renderTaskBank();
+    });
     item.querySelector('[data-action="delete"]').addEventListener("click", () => deleteSavedTask(task));
     els.taskBank.append(item);
   });
+}
+
+function taskGoalOptions(selectedId) {
+  return state.goals
+    .map((goal) => `<option value="${escapeHtml(goal.id)}" ${goal.id === selectedId ? "selected" : ""}>${escapeHtml(goal.name)}</option>`)
+    .join("");
+}
+
+function durationUnitOptions(selectedUnit) {
+  return `
+    <option value="minutes" ${selectedUnit === "minutes" ? "selected" : ""}>分</option>
+    <option value="hours" ${selectedUnit === "hours" ? "selected" : ""}>時間</option>
+  `;
+}
+
+function reminderOptions(selectedReminder = "なし") {
+  return ["なし", "10分前", "30分前", "毎時間", "朝・昼・夜"]
+    .map((value) => `<option value="${escapeHtml(value)}" ${value === selectedReminder ? "selected" : ""}>${escapeHtml(value)}</option>`)
+    .join("");
 }
 
 function createDragPreview(task, goal) {
@@ -283,7 +337,7 @@ function createDragPreview(task, goal) {
 }
 
 function startTouchScheduleDrag(event, task, goal, item) {
-  if (event.pointerType === "mouse" || event.target.closest("button")) return;
+  if (event.pointerType === "mouse" || event.target.closest("button, input, textarea, select")) return;
   const isArmed = armedTaskDragId === task.id;
   if (!isArmed) {
     armedTaskDragId = task.id;
@@ -962,6 +1016,33 @@ function deleteScheduledItem(item) {
   render();
 }
 
+function saveTaskEdit(event, task) {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  const durationValue = Number(data.get("durationValue"));
+  const durationUnit = data.get("durationUnit");
+  const title = data.get("title").trim();
+  if (!title || !durationValue) return;
+  task.title = title;
+  task.goalId = data.get("goalId");
+  task.durationValue = durationValue;
+  task.durationUnit = durationUnit;
+  task.minutes = durationUnit === "hours" ? durationValue * 60 : durationValue;
+  task.reminder = data.get("reminder");
+  state.scheduled.forEach((item) => {
+    if (item.taskId !== task.id) return;
+    item.title = task.title;
+    item.goalId = task.goalId;
+    item.minutes = task.minutes;
+    item.durationValue = task.durationValue;
+    item.durationUnit = task.durationUnit;
+    item.reminder = task.reminder;
+  });
+  selectedGoalId = task.goalId;
+  showToast("保存タスクを更新しました。");
+  render();
+}
+
 function openDayDialog(date) {
   const items = state.scheduled
     .filter((item) => item.date === date && (!selectedGoalId || item.goalId === selectedGoalId))
@@ -1430,7 +1511,7 @@ async function showNotification(title, body) {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260519-armeddrag")
+      .register("./sw.js?v=20260519-taskedit")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");

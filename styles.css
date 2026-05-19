@@ -888,6 +888,33 @@ body.is-scheduling .day-column {
   border-color: rgba(29, 127, 95, 0.48);
   background: var(--accent-soft);
   box-shadow: inset 0 0 0 1px rgba(29, 127, 95, 0.18), 0 10px 24px rgba(29, 127, 95, 0.12);
+  touch-action: none;
+}
+
+.task-edit-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(29, 127, 95, 0.18);
+}
+
+.task-edit-form label {
+  gap: 4px;
+  font-size: 11px;
+}
+
+.task-edit-form input,
+.task-edit-form select {
+  min-height: 34px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.task-edit-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
 }
 
 .drag-preview {
@@ -2380,6 +2407,16 @@ dialog {
     user-select: none;
   }
 
+  body[data-active-screen="schedule"] .bank-task.armed {
+    touch-action: none;
+  }
+
+  body[data-active-screen="schedule"] .task-edit-form,
+  body[data-active-screen="schedule"] .task-edit-form * {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
   body[data-active-screen="schedule"][data-view-mode="month"] [data-view-panel="tasks"] {
     padding: 8px;
   }
@@ -2411,7 +2448,10 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .bank-task .task-meta {
-    display: none;
+    display: block;
+    margin-top: 4px;
+    font-size: 10px;
+    line-height: 1.25;
   }
 
   body[data-active-screen="schedule"] .bank-task-actions {
