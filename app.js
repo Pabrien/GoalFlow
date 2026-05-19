@@ -11,7 +11,7 @@ let highlightedScheduleDate = "";
 let highlightedScheduleTimer = null;
 let activeTimeEditId = "";
 let activeScheduleControlId = "";
-let armedTaskDragId = "";
+let editingTaskId = "";
 const screenOrder = ["home", "goals", "schedule", "today"];
 
 const els = {
@@ -231,14 +231,14 @@ function renderTaskBank() {
   tasks.forEach((task) => {
     const goal = findGoal(task.goalId);
     const item = document.createElement("article");
-    item.className = `bank-task ${armedTaskDragId === task.id ? "armed" : ""}`;
+    item.className = `bank-task ${editingTaskId === task.id ? "editing" : ""}`;
     item.draggable = true;
     item.dataset.taskId = task.id;
     let nativeDragging = false;
     item.innerHTML = `
       ${taskMarkup(task, goal)}
       ${
-        armedTaskDragId === task.id
+        editingTaskId === task.id
           ? `
             <form class="task-edit-form" data-task-edit="${escapeHtml(task.id)}">
               <label>タスク名<input name="title" required maxlength="28" value="${escapeHtml(task.title)}" /></label>
@@ -258,6 +258,7 @@ function renderTaskBank() {
       }
       <div class="bank-task-actions">
         <button class="mini-button" type="button" data-action="today">今日へ</button>
+        <button class="mini-button" type="button" data-action="edit">${editingTaskId === task.id ? "閉じる" : "編集"}</button>
         ${trashButton("保存タスクを削除")}
       </div>
     `;
@@ -281,12 +282,6 @@ function renderTaskBank() {
         nativeDragging = false;
       }, 0);
     });
-    item.addEventListener("click", (event) => {
-      if (nativeDragging || event.target.closest("button, input, textarea, select")) return;
-      if (armedTaskDragId === task.id) return;
-      armedTaskDragId = task.id;
-      renderTaskBank();
-    });
     item.addEventListener("pointerdown", (event) => startTouchScheduleDrag(event, task, goal, item));
     item.addEventListener("selectstart", (event) => event.preventDefault());
     item.addEventListener("contextmenu", (event) => {
@@ -298,8 +293,12 @@ function renderTaskBank() {
       render();
     });
     item.querySelector("[data-task-edit]")?.addEventListener("submit", (event) => saveTaskEdit(event, task));
+    item.querySelector('[data-action="edit"]').addEventListener("click", () => {
+      editingTaskId = editingTaskId === task.id ? "" : task.id;
+      renderTaskBank();
+    });
     item.querySelector('[data-action="close-edit"]')?.addEventListener("click", () => {
-      armedTaskDragId = "";
+      editingTaskId = "";
       renderTaskBank();
     });
     item.querySelector('[data-action="delete"]').addEventListener("click", () => deleteSavedTask(task));
@@ -338,12 +337,6 @@ function createDragPreview(task, goal) {
 
 function startTouchScheduleDrag(event, task, goal, item) {
   if (event.pointerType === "mouse" || event.target.closest("button, input, textarea, select")) return;
-  const isArmed = armedTaskDragId === task.id;
-  if (!isArmed) {
-    armedTaskDragId = task.id;
-    renderTaskBank();
-    return;
-  }
   event.preventDefault();
   const startX = event.clientX;
   const startY = event.clientY;
@@ -384,10 +377,8 @@ function startTouchScheduleDrag(event, task, goal, item) {
   const onMove = (moveEvent) => {
     const deltaX = moveEvent.clientX - startX;
     const deltaY = moveEvent.clientY - startY;
-    if (!didStart && Math.hypot(deltaX, deltaY) > 12) {
-      window.clearTimeout(pressTimer);
+    if (!didStart && Math.hypot(deltaX, deltaY) > 10) {
       startDrag(moveEvent.clientX, moveEvent.clientY);
-      return;
     }
     if (!didStart) return;
     moveEvent.preventDefault();
@@ -403,7 +394,6 @@ function startTouchScheduleDrag(event, task, goal, item) {
     }
   };
   const cleanup = (removeListeners = true) => {
-    window.clearTimeout(pressTimer);
     if (didStart) {
       document.body.classList.remove("is-scheduling");
       item.classList.remove("dragging");
@@ -427,13 +417,11 @@ function startTouchScheduleDrag(event, task, goal, item) {
     const snappedTime = landingTarget ? getTimeFromPoint(upEvent.clientY, landingTarget) : "";
     cleanup();
     if (date) {
-      armedTaskDragId = "";
       scheduleTask(task.id, date, snappedTime);
     }
   };
   const onCancel = () => cleanup();
 
-  const pressTimer = window.setTimeout(() => startDrag(startX, startY), 90);
   document.addEventListener("pointermove", onMove);
   document.addEventListener("pointerup", onUp);
   document.addEventListener("pointercancel", onCancel);
@@ -1039,6 +1027,7 @@ function saveTaskEdit(event, task) {
     item.reminder = task.reminder;
   });
   selectedGoalId = task.goalId;
+  editingTaskId = "";
   showToast("保存タスクを更新しました。");
   render();
 }
@@ -1511,7 +1500,7 @@ async function showNotification(title, body) {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260519-taskedit")
+      .register("./sw.js?v=20260519-directdrag")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");
