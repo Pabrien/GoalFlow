@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260519-handleweek" />
+    <link rel="stylesheet" href="./styles.css?v=20260520-homegoals" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -189,7 +189,7 @@
                 <button class="switch-button" id="monthView" type="button" aria-pressed="false">月</button>
               </div>
               <button class="icon-button" id="prevPeriod" type="button" aria-label="前へ" title="前へ">‹</button>
-              <button class="ghost-button" id="todayPeriod" type="button">今日へ</button>
+              <button class="ghost-button" id="todayPeriod" type="button">今日に戻る</button>
               <button class="icon-button" id="nextPeriod" type="button" aria-label="次へ" title="次へ">›</button>
             </div>
           </div>
@@ -221,17 +221,22 @@
         </label>
         <label>
           カテゴリ
-          <select name="category">
-            <option value="筋トレ">筋トレ</option>
-            <option value="勉強">勉強</option>
-            <option value="仕事">仕事</option>
-            <option value="健康">健康</option>
-            <option value="習慣">習慣</option>
-          </select>
+          <input name="category" list="categoryOptions" required maxlength="16" placeholder="例：筋トレ、勉強、副業" />
+          <datalist id="categoryOptions">
+            <option value="筋トレ"></option>
+            <option value="勉強"></option>
+            <option value="仕事"></option>
+            <option value="健康"></option>
+            <option value="習慣"></option>
+          </datalist>
         </label>
         <label>
           期限
           <input name="deadline" type="date" required />
+        </label>
+        <label>
+          開始日
+          <input name="createdAt" type="date" required />
         </label>
         <label>
           目標メモ
@@ -287,6 +292,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script defer src="./app.js?v=20260519-handleweek"></script>
+    <script defer src="./app.js?v=20260520-homegoals"></script>
   </body>
 </html>

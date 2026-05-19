@@ -28,6 +28,7 @@ const els = {
   openGoalDialog: document.querySelector("#openGoalDialog"),
   openTaskDialog: document.querySelector("#openTaskDialog"),
   taskGoalSelect: document.querySelector("#taskGoalSelect"),
+  categoryOptions: document.querySelector("#categoryOptions"),
   goalFilter: document.querySelector("#goalFilter"),
   chart: document.querySelector("#progressChart"),
   completionPie: document.querySelector("#completionPie"),
@@ -84,6 +85,7 @@ function seedState() {
       id: crypto.randomUUID(),
       name: "3か月でベンチプレス +10kg",
       category: "筋トレ",
+      createdAt: toISO(today),
       deadline: addDays(today, 88).toISOString().slice(0, 10),
       note: "週3回の重量管理。無理なく継続する。",
     },
@@ -91,6 +93,7 @@ function seedState() {
       id: crypto.randomUUID(),
       name: "英語ニュースを毎日読む",
       category: "勉強",
+      createdAt: toISO(today),
       deadline: addDays(today, 45).toISOString().slice(0, 10),
       note: "朝に15分。読んだ記事を一言で要約する。",
     },
@@ -119,7 +122,7 @@ function loadState() {
   try {
     const parsed = JSON.parse(saved);
     return {
-      goals: Array.isArray(parsed.goals) ? parsed.goals : [],
+      goals: Array.isArray(parsed.goals) ? parsed.goals.map(normalizeGoal) : [],
       tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
       scheduled: Array.isArray(parsed.scheduled) ? parsed.scheduled : [],
       meta: {
@@ -131,6 +134,14 @@ function loadState() {
   } catch {
     return createEmptyState();
   }
+}
+
+function normalizeGoal(goal) {
+  return {
+    ...goal,
+    category: goal.category || "未分類",
+    createdAt: goal.createdAt || toISO(today),
+  };
 }
 
 function saveState() {
@@ -153,6 +164,7 @@ function render() {
   renderCalendar();
   renderToday();
   renderSelectors();
+  renderCategoryOptions();
   renderScreenTabs();
   renderOnboarding();
   renderNextAction();
@@ -179,15 +191,24 @@ function renderGoals() {
     const done = state.scheduled.filter((item) => item.goalId === goal.id && item.done).length;
     const total = state.scheduled.filter((item) => item.goalId === goal.id).length;
     const percent = total ? Math.round((done / total) * 100) : 0;
+    const daysLeft = daysBetween(today, goal.deadline);
+    const startLabel = formatDate(goal.createdAt);
+    const deadlineLabel = formatDate(goal.deadline);
+    const paceLabel = total ? `${done}/${total} 完了` : "まず1件予定化";
+    const deadlineTone = daysLeft >= 0 ? `あと${daysLeft}日` : `${Math.abs(daysLeft)}日経過`;
     const card = document.createElement("article");
     card.className = `goal-card ${goal.id === selectedGoalId ? "active" : ""}`;
     card.innerHTML = `
       <div class="goal-card-head">
         <button type="button" class="goal-select">
           <span class="goal-title"><span>${escapeHtml(goal.name)}</span><span class="tag">${escapeHtml(goal.category)}</span></span>
-          <p class="goal-meta">期限 ${formatDate(goal.deadline)}・${done}/${total} 完了</p>
+          <p class="goal-meta">開始 ${startLabel}・期限 ${deadlineLabel}・${escapeHtml(deadlineTone)}</p>
         </button>
         ${trashButton("目標を削除")}
+      </div>
+      <div class="goal-stats">
+        <span>${escapeHtml(paceLabel)}</span>
+        <span>進み具合 ${percent}%</span>
       </div>
       <div class="progress-track"><div class="progress-fill" style="width: ${percent}%"></div></div>
     `;
@@ -238,7 +259,7 @@ function renderTaskBank() {
           : ""
       }
       <div class="bank-task-actions">
-        <button class="mini-button" type="button" data-action="today">今日へ</button>
+        <button class="mini-button" type="button" data-action="today">今日に追加</button>
         <button class="mini-button" type="button" data-action="edit">${editingTaskId === task.id ? "閉じる" : "編集"}</button>
         ${trashButton("保存タスクを削除")}
       </div>
@@ -599,11 +620,20 @@ function renderSelectors() {
   els.monthView.classList.toggle("active", viewMode === "month");
   els.weekView.setAttribute("aria-pressed", String(viewMode === "week"));
   els.monthView.setAttribute("aria-pressed", String(viewMode === "month"));
-  els.todayPeriod.textContent = "今日へ";
+  els.todayPeriod.textContent = "今日に戻る";
   const todayIsVisible = isTodayVisibleInSchedule();
   els.todayPeriod.classList.toggle("needs-attention", !todayIsVisible);
-  els.todayPeriod.setAttribute("aria-label", todayIsVisible ? "今日を表示中" : "今日へ戻る");
-  els.todayPeriod.title = todayIsVisible ? "今日を表示中" : "今日へ戻る";
+  els.todayPeriod.setAttribute("aria-label", todayIsVisible ? "今日を表示中" : "今日に戻る");
+  els.todayPeriod.title = todayIsVisible ? "今日を表示中" : "今日に戻る";
+}
+
+function renderCategoryOptions() {
+  if (!els.categoryOptions) return;
+  const categories = new Set(["筋トレ", "勉強", "仕事", "健康", "習慣"]);
+  state.goals.forEach((goal) => {
+    if (goal.category) categories.add(goal.category);
+  });
+  els.categoryOptions.innerHTML = [...categories].map((category) => `<option value="${escapeHtml(category)}"></option>`).join("");
 }
 
 function isTodayVisibleInSchedule() {
@@ -659,7 +689,7 @@ function getNextAction(todaysItems, todaysDone) {
   if (!todaysItems.length) {
     return {
       title: "今日やることを追加",
-      body: "保存タスクを今日に入れると、予定ではなく行動に変わります。タスク画面の「今日へ」からすぐ追加できます。",
+      body: "保存タスクを今日に入れると、予定ではなく行動に変わります。タスク画面の「今日に追加」からすぐ追加できます。",
       button: "スケジュールで追加",
       action: "openTasks",
       buddyTitle: "今日に落とす",
@@ -719,6 +749,9 @@ function renderSummary() {
 
 function renderChart() {
   const ctx = els.chart.getContext("2d");
+  const displayWidth = Math.round(els.chart.parentElement?.clientWidth || els.chart.clientWidth || 760);
+  els.chart.width = Math.max(320, displayWidth - 2);
+  els.chart.height = 260;
   const width = els.chart.width;
   const height = els.chart.height;
   ctx.clearRect(0, 0, width, height);
@@ -734,24 +767,27 @@ function renderChart() {
     return state.scheduled.filter((item) => item.date === iso && item.done && (!selectedGoalId || item.goalId === selectedGoalId)).length;
   });
   const max = Math.max(1, ...values);
-  const padding = 34;
-  const barWidth = (width - padding * 2) / values.length - 10;
+  const paddingX = width < 420 ? 22 : 34;
+  const paddingTop = 30;
+  const paddingBottom = 38;
+  const gap = width < 420 ? 6 : 10;
+  const barWidth = Math.max(14, (width - paddingX * 2 - gap * (values.length - 1)) / values.length);
   ctx.strokeStyle = "#dfe3da";
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(padding, height - padding);
-  ctx.lineTo(width - padding + 10, height - padding);
+  ctx.moveTo(paddingX, height - paddingBottom);
+  ctx.lineTo(width - paddingX, height - paddingBottom);
   ctx.stroke();
   values.forEach((value, index) => {
-    const x = padding + index * (barWidth + 10) + 8;
-    const barHeight = ((height - padding * 2) * value) / max;
-    const y = height - padding - barHeight;
+    const x = paddingX + index * (barWidth + gap);
+    const barHeight = ((height - paddingTop - paddingBottom) * value) / max;
+    const y = height - paddingBottom - barHeight;
     ctx.fillStyle = index === values.length - 1 ? "#146c63" : "#2f69c8";
     ctx.fillRect(x, y, barWidth, barHeight || 3);
     ctx.fillStyle = "#6b7066";
-    ctx.font = "12px system-ui";
+    ctx.font = `${width < 420 ? 10 : 12}px system-ui`;
     ctx.textAlign = "center";
-    ctx.fillText(`${days[index].getMonth() + 1}/${days[index].getDate()}`, x + barWidth / 2, height - 12);
+    ctx.fillText(`${days[index].getMonth() + 1}/${days[index].getDate()}`, x + barWidth / 2, height - 14);
     ctx.fillText(value, x + barWidth / 2, Math.max(18, y - 8));
   });
 }
@@ -815,7 +851,7 @@ function renderGoalReport() {
   els.goalReport.innerHTML = "";
   const head = document.createElement("div");
   head.className = "report-head";
-  head.innerHTML = "<span>目標</span><span>完了</span><span>達成率</span><span>進み具合</span>";
+  head.innerHTML = "<span>目標</span><span>開始</span><span>記録</span><span>進み具合</span>";
   els.goalReport.append(head);
 
   if (!state.goals.length) {
@@ -827,13 +863,21 @@ function renderGoalReport() {
     const items = state.scheduled.filter((item) => item.goalId === goal.id);
     const done = items.filter((item) => item.done).length;
     const rate = items.length ? Math.round((done / items.length) * 100) : 0;
+    const daysActive = Math.max(1, daysBetween(goal.createdAt, today) + 1);
+    const daysLeft = daysBetween(today, goal.deadline);
+    const progressText = items.length ? `${done}/${items.length}` : "未予定";
+    const startText = `${formatDate(goal.createdAt)}から${daysActive}日目`;
+    const supportText = daysLeft >= 0 ? `期限まであと${daysLeft}日` : `期限から${Math.abs(daysLeft)}日`;
     const row = document.createElement("div");
     row.className = "report-row";
     row.innerHTML = `
       <div class="report-title"><span>${escapeHtml(goal.name)}</span></div>
-      <span>${done}/${items.length}</span>
-      <span class="report-rate">${rate}%</span>
-      <div class="report-progress" aria-label="${escapeHtml(goal.name)}の達成率 ${rate}%"><span style="width: ${rate}%"></span></div>
+      <span class="report-start">${escapeHtml(startText)}</span>
+      <span class="report-rate">${escapeHtml(progressText)}</span>
+      <div class="report-progress-cell">
+        <div class="report-progress" aria-label="${escapeHtml(goal.name)}の達成率 ${rate}%"><span style="width: ${rate}%"></span></div>
+        <span class="report-support">${escapeHtml(supportText)}</span>
+      </div>
     `;
     els.goalReport.append(row);
   });
@@ -1094,6 +1138,14 @@ function formatMonthTitle(date) {
   return `${date.getFullYear()}年 ${date.getMonth() + 1}月`;
 }
 
+function daysBetween(start, end) {
+  const startDate = typeof start === "string" ? new Date(`${start}T00:00:00`) : start;
+  const endDate = typeof end === "string" ? new Date(`${end}T00:00:00`) : end;
+  const startMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const endMidnight = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  return Math.round((endMidnight - startMidnight) / 86400000);
+}
+
 function updateDurationInput() {
   const input = els.taskForm.elements.namedItem("minutes");
   const unit = els.taskForm.elements.namedItem("durationUnit").value;
@@ -1135,6 +1187,7 @@ els.openTaskDialog.addEventListener("click", () => {
 
 function openGoalDialog() {
   els.goalForm.reset();
+  els.goalForm.elements.namedItem("createdAt").value = toISO(today);
   els.goalForm.elements.namedItem("deadline").value = addDays(today, 30).toISOString().slice(0, 10);
   els.goalDialog.showModal();
 }
@@ -1145,7 +1198,8 @@ els.goalForm.addEventListener("submit", (event) => {
   const goal = {
     id: crypto.randomUUID(),
     name: data.get("name").trim(),
-    category: data.get("category"),
+    category: data.get("category").trim() || "未分類",
+    createdAt: data.get("createdAt"),
     deadline: data.get("deadline"),
     note: data.get("note").trim(),
   };
@@ -1334,7 +1388,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260519-handleweek")
+      .register("./sw.js?v=20260520-homegoals")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");

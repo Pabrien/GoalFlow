@@ -585,7 +585,7 @@ button {
 .report-row,
 .report-head {
   display: grid;
-  grid-template-columns: minmax(160px, 1.5fr) 80px 80px minmax(130px, 1fr);
+  grid-template-columns: minmax(160px, 1.45fr) minmax(116px, 0.9fr) 72px minmax(150px, 1fr);
   gap: 10px;
   align-items: center;
 }
@@ -617,6 +617,20 @@ button {
 
 .report-rate {
   font-weight: 900;
+}
+
+.report-start,
+.report-support {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.report-progress-cell {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
 }
 
 .report-progress {
@@ -791,12 +805,36 @@ body[data-active-screen="today"] .insights {
   font-weight: 850;
 }
 
+.goal-title span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .goal-meta,
 .task-meta {
   margin: 6px 0 0;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.goal-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.goal-stats span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #f2f5ef;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
 }
 
 .progress-track {
