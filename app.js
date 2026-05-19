@@ -11,6 +11,7 @@ let highlightedScheduleDate = "";
 let highlightedScheduleTimer = null;
 let activeTimeEditId = "";
 let activeScheduleControlId = "";
+let armedTaskDragId = "";
 const screenOrder = ["home", "goals", "schedule", "today"];
 
 const els = {
@@ -230,7 +231,7 @@ function renderTaskBank() {
   tasks.forEach((task) => {
     const goal = findGoal(task.goalId);
     const item = document.createElement("article");
-    item.className = "bank-task";
+    item.className = `bank-task ${armedTaskDragId === task.id ? "armed" : ""}`;
     item.draggable = true;
     item.dataset.taskId = task.id;
     item.innerHTML = `
@@ -283,6 +284,13 @@ function createDragPreview(task, goal) {
 
 function startTouchScheduleDrag(event, task, goal, item) {
   if (event.pointerType === "mouse" || event.target.closest("button")) return;
+  const isArmed = armedTaskDragId === task.id;
+  if (!isArmed) {
+    armedTaskDragId = task.id;
+    renderTaskBank();
+    return;
+  }
+  event.preventDefault();
   const startX = event.clientX;
   const startY = event.clientY;
   let didStart = false;
@@ -324,7 +332,7 @@ function startTouchScheduleDrag(event, task, goal, item) {
     const deltaY = moveEvent.clientY - startY;
     if (!didStart && Math.hypot(deltaX, deltaY) > 12) {
       window.clearTimeout(pressTimer);
-      cleanup();
+      startDrag(moveEvent.clientX, moveEvent.clientY);
       return;
     }
     if (!didStart) return;
@@ -364,11 +372,14 @@ function startTouchScheduleDrag(event, task, goal, item) {
     const date = landingTarget?.dataset.date;
     const snappedTime = landingTarget ? getTimeFromPoint(upEvent.clientY, landingTarget) : "";
     cleanup();
-    if (date) scheduleTask(task.id, date, snappedTime);
+    if (date) {
+      armedTaskDragId = "";
+      scheduleTask(task.id, date, snappedTime);
+    }
   };
   const onCancel = () => cleanup();
 
-  const pressTimer = window.setTimeout(() => startDrag(startX, startY), 260);
+  const pressTimer = window.setTimeout(() => startDrag(startX, startY), 90);
   document.addEventListener("pointermove", onMove);
   document.addEventListener("pointerup", onUp);
   document.addEventListener("pointercancel", onCancel);
@@ -1419,7 +1430,7 @@ async function showNotification(title, body) {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260519-dragcal")
+      .register("./sw.js?v=20260519-armeddrag")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");

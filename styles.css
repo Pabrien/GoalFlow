@@ -884,6 +884,12 @@ body.is-scheduling .day-column {
   display: none;
 }
 
+.bank-task.armed {
+  border-color: rgba(29, 127, 95, 0.48);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px rgba(29, 127, 95, 0.18), 0 10px 24px rgba(29, 127, 95, 0.12);
+}
+
 .drag-preview {
   position: fixed;
   top: -1000px;
@@ -2379,30 +2385,25 @@ dialog {
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .task-bank {
-    display: flex;
-    gap: 6px;
-    margin-top: 6px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
+    gap: 8px;
+    margin-top: 8px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .bank-task {
-    flex: 0 0 108px;
-    flex-basis: 108px;
-    padding: 6px;
-    scroll-snap-align: start;
-    touch-action: pan-x;
+    padding: 8px;
+    touch-action: pan-y;
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .bank-task .task-title {
-    font-size: 11px;
-    line-height: 1.15;
+    font-size: 12px;
+    line-height: 1.2;
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .bank-task-actions {
-    display: none;
+    display: flex;
   }
 
   body[data-active-screen="schedule"] .bank-task .task-title {

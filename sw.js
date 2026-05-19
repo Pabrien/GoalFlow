@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v8-20260519-dragcal";
+const cacheName = "goalflow-v9-20260519-armeddrag";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260519-dragcal",
-  "./app.js?v=20260519-dragcal",
+  "./styles.css?v=20260519-armeddrag",
+  "./app.js?v=20260519-armeddrag",
   "./manifest.webmanifest",
   "./icons/goalflow-icon-512.png",
   "./icons/goalflow-icon.svg",
