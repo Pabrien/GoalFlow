@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v11-20260519-directdrag";
+const cacheName = "goalflow-v12-20260519-datesonly";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260519-directdrag",
-  "./app.js?v=20260519-directdrag",
+  "./styles.css?v=20260519-datesonly",
+  "./app.js?v=20260519-datesonly",
   "./manifest.webmanifest",
   "./icons/goalflow-icon-512.png",
   "./icons/goalflow-icon.svg",

@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260519-directdrag" />
+    <link rel="stylesheet" href="./styles.css?v=20260519-datesonly" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -29,7 +29,6 @@
           <p class="product-line">目標から逆算して、今日やることへ落とし込む。</p>
         </div>
         <div class="topbar-actions">
-          <button class="notify-button" id="notifyButton" type="button">通知を有効化</button>
           <div class="save-status" id="saveStatus" aria-live="polite">自動保存</div>
         </div>
       </header>
@@ -268,16 +267,6 @@
               <option value="hours">時間</option>
             </select>
           </label>
-          <label>
-            リマインド
-            <select name="reminder">
-              <option value="なし">なし</option>
-              <option value="10分前">10分前</option>
-              <option value="30分前">30分前</option>
-              <option value="朝・昼・夜">朝・昼・夜</option>
-              <option value="毎時間">毎時間</option>
-            </select>
-          </label>
         </div>
         <button class="primary-button" type="submit">保存</button>
       </form>
@@ -298,6 +287,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script defer src="./app.js?v=20260519-directdrag"></script>
+    <script defer src="./app.js?v=20260519-datesonly"></script>
   </body>
 </html>

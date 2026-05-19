@@ -9,7 +9,6 @@ let activeScreen = "home";
 let highlightedCompletionId = "";
 let highlightedScheduleDate = "";
 let highlightedScheduleTimer = null;
-let activeTimeEditId = "";
 let activeScheduleControlId = "";
 let editingTaskId = "";
 const screenOrder = ["home", "goals", "schedule", "today"];
@@ -53,7 +52,6 @@ const els = {
   emptyStart: document.querySelector("#emptyStart"),
   emptyCreateGoal: document.querySelector("#emptyCreateGoal"),
   saveStatus: document.querySelector("#saveStatus"),
-  notifyButton: document.querySelector("#notifyButton"),
   launchScreen: document.querySelector("#launchScreen"),
   nextActionTitle: document.querySelector("#nextActionTitle"),
   nextActionBody: document.querySelector("#nextActionBody"),
@@ -98,19 +96,19 @@ function seedState() {
     },
   ];
   const tasks = [
-    { id: crypto.randomUUID(), goalId: goals[0].id, title: "胸・肩トレ", minutes: 70, durationValue: 70, durationUnit: "minutes", reminder: "30分前" },
-    { id: crypto.randomUUID(), goalId: goals[0].id, title: "フォーム動画チェック", minutes: 15, durationValue: 15, durationUnit: "minutes", reminder: "10分前" },
-    { id: crypto.randomUUID(), goalId: goals[1].id, title: "英語ニュース 1本", minutes: 20, durationValue: 20, durationUnit: "minutes", reminder: "朝・昼・夜" },
-    { id: crypto.randomUUID(), goalId: goals[1].id, title: "単語レビュー 30個", minutes: 15, durationValue: 15, durationUnit: "minutes", reminder: "毎時間" },
+    { id: crypto.randomUUID(), goalId: goals[0].id, title: "胸・肩トレ", minutes: 70, durationValue: 70, durationUnit: "minutes" },
+    { id: crypto.randomUUID(), goalId: goals[0].id, title: "フォーム動画チェック", minutes: 15, durationValue: 15, durationUnit: "minutes" },
+    { id: crypto.randomUUID(), goalId: goals[1].id, title: "英語ニュース 1本", minutes: 20, durationValue: 20, durationUnit: "minutes" },
+    { id: crypto.randomUUID(), goalId: goals[1].id, title: "単語レビュー 30個", minutes: 15, durationValue: 15, durationUnit: "minutes" },
   ];
   return {
     goals,
     tasks,
     scheduled: [
-      makeSchedule(tasks[0], dates[1], "19:00", true),
-      makeSchedule(tasks[2], dates[2], "08:00", false),
-      makeSchedule(tasks[3], dates[3], "21:30", false),
-      makeSchedule(tasks[0], dates[5], "10:00", false),
+      makeSchedule(tasks[0], dates[1], true),
+      makeSchedule(tasks[2], dates[2], false),
+      makeSchedule(tasks[3], dates[3], false),
+      makeSchedule(tasks[0], dates[5], false),
     ],
   };
 }
@@ -144,7 +142,6 @@ function saveState() {
 
 function render() {
   renderFileWarning();
-  renderNotificationState();
   document.body.dataset.viewMode = viewMode;
   document.body.dataset.activeScreen = activeScreen;
   document.body.dataset.hasGoals = String(state.goals.length > 0);
@@ -169,24 +166,6 @@ function render() {
 function renderFileWarning() {
   if (!els.fileWarning) return;
   els.fileWarning.hidden = window.location.protocol !== "file:";
-}
-
-function renderNotificationState() {
-  if (!els.notifyButton) return;
-  if (!("Notification" in window)) {
-    els.notifyButton.textContent = "通知非対応";
-    els.notifyButton.disabled = true;
-    return;
-  }
-  if (Notification.permission === "granted") {
-    els.notifyButton.textContent = "通知ON";
-    els.notifyButton.classList.add("enabled");
-    els.notifyButton.disabled = false;
-    return;
-  }
-  els.notifyButton.textContent = Notification.permission === "denied" ? "通知ブロック中" : "通知を有効化";
-  els.notifyButton.classList.remove("enabled");
-  els.notifyButton.disabled = Notification.permission === "denied";
 }
 
 function renderGoals() {
@@ -247,7 +226,6 @@ function renderTaskBank() {
                 <label>時間<input name="durationValue" type="number" min="1" max="240" step="1" value="${escapeHtml(task.durationValue ?? task.minutes ?? 30)}" /></label>
                 <label>単位<select name="durationUnit">${durationUnitOptions(task.durationUnit ?? "minutes")}</select></label>
               </div>
-              <label>リマインド<select name="reminder">${reminderOptions(task.reminder)}</select></label>
               <div class="task-edit-actions">
                 <button class="mini-button" type="submit">保存</button>
                 <button class="mini-button" type="button" data-action="close-edit">閉じる</button>
@@ -317,12 +295,6 @@ function durationUnitOptions(selectedUnit) {
     <option value="minutes" ${selectedUnit === "minutes" ? "selected" : ""}>分</option>
     <option value="hours" ${selectedUnit === "hours" ? "selected" : ""}>時間</option>
   `;
-}
-
-function reminderOptions(selectedReminder = "なし") {
-  return ["なし", "10分前", "30分前", "毎時間", "朝・昼・夜"]
-    .map((value) => `<option value="${escapeHtml(value)}" ${value === selectedReminder ? "selected" : ""}>${escapeHtml(value)}</option>`)
-    .join("");
 }
 
 function createDragPreview(task, goal) {
@@ -414,10 +386,9 @@ function startTouchScheduleDrag(event, task, goal, item) {
     onMove(upEvent);
     const landingTarget = currentTarget ?? getScheduleColumnFromPoint(upEvent.clientX, upEvent.clientY);
     const date = landingTarget?.dataset.date;
-    const snappedTime = landingTarget ? getTimeFromPoint(upEvent.clientY, landingTarget) : "";
     cleanup();
     if (date) {
-      scheduleTask(task.id, date, snappedTime);
+      scheduleTask(task.id, date);
     }
   };
   const onCancel = () => cleanup();
@@ -463,14 +434,13 @@ function renderCalendar() {
     column.addEventListener("drop", (event) => {
       event.preventDefault();
       document.body.classList.remove("is-scheduling");
-      const snappedTime = getTimeFromPoint(event.clientY, column);
       clearDropTargets(column);
       const scheduledId = event.dataTransfer.getData("application/x-goalflow-scheduled");
       if (scheduledId) {
-        moveScheduledTask(scheduledId, iso, snappedTime);
+        moveScheduledTask(scheduledId, iso);
         return;
       }
-      scheduleTask(event.dataTransfer.getData("text/plain"), iso, snappedTime);
+      scheduleTask(event.dataTransfer.getData("text/plain"), iso);
     });
     column.addEventListener("click", (event) => {
       if ((viewMode !== "month" && !isCompactScheduleLayout()) || document.body.classList.contains("is-scheduling") || event.target.closest(".scheduled-task")) return;
@@ -478,79 +448,23 @@ function renderCalendar() {
     });
     const list = column.querySelector(".day-tasks");
     const scheduled = state.scheduled.filter((item) => item.date === iso && (!selectedGoalId || item.goalId === selectedGoalId));
-    if (viewMode === "week" && !isCompactScheduleLayout()) {
-      renderTimeSlots(list, scheduled);
-    } else if (scheduled.length) {
+    if (scheduled.length) {
       scheduled.forEach((item) => list.append(scheduledElement(item, viewMode === "month")));
     }
     els.calendarGrid.append(column);
   });
 }
 
-function renderTimeSlots(list, scheduled) {
-  list.classList.add("time-grid");
-  const grouped = scheduled.reduce((map, item) => {
-    const hour = parseHour(item.time);
-    if (!map.has(hour)) map.set(hour, []);
-    map.get(hour).push(item);
-    return map;
-  }, new Map());
-
-  for (let hour = 0; hour < 24; hour += 1) {
-    const slot = document.createElement("div");
-    slot.className = "time-slot";
-    slot.dataset.hour = String(hour);
-    slot.innerHTML = `
-      <span class="time-slot-label">${formatHourLabel(hour)}</span>
-      <div class="slot-items"></div>
-    `;
-    const items = grouped.get(hour) ?? [];
-    items
-      .sort((a, b) => a.time.localeCompare(b.time))
-      .forEach((item) => slot.querySelector(".slot-items").append(scheduledElement(item, true)));
-    list.append(slot);
-  }
-}
-
 function setColumnDropTarget(column, clientY) {
   column.classList.add("drop-target");
-  column.querySelectorAll(".time-slot.slot-target").forEach((slot) => slot.classList.remove("slot-target"));
-  getSlotFromPoint(clientY, column)?.classList.add("slot-target");
 }
 
 function clearDropTargets(column) {
   column.classList.remove("drop-target");
-  column.querySelectorAll(".time-slot.slot-target").forEach((slot) => slot.classList.remove("slot-target"));
 }
 
 function getScheduleColumnFromPoint(clientX, clientY) {
   return document.elementFromPoint(clientX, clientY)?.closest(".day-column");
-}
-
-function getSlotFromPoint(clientY, column) {
-  if (viewMode !== "week" || isCompactScheduleLayout()) return null;
-  const slots = [...column.querySelectorAll(".time-slot")];
-  if (!slots.length) return null;
-  return slots.find((slot) => {
-    const rect = slot.getBoundingClientRect();
-    return clientY >= rect.top && clientY <= rect.bottom;
-  }) ?? slots[clientY < slots[0].getBoundingClientRect().top ? 0 : slots.length - 1];
-}
-
-function getTimeFromPoint(clientY, column) {
-  const slot = getSlotFromPoint(clientY, column);
-  if (!slot) return "";
-  return `${String(Number(slot.dataset.hour)).padStart(2, "0")}:00`;
-}
-
-function parseHour(time) {
-  const hour = Number(String(time || "00:00").split(":")[0]);
-  if (Number.isNaN(hour)) return 0;
-  return Math.max(0, Math.min(23, hour));
-}
-
-function formatHourLabel(hour) {
-  return `${String(hour).padStart(2, "0")}:00`;
 }
 
 function isCompactScheduleLayout() {
@@ -569,28 +483,19 @@ function getCompactMonthDays(date) {
 function scheduledElement(item, isCompact = false) {
   const task = state.tasks.find((candidate) => candidate.id === item.taskId) ?? item;
   const goal = findGoal(item.goalId);
-  const isEditingTime = activeTimeEditId === item.id;
   const node = document.createElement("article");
   node.className = `scheduled-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""} ${
-    item.id === activeScheduleControlId || isEditingTime ? "active" : ""
+    item.id === activeScheduleControlId ? "active" : ""
   }`;
   node.draggable = true;
   node.tabIndex = 0;
   node.dataset.scheduledId = item.id;
   node.innerHTML = `
-    ${taskMarkup({ ...task, reminder: item.reminder, minutes: item.minutes }, goal, item.time, isCompact)}
+    ${taskMarkup({ ...task, minutes: item.minutes }, goal, isCompact)}
     <div class="task-actions">
       <button class="mini-button" type="button" data-action="done">${item.done ? "戻す" : "完了"}</button>
-      <button class="mini-button time-button" type="button" data-action="time" data-editing="${isEditingTime}" aria-label="開始時刻を変更">${
-        isEditingTime ? "閉じる" : "時刻変更"
-      }</button>
       ${trashButton("予定から削除")}
     </div>
-    ${
-      isEditingTime
-        ? `<label class="time-editor">開始時刻<input type="time" value="${escapeHtml(item.time)}" data-time-editor="${escapeHtml(item.id)}" /></label>`
-        : ""
-    }
   `;
   node.addEventListener("click", (event) => {
     if (event.target.closest("button, input")) return;
@@ -603,7 +508,6 @@ function scheduledElement(item, isCompact = false) {
       return;
     }
     activeScheduleControlId = "";
-    activeTimeEditId = "";
     document.body.classList.add("is-scheduling");
     node.classList.add("dragging");
     vibrate(6);
@@ -623,20 +527,6 @@ function scheduledElement(item, isCompact = false) {
   node.querySelector('[data-action="done"]').addEventListener("click", () => {
     toggleScheduledDone(item);
   });
-  node.querySelector('[data-action="time"]').addEventListener("click", () => {
-    activeTimeEditId = isEditingTime ? "" : item.id;
-    render();
-    focusActiveTimeEditor();
-  });
-  const timeInput = node.querySelector("[data-time-editor]");
-  timeInput?.addEventListener("change", () => updateScheduledTime(item, timeInput.value));
-  timeInput?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") updateScheduledTime(item, timeInput.value);
-    if (event.key === "Escape") {
-      activeTimeEditId = "";
-      render();
-    }
-  });
   node.querySelector('[data-action="delete"]').addEventListener("click", () => deleteScheduledItem(item));
   return node;
 }
@@ -650,14 +540,14 @@ function renderToday() {
     return;
   }
   items
-    .sort((a, b) => a.time.localeCompare(b.time))
+    .sort((a, b) => a.title.localeCompare(b.title, "ja"))
     .forEach((item) => {
       const task = state.tasks.find((candidate) => candidate.id === item.taskId) ?? item;
       const goal = findGoal(item.goalId);
       const node = document.createElement("article");
       node.className = `today-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""}`;
       node.innerHTML = `
-        ${taskMarkup({ ...task, reminder: item.reminder, minutes: item.minutes }, goal, item.time)}
+        ${taskMarkup({ ...task, minutes: item.minutes }, goal)}
         <div class="task-actions">
           <button class="mini-button" type="button" data-action="done">${item.done ? "戻す" : "完了"}</button>
           ${trashButton("今日の予定から削除")}
@@ -956,11 +846,11 @@ function drawEmptyCanvas(ctx, width, height, text) {
   ctx.fillText(text, width / 2, height / 2);
 }
 
-function taskMarkup(task, goal, time = "", isCompact = false) {
+function taskMarkup(task, goal, isCompact = false) {
   const duration = formatDuration(task);
-  const meta = isCompact ? `${goal?.name ?? "未設定"}・${duration}` : `${goal?.name ?? "未設定"}・${duration}・通知 ${task.reminder}`;
+  const meta = isCompact ? `${goal?.name ?? "未設定"}` : `${goal?.name ?? "未設定"}・${duration}`;
   return `
-    <div class="task-title"><span>${escapeHtml(task.title)}</span>${time ? `<span>${escapeHtml(time)}</span>` : ""}</div>
+    <div class="task-title"><span>${escapeHtml(task.title)}</span></div>
     <p class="task-meta">${escapeHtml(meta)}</p>
   `;
 }
@@ -998,7 +888,6 @@ function deleteSavedTask(task) {
 
 function deleteScheduledItem(item) {
   state.scheduled = state.scheduled.filter((candidate) => candidate.id !== item.id);
-  if (activeTimeEditId === item.id) activeTimeEditId = "";
   if (activeScheduleControlId === item.id) activeScheduleControlId = "";
   showToast("予定から削除しました。");
   render();
@@ -1016,7 +905,6 @@ function saveTaskEdit(event, task) {
   task.durationValue = durationValue;
   task.durationUnit = durationUnit;
   task.minutes = durationUnit === "hours" ? durationValue * 60 : durationValue;
-  task.reminder = data.get("reminder");
   state.scheduled.forEach((item) => {
     if (item.taskId !== task.id) return;
     item.title = task.title;
@@ -1024,7 +912,6 @@ function saveTaskEdit(event, task) {
     item.minutes = task.minutes;
     item.durationValue = task.durationValue;
     item.durationUnit = task.durationUnit;
-    item.reminder = task.reminder;
   });
   selectedGoalId = task.goalId;
   editingTaskId = "";
@@ -1035,7 +922,7 @@ function saveTaskEdit(event, task) {
 function openDayDialog(date) {
   const items = state.scheduled
     .filter((item) => item.date === date && (!selectedGoalId || item.goalId === selectedGoalId))
-    .sort((a, b) => a.time.localeCompare(b.time));
+    .sort((a, b) => a.title.localeCompare(b.title, "ja"));
   els.dayDialogTitle.textContent = `${formatDateWithWeekday(date)}の予定`;
   els.dayDialogList.innerHTML = items.length
     ? items
@@ -1045,7 +932,7 @@ function openDayDialog(date) {
             <article class="day-dialog-item ${item.done ? "done" : ""}">
               <div>
                 <strong>${escapeHtml(item.title)}</strong>
-                <span>${escapeHtml(item.time || "終日")}・${escapeHtml(goal?.name ?? "目標なし")}</span>
+                <span>${escapeHtml(goal?.name ?? "目標なし")}・${escapeHtml(formatDuration(item))}</span>
               </div>
               <button class="mini-button" type="button" data-day-done="${escapeHtml(item.id)}">${item.done ? "戻す" : "完了"}</button>
             </article>
@@ -1069,55 +956,35 @@ function formatDateWithWeekday(dateString) {
   return `${date.getMonth() + 1}/${date.getDate()}（${["日", "月", "火", "水", "木", "金", "土"][date.getDay()]}）`;
 }
 
-function updateScheduledTime(item, value) {
-  if (!/^\d{2}:\d{2}$/.test(value)) return;
-  item.time = value;
-  activeTimeEditId = "";
-  showToast(`開始時刻を${item.time}に変更しました。`);
-  render();
-}
-
-function focusActiveTimeEditor() {
-  window.setTimeout(() => {
-    const input = [...document.querySelectorAll("[data-time-editor]")].find((candidate) => candidate.dataset.timeEditor === activeTimeEditId);
-    input?.focus();
-    input?.showPicker?.();
-  }, 0);
-}
-
-function scheduleTask(taskId, date, time = "") {
+function scheduleTask(taskId, date) {
   const task = state.tasks.find((candidate) => candidate.id === taskId);
   if (!task) return;
-  const startTime = time || suggestTime(date);
-  state.scheduled.push(makeSchedule(task, date, startTime, false));
+  state.scheduled.push(makeSchedule(task, date, false));
   highlightedScheduleDate = date;
   activeScheduleControlId = "";
-  activeTimeEditId = "";
   window.clearTimeout(highlightedScheduleTimer);
   highlightedScheduleTimer = window.setTimeout(() => {
     highlightedScheduleDate = "";
     render();
   }, 720);
   vibrate(date === toISO(today) ? 18 : 10);
-  showToast(date === toISO(today) ? `${startTime}に追加しました。あとは1つ完了するだけです。` : `${startTime}に予定を追加しました。`);
+  showToast(date === toISO(today) ? "今日に追加しました。あとは1つ完了するだけです。" : "予定を追加しました。");
   render();
 }
 
-function moveScheduledTask(scheduledId, date, time = "") {
+function moveScheduledTask(scheduledId, date) {
   const item = state.scheduled.find((candidate) => candidate.id === scheduledId);
   if (!item) return;
   item.date = date;
-  item.time = time || item.time || suggestTime(date);
   highlightedScheduleDate = date;
   activeScheduleControlId = "";
-  activeTimeEditId = "";
   window.clearTimeout(highlightedScheduleTimer);
   highlightedScheduleTimer = window.setTimeout(() => {
     highlightedScheduleDate = "";
     render();
   }, 720);
   vibrate(12);
-  showToast(`${item.time}に移動しました。`);
+  showToast("予定を移動しました。");
   render();
 }
 
@@ -1125,7 +992,7 @@ function vibrate(duration = 8) {
   if (window.navigator?.vibrate) window.navigator.vibrate(duration);
 }
 
-function makeSchedule(task, date, time, done) {
+function makeSchedule(task, date, done) {
   return {
     id: crypto.randomUUID(),
     taskId: task.id,
@@ -1134,16 +1001,9 @@ function makeSchedule(task, date, time, done) {
     minutes: task.minutes,
     durationValue: task.durationValue ?? task.minutes,
     durationUnit: task.durationUnit ?? "minutes",
-    reminder: task.reminder,
     date,
-    time,
     done,
   };
-}
-
-function suggestTime(date) {
-  const count = state.scheduled.filter((item) => item.date === date).length;
-  return ["08:00", "12:30", "19:00", "21:00"][count % 4];
 }
 
 function calcStreak() {
@@ -1297,7 +1157,6 @@ els.taskForm.addEventListener("submit", (event) => {
     minutes: durationUnit === "hours" ? durationValue * 60 : durationValue,
     durationValue,
     durationUnit,
-    reminder: data.get("reminder"),
   });
   selectedGoalId = data.get("goalId");
   els.taskDialog.close();
@@ -1461,46 +1320,10 @@ els.dismissOnboarding.addEventListener("click", () => {
   render();
 });
 
-els.notifyButton?.addEventListener("click", enableNotifications);
-
-async function enableNotifications() {
-  if (!("Notification" in window)) {
-    showToast("この環境では通知に対応していません。");
-    return;
-  }
-  if (window.location.protocol === "file:") {
-    showToast("通知はローカルサーバーかHTTPSで使えます。");
-    return;
-  }
-  const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
-  renderNotificationState();
-  if (permission !== "granted") {
-    showToast("通知が許可されませんでした。");
-    return;
-  }
-  showToast("通知を有効化しました。");
-  showNotification("GoalFlow", "リマインダー通知の準備ができました。");
-}
-
-async function showNotification(title, body) {
-  if (Notification.permission !== "granted") return;
-  const registration = await navigator.serviceWorker?.ready.catch(() => null);
-  if (registration) {
-    registration.showNotification(title, {
-      body,
-      badge: "./icons/goalflow-icon-512.png",
-      icon: "./icons/goalflow-icon-512.png",
-      tag: "goalflow-ready",
-    });
-    return;
-  }
-  new Notification(title, { body, icon: "./icons/goalflow-icon-512.png" });
-}
-
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260519-directdrag")
+      .register("./sw.js?v=20260519-datesonly")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");
