@@ -211,11 +211,14 @@ function renderTaskBank() {
     const goal = findGoal(task.goalId);
     const item = document.createElement("article");
     item.className = `bank-task ${editingTaskId === task.id ? "editing" : ""}`;
-    item.draggable = true;
+    item.draggable = false;
     item.dataset.taskId = task.id;
     let nativeDragging = false;
     item.innerHTML = `
-      ${taskMarkup(task, goal)}
+      <div class="bank-task-main">
+        <span class="task-drag-handle" data-drag-handle draggable="true" role="button" tabindex="0" aria-label="カレンダーへドラッグ"></span>
+        <div class="bank-task-copy">${taskMarkup(task, goal)}</div>
+      </div>
       ${
         editingTaskId === task.id
           ? `
@@ -240,7 +243,8 @@ function renderTaskBank() {
         ${trashButton("保存タスクを削除")}
       </div>
     `;
-    item.addEventListener("dragstart", (event) => {
+    const dragHandle = item.querySelector("[data-drag-handle]");
+    dragHandle.addEventListener("dragstart", (event) => {
       nativeDragging = true;
       event.dataTransfer.setData("text/plain", task.id);
       event.dataTransfer.effectAllowed = "copy";
@@ -252,13 +256,20 @@ function renderTaskBank() {
       event.dataTransfer.setDragImage(preview, 18, 18);
       requestAnimationFrame(() => preview.remove());
     });
-    item.addEventListener("dragend", () => {
+    dragHandle.addEventListener("dragend", () => {
       document.body.classList.remove("is-scheduling");
       document.querySelectorAll(".day-column.drop-target").forEach((column) => clearDropTargets(column));
       item.classList.remove("dragging");
       window.setTimeout(() => {
         nativeDragging = false;
       }, 0);
+    });
+    dragHandle.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      scheduleTask(task.id, toISO(today));
+      activeScreen = "today";
+      render();
     });
     item.addEventListener("pointerdown", (event) => startTouchScheduleDrag(event, task, goal, item));
     item.addEventListener("selectstart", (event) => event.preventDefault());
@@ -308,7 +319,7 @@ function createDragPreview(task, goal) {
 }
 
 function startTouchScheduleDrag(event, task, goal, item) {
-  if (event.pointerType === "mouse" || event.target.closest("button, input, textarea, select")) return;
+  if (event.pointerType === "mouse" || !event.target.closest("[data-drag-handle]")) return;
   event.preventDefault();
   const startX = event.clientX;
   const startY = event.clientY;
@@ -1323,7 +1334,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260519-datesonly")
+      .register("./sw.js?v=20260519-handleweek")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");

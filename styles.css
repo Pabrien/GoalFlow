@@ -816,9 +816,60 @@ body[data-active-screen="today"] .insights {
 .bank-task {
   padding: 11px;
   touch-action: pan-y;
-  cursor: grab;
   transition: opacity 0.16s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, border-color 0.18s ease;
   will-change: transform;
+}
+
+.bank-task-main {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+}
+
+.bank-task-copy {
+  min-width: 0;
+}
+
+.task-drag-handle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 42px;
+  border: 1px solid rgba(20, 108, 99, 0.18);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(20, 108, 99, 0.08), rgba(20, 108, 99, 0.03));
+  cursor: grab;
+  touch-action: none;
+}
+
+.task-drag-handle::before {
+  content: "";
+  width: 14px;
+  height: 18px;
+  border-radius: 4px;
+  background:
+    radial-gradient(circle, var(--accent) 1.6px, transparent 2px) 0 0 / 7px 7px,
+    radial-gradient(circle, var(--accent) 1.6px, transparent 2px) 3.5px 3.5px / 7px 7px;
+  opacity: 0.62;
+}
+
+.task-drag-handle::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-top: 2px solid var(--accent);
+  border-right: 2px solid var(--accent);
+  opacity: 0.72;
+  transform: rotate(45deg);
+}
+
+.task-drag-handle:focus-visible {
+  outline: 3px solid rgba(20, 108, 99, 0.16);
+  outline-offset: 2px;
 }
 
 .bank-task-actions {
@@ -2193,12 +2244,23 @@ dialog {
 
   body[data-active-screen="schedule"] .bank-task {
     min-width: 0;
-    padding: 8px;
-    touch-action: none;
+    padding: 7px;
+    touch-action: pan-y;
     -webkit-touch-callout: none;
     -webkit-user-drag: none;
     -webkit-user-select: none;
     user-select: none;
+  }
+
+  body[data-active-screen="schedule"] .bank-task-main {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  body[data-active-screen="schedule"] .task-drag-handle {
+    width: 28px;
+    height: 36px;
+    border-radius: 7px;
   }
 
   body[data-active-screen="schedule"] .bank-task * {
@@ -2228,8 +2290,8 @@ dialog {
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .bank-task {
-    padding: 8px;
-    touch-action: none;
+    padding: 7px;
+    touch-action: pan-y;
   }
 
   body[data-active-screen="schedule"][data-view-mode="month"] .bank-task .task-title {
@@ -2242,7 +2304,7 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .bank-task .task-title {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   body[data-active-screen="schedule"] .bank-task .task-meta {
@@ -2253,13 +2315,13 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .bank-task-actions {
-    margin-top: 6px;
+    margin-top: 5px;
   }
 
   body[data-active-screen="schedule"] .bank-task .mini-button,
   body[data-active-screen="schedule"] .bank-task .trash-button {
-    min-height: 30px;
-    padding: 0 8px;
+    min-height: 28px;
+    padding: 0 7px;
   }
 
   body[data-active-screen="schedule"] .planner {
@@ -2347,20 +2409,23 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .calendar-grid.week-mode .scheduled-task {
-    display: grid;
-    min-height: 34px;
-    padding: 6px 4px;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
+    display: block;
+    min-height: 30px;
+    padding: 4px 3px;
+    border-left: 3px solid var(--accent);
+    background: #fbfcfa;
   }
 
   body[data-active-screen="schedule"] .calendar-grid.week-mode .scheduled-task .task-title {
-    display: block;
-    font-size: 10px;
-    line-height: 1.15;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 9px;
+    line-height: 1.18;
+    white-space: normal;
   }
 
-  body[data-active-screen="schedule"] .calendar-grid.week-mode .scheduled-task .task-title span:last-child,
   body[data-active-screen="schedule"] .calendar-grid.week-mode .scheduled-task .task-meta {
     display: none;
   }
@@ -2454,6 +2519,13 @@ dialog {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  body[data-active-screen="schedule"] .calendar-grid.week-mode .scheduled-task .task-title span:first-child {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
   }
 
   body[data-active-screen="schedule"] .scheduled-task .task-title span:last-child,
