@@ -419,7 +419,7 @@ function renderCalendar() {
       scheduleTask(event.dataTransfer.getData("text/plain"), iso, snappedTime);
     });
     column.addEventListener("click", (event) => {
-      if (viewMode !== "month" || document.body.classList.contains("is-scheduling") || event.target.closest(".scheduled-task")) return;
+      if ((viewMode !== "month" && !isCompactScheduleLayout()) || document.body.classList.contains("is-scheduling") || event.target.closest(".scheduled-task")) return;
       openDayDialog(iso);
     });
     const list = column.querySelector(".day-tasks");
@@ -1352,7 +1352,7 @@ async function showNotification(title, body) {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260518-todayhint")
+      .register("./sw.js?v=20260519-calviews")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");

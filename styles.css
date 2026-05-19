@@ -2435,7 +2435,7 @@ dialog {
 
   body[data-active-screen="schedule"] .calendar-grid.month-mode.compact-month-mode {
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    width: min(100%, 248px);
+    width: min(100%, 288px);
     gap: 3px;
   }
 
@@ -2460,7 +2460,7 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .calendar-grid.week-mode .day-column {
-    min-height: clamp(82px, 17vh, 118px);
+    min-height: clamp(150px, 28vh, 220px);
   }
 
   body[data-active-screen="schedule"] .day-column.drop-target {
