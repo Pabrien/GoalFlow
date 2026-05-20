@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v20-20260520-darkmode";
+const cacheName = "goalflow-v21-20260520-darkcontrast";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260520-darkmode",
-  "./app.js?v=20260520-darkmode",
+  "./styles.css?v=20260520-darkcontrast",
+  "./app.js?v=20260520-darkcontrast",
   "./manifest.webmanifest",
   "./icons/goalflow-icon-512.png",
   "./icons/goalflow-icon.svg",
