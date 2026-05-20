@@ -666,7 +666,7 @@ button {
 .report-row,
 .report-head {
   display: grid;
-  grid-template-columns: minmax(160px, 1.45fr) minmax(116px, 0.9fr) 72px minmax(150px, 1fr);
+  grid-template-columns: minmax(160px, 1.45fr) minmax(116px, 0.9fr) minmax(82px, 0.55fr) minmax(150px, 1fr);
   gap: 10px;
   align-items: center;
 }
@@ -698,6 +698,7 @@ button {
 
 .report-rate {
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .report-start,
@@ -1064,6 +1065,38 @@ body.is-scheduling .day-column {
   display: flex;
   gap: 6px;
   justify-content: flex-end;
+}
+
+.category-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.category-chip {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(229, 231, 235, 0.95);
+  border-radius: 999px;
+  background: #f7f8fb;
+  color: #5f6673;
+  font-size: 12px;
+  font-weight: 850;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.category-chip:hover {
+  border-color: rgba(29, 127, 95, 0.34);
+  background: #edf8f1;
+  color: var(--accent-strong);
+}
+
+.category-chip.active {
+  border-color: rgba(29, 127, 95, 0.42);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  transform: translateY(-1px);
 }
 
 .drag-preview {

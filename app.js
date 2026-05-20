@@ -13,6 +13,8 @@ let activeScheduleControlId = "";
 let editingTaskId = "";
 let editingGoalId = "";
 let editingScheduledId = "";
+let goalSelectTimer = null;
+let scheduleControlTimer = null;
 const screenOrder = ["home", "goals", "schedule", "today"];
 
 const els = {
@@ -31,6 +33,7 @@ const els = {
   openTaskDialog: document.querySelector("#openTaskDialog"),
   taskGoalSelect: document.querySelector("#taskGoalSelect"),
   categoryOptions: document.querySelector("#categoryOptions"),
+  categoryPicker: document.querySelector("#categoryPicker"),
   goalFilter: document.querySelector("#goalFilter"),
   chart: document.querySelector("#progressChart"),
   completionPie: document.querySelector("#completionPie"),
@@ -215,10 +218,22 @@ function renderGoals() {
       <div class="progress-track"><div class="progress-fill" style="width: ${percent}%"></div></div>
     `;
     card.querySelector(".goal-select").addEventListener("click", () => {
-      selectedGoalId = goal.id;
-      render();
+      window.clearTimeout(goalSelectTimer);
+      goalSelectTimer = window.setTimeout(() => {
+        selectedGoalId = goal.id;
+        render();
+      }, 220);
     });
-    bindDoubleActivate(card.querySelector(".goal-select"), () => openGoalDialog(goal));
+    bindDoubleActivate(card.querySelector(".goal-select"), () => {
+      window.clearTimeout(goalSelectTimer);
+      selectedGoalId = goal.id;
+      if (els.goalDialog.open && editingGoalId === goal.id) {
+        editingGoalId = "";
+        els.goalDialog.close();
+        return;
+      }
+      openGoalDialog(goal);
+    });
     card.querySelector('[data-action="delete"]').addEventListener("click", () => deleteGoal(goal));
     els.goalList.append(card);
   });
@@ -316,6 +331,10 @@ function renderTaskBank() {
       activeScreen = "today";
       render();
     });
+    bindDoubleActivate(item.querySelector(".bank-task-copy"), () => {
+      editingTaskId = editingTaskId === task.id ? "" : task.id;
+      renderTaskBank();
+    });
     item.querySelector("[data-task-edit]")?.addEventListener("submit", (event) => saveTaskEdit(event, task));
     item.querySelector('[data-action="edit"]').addEventListener("click", () => {
       editingTaskId = editingTaskId === task.id ? "" : task.id;
@@ -348,8 +367,11 @@ function bindDoubleActivate(node, callback) {
   let lastTapTime = 0;
   let lastTapX = 0;
   let lastTapY = 0;
-  const canActivate = (event) =>
-    event.target instanceof Element && !event.target.closest("button, input, textarea, select, form");
+  const canActivate = (event) => {
+    if (!(event.target instanceof Element)) return false;
+    const interactive = event.target.closest("button, input, textarea, select, form");
+    return !interactive || interactive === node;
+  };
   node.addEventListener("dblclick", (event) => {
     if (!canActivate(event)) return;
     event.preventDefault();
@@ -592,12 +614,17 @@ function scheduledElement(item, isCompact = false) {
   `;
   node.addEventListener("click", (event) => {
     if (event.target.closest("button, input, textarea, select")) return;
-    activeScheduleControlId = activeScheduleControlId === item.id ? "" : item.id;
-    render();
+    window.clearTimeout(scheduleControlTimer);
+    scheduleControlTimer = window.setTimeout(() => {
+      activeScheduleControlId = activeScheduleControlId === item.id ? "" : item.id;
+      render();
+    }, 180);
   });
   bindDoubleActivate(node, () => {
-    editingScheduledId = item.id;
-    activeScheduleControlId = item.id;
+    window.clearTimeout(scheduleControlTimer);
+    const willEdit = editingScheduledId !== item.id;
+    editingScheduledId = willEdit ? item.id : "";
+    activeScheduleControlId = willEdit ? item.id : "";
     render();
   });
   node.addEventListener("dragstart", (event) => {
@@ -661,7 +688,7 @@ function renderToday() {
         if (event.target.closest("button, input, textarea, select")) return;
       });
       bindDoubleActivate(node, () => {
-        editingScheduledId = item.id;
+        editingScheduledId = editingScheduledId === item.id ? "" : item.id;
         render();
       });
       node.querySelector('[data-action="done"]').addEventListener("click", () => {
@@ -712,12 +739,36 @@ function renderSelectors() {
 }
 
 function renderCategoryOptions() {
-  if (!els.categoryOptions) return;
+  if (!els.categoryOptions && !els.categoryPicker) return;
   const categories = new Set(["筋トレ", "勉強", "仕事", "健康", "習慣"]);
   state.goals.forEach((goal) => {
     if (goal.category) categories.add(goal.category);
   });
-  els.categoryOptions.innerHTML = [...categories].map((category) => `<option value="${escapeHtml(category)}"></option>`).join("");
+  const categoryList = [...categories];
+  if (els.categoryOptions) {
+    els.categoryOptions.innerHTML = categoryList.map((category) => `<option value="${escapeHtml(category)}"></option>`).join("");
+  }
+  renderCategoryPicker(categoryList);
+}
+
+function renderCategoryPicker(categories) {
+  if (!els.categoryPicker) return;
+  const currentCategory = els.goalForm?.elements.namedItem("category")?.value ?? "";
+  els.categoryPicker.innerHTML = categories
+    .map(
+      (category) => `
+        <button class="category-chip ${category === currentCategory ? "active" : ""}" type="button" data-category="${escapeHtml(category)}">
+          ${escapeHtml(category)}
+        </button>
+      `,
+    )
+    .join("");
+  els.categoryPicker.querySelectorAll("[data-category]").forEach((button) => {
+    button.addEventListener("click", () => {
+      els.goalForm.elements.namedItem("category").value = button.dataset.category;
+      renderCategoryPicker(categories);
+    });
+  });
 }
 
 function isTodayVisibleInSchedule() {
@@ -942,7 +993,7 @@ function renderGoalReport() {
   els.goalReport.innerHTML = "";
   const head = document.createElement("div");
   head.className = "report-head";
-  head.innerHTML = "<span>目標</span><span>開始</span><span>記録</span><span>進み具合</span>";
+  head.innerHTML = "<span>目標</span><span>開始</span><span>記録（個）</span><span>進み具合</span>";
   els.goalReport.append(head);
 
   if (!state.goals.length) {
@@ -956,7 +1007,7 @@ function renderGoalReport() {
     const rate = items.length ? Math.round((done / items.length) * 100) : 0;
     const daysActive = Math.max(1, daysBetween(goal.createdAt, today) + 1);
     const daysLeft = daysBetween(today, goal.deadline);
-    const progressText = items.length ? `${done}/${items.length}` : "未予定";
+    const progressText = items.length ? `${done}/${items.length}個` : "未予定";
     const startText = `${formatDate(goal.createdAt)}から${daysActive}日目`;
     const supportText = daysLeft >= 0 ? `期限まであと${daysLeft}日` : `期限から${Math.abs(daysLeft)}日`;
     const row = document.createElement("div");
@@ -1306,6 +1357,7 @@ function openGoalDialog(goal = null) {
   els.goalForm.elements.namedItem("createdAt").value = goal?.createdAt ?? toISO(today);
   els.goalForm.elements.namedItem("deadline").value = goal?.deadline ?? addDays(today, 30).toISOString().slice(0, 10);
   els.goalForm.elements.namedItem("note").value = goal?.note ?? "";
+  renderCategoryOptions();
   els.goalDialog.showModal();
 }
 
@@ -1351,6 +1403,7 @@ els.taskForm.addEventListener("submit", (event) => {
 });
 
 els.taskForm.elements.namedItem("durationUnit").addEventListener("change", updateDurationInput);
+els.goalForm.elements.namedItem("category").addEventListener("input", () => renderCategoryOptions());
 
 document.querySelector("#prevPeriod").addEventListener("click", () => {
   if (isCompactMonthView()) {
@@ -1510,7 +1563,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260520-celebrate")
+      .register("./sw.js?v=20260520-reportedit")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");

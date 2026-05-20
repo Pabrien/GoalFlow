@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260520-celebrate" />
+    <link rel="stylesheet" href="./styles.css?v=20260520-reportedit" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -221,7 +221,7 @@
         </label>
         <label>
           カテゴリ
-          <input name="category" list="categoryOptions" required maxlength="16" placeholder="例：筋トレ、勉強、副業" />
+          <input name="category" required maxlength="16" placeholder="例：筋トレ、勉強、副業" />
           <datalist id="categoryOptions">
             <option value="筋トレ"></option>
             <option value="勉強"></option>
@@ -229,6 +229,7 @@
             <option value="健康"></option>
             <option value="習慣"></option>
           </datalist>
+          <div class="category-picker" id="categoryPicker" aria-label="カテゴリ候補"></div>
         </label>
         <label>
           期限
@@ -292,6 +293,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script defer src="./app.js?v=20260520-celebrate"></script>
+    <script defer src="./app.js?v=20260520-reportedit"></script>
   </body>
 </html>
