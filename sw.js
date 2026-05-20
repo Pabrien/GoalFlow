@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v17-20260520-reportedit";
+const cacheName = "goalflow-v18-20260520-quietactions";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260520-reportedit",
-  "./app.js?v=20260520-reportedit",
+  "./styles.css?v=20260520-quietactions",
+  "./app.js?v=20260520-quietactions",
   "./manifest.webmanifest",
   "./icons/goalflow-icon-512.png",
   "./icons/goalflow-icon.svg",

@@ -873,10 +873,7 @@ body[data-active-screen="today"] .insights {
 }
 
 .goal-card-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 36px;
-  gap: 8px;
-  align-items: start;
+  display: block;
 }
 
 .goal-title,
@@ -1063,8 +1060,34 @@ body.is-scheduling .day-column {
 
 .task-edit-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   justify-content: flex-end;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dialog-actions .primary-button {
+  width: auto;
+  min-width: 120px;
+}
+
+.danger-button {
+  border-color: rgba(209, 92, 92, 0.28);
+  background: #fff4f2;
+  color: #a33b3b;
+}
+
+.danger-button:hover,
+.danger-button:focus-visible {
+  border-color: rgba(209, 92, 92, 0.5);
+  background: #ffe9e4;
+  color: #8e2f2f;
 }
 
 .category-picker {
