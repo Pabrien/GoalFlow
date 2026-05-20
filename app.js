@@ -31,8 +31,14 @@ let pieAnimationFrame = null;
 let taskBankReturnDropBound = false;
 let calendarSize = normalizeCalendarSize(state.meta?.calendarSize);
 let hasPlayedInitialMotion = false;
+let lastAnimatedScreen = "";
 let completionSound = null;
+let focusSound = null;
+let selectSound = null;
 let flowOrbitAnimation = null;
+let interactionAudioBound = false;
+let lastFocusSoundAt = 0;
+let lastFocusSoundTarget = null;
 const screenOrder = ["home", "goals", "schedule", "today"];
 
 const translations = {
@@ -1610,20 +1616,27 @@ function renderSummary() {
   );
 }
 
-function renderChart() {
-  const ctx = els.chart.getContext("2d");
+function prepareCanvas(canvas, height = 260, minWidth = 320) {
+  const ctx = canvas.getContext("2d");
   const displayWidth = Math.round(
-    els.chart.parentElement?.clientWidth || els.chart.clientWidth || 760,
+    canvas.parentElement?.clientWidth || canvas.clientWidth || minWidth,
   );
-  els.chart.width = Math.max(320, displayWidth - 2);
-  els.chart.height = 260;
-  const width = els.chart.width;
-  const height = els.chart.height;
+  const width = Math.max(minWidth, displayWidth - 2);
+  const ratio = Math.min(2, window.devicePixelRatio || 1);
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  return { ctx, width, height, ratio };
+}
+
+function renderChart() {
+  const { ctx, width, height } = prepareCanvas(els.chart, 270, 320);
   if (!state.scheduled.length) {
     window.cancelAnimationFrame(chartAnimationFrame);
-    ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
-    ctx.fillRect(0, 0, width, height);
     drawEmptyCanvas(ctx, width, height, t("chart.empty"));
     return;
   }
@@ -1642,41 +1655,80 @@ function renderChart() {
   });
   const max = Math.max(1, ...values);
   const labels = chartMetricLabels(chartMetric);
-  const paddingX = width < 420 ? 22 : 34;
-  const paddingTop = 30;
-  const paddingBottom = 38;
-  const gap = width < 420 ? 6 : 10;
+  const paddingX = width < 420 ? 24 : 38;
+  const paddingTop = 46;
+  const paddingBottom = 44;
+  const gap = width < 420 ? 8 : 14;
   const barWidth = Math.max(
-    14,
+    16,
     (width - paddingX * 2 - gap * (values.length - 1)) / values.length,
   );
   const draw = (progress) => {
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
+    const bg = ctx.createLinearGradient(0, 0, width, height);
+    bg.addColorStop(0, canvasColor("--canvas-bg", "#fbfcfa"));
+    bg.addColorStop(1, canvasColor("--canvas-bg-soft", "#f3f7f4"));
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, width, height);
+
+    const chartTop = paddingTop;
+    const chartBottom = height - paddingBottom;
     ctx.strokeStyle = canvasColor("--canvas-line", "#dfe3da");
     ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(paddingX, height - paddingBottom);
-    ctx.lineTo(width - paddingX, height - paddingBottom);
-    ctx.stroke();
+    ctx.globalAlpha = 0.55;
+    for (let line = 0; line < 4; line += 1) {
+      const y = chartTop + ((chartBottom - chartTop) * line) / 3;
+      ctx.beginPath();
+      ctx.moveTo(paddingX, y);
+      ctx.lineTo(width - paddingX, y);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
     ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
-    ctx.font = `${width < 420 ? 10 : 12}px system-ui`;
+    ctx.font = `700 ${width < 420 ? 11 : 12}px system-ui`;
     ctx.textAlign = "left";
-    ctx.fillText(labels.caption, paddingX, 18);
+    ctx.fillText(labels.caption, paddingX, 24);
+
     values.forEach((value, index) => {
       const x = paddingX + index * (barWidth + gap);
       const animatedValue = value * progress;
-      const barHeight =
-        ((height - paddingTop - paddingBottom) * animatedValue) / max;
-      const y = height - paddingBottom - barHeight;
-      const radius = Math.min(8, barWidth / 2);
-      ctx.fillStyle =
+      const barHeight = ((chartBottom - chartTop) * animatedValue) / max;
+      const y = chartBottom - Math.max(4, barHeight);
+      const radius = Math.min(12, barWidth / 2);
+      const fill = ctx.createLinearGradient(0, y, 0, chartBottom);
+      if (index === values.length - 1) {
+        fill.addColorStop(0, canvasColor("--accent-strong", "#0b4d45"));
+        fill.addColorStop(1, canvasColor("--accent", "#146c63"));
+      } else {
+        fill.addColorStop(0, canvasColor("--blue", "#2f69c8"));
+        fill.addColorStop(1, canvasColor("--accent", "#146c63"));
+      }
+      ctx.save();
+      ctx.shadowColor =
         index === values.length - 1
-          ? canvasColor("--accent", "#146c63")
-          : canvasColor("--blue", "#2f69c8");
-      roundedRect(ctx, x, y, barWidth, barHeight || 3, radius);
+          ? "rgba(20, 108, 99, 0.22)"
+          : "rgba(47, 105, 200, 0.16)";
+      ctx.shadowBlur = 16;
+      ctx.shadowOffsetY = 8;
+      ctx.fillStyle = fill;
+      roundedRect(ctx, x, y, barWidth, Math.max(4, barHeight), radius);
       ctx.fill();
+      ctx.restore();
+
+      if (index === values.length - 1) {
+        ctx.fillStyle = canvasColor("--yellow", "#f1b93c");
+        ctx.beginPath();
+        ctx.arc(
+          x + barWidth / 2,
+          y + 5,
+          Math.min(4, barWidth / 5),
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+      }
+
       ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
       ctx.font = `${width < 420 ? 10 : 12}px system-ui`;
       ctx.textAlign = "center";
@@ -1691,25 +1743,16 @@ function renderChart() {
         ctx.fillText(
           formatMetricValue(animatedValue, chartMetric),
           x + barWidth / 2,
-          Math.max(18, y - 8),
+          Math.max(36, y - 10),
         );
       }
     });
   };
-  animateCanvas("chart", draw, 620);
+  animateCanvas("chart", draw, 820);
 }
 
 function renderCompletionPie() {
-  const ctx = els.completionPie.getContext("2d");
-  const displayWidth = Math.round(
-    els.completionPie.parentElement?.clientWidth ||
-      els.completionPie.clientWidth ||
-      360,
-  );
-  els.completionPie.width = Math.max(280, displayWidth - 2);
-  els.completionPie.height = 260;
-  const width = els.completionPie.width;
-  const height = els.completionPie.height;
+  const { ctx, width, height } = prepareCanvas(els.completionPie, 270, 280);
   const filteredItems = state.scheduled.filter(
     (item) => !selectedGoalId || item.goalId === selectedGoalId,
   );
@@ -1719,48 +1762,61 @@ function renderCompletionPie() {
   const pending = Math.max(0, total - done);
   const rate = total ? Math.round((done / total) * 100) : 0;
   const centerX = width / 2;
-  const centerY = height / 2 - 4;
-  const radius = Math.min(width, height) * 0.3;
+  const centerY = height / 2 - 6;
+  const radius = Math.min(width, height) * 0.28;
   const start = -Math.PI / 2;
   const doneAngle = total ? (Math.PI * 2 * done) / total : 0;
   const labels = chartMetricLabels(pieMetric);
 
   if (!total) {
     window.cancelAnimationFrame(pieAnimationFrame);
-    ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
-    ctx.fillRect(0, 0, width, height);
     drawEmptyCanvas(ctx, width, height, t("pie.empty"));
     return;
   }
 
   const draw = (progress) => {
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
+    const bg = ctx.createLinearGradient(0, 0, width, height);
+    bg.addColorStop(0, canvasColor("--canvas-bg", "#fbfcfa"));
+    bg.addColorStop(1, canvasColor("--canvas-bg-soft", "#f3f7f4"));
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, width, height);
+
+    ctx.save();
+    ctx.lineWidth = Math.max(18, radius * 0.22);
+    ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
     ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.fillStyle = canvasColor("--canvas-line", "#e4e9df");
-    ctx.fill();
+    ctx.strokeStyle = canvasColor("--canvas-line", "#e4e9df");
+    ctx.stroke();
 
     if (done > 0) {
+      const stroke = ctx.createLinearGradient(
+        centerX - radius,
+        centerY - radius,
+        centerX + radius,
+        centerY + radius,
+      );
+      stroke.addColorStop(0, canvasColor("--accent-strong", "#0b4d45"));
+      stroke.addColorStop(0.72, canvasColor("--accent", "#146c63"));
+      stroke.addColorStop(1, canvasColor("--yellow", "#f1b93c"));
       ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
       ctx.arc(centerX, centerY, radius, start, start + doneAngle * progress);
-      ctx.closePath();
-      ctx.fillStyle = canvasColor("--accent", "#146c63");
-      ctx.fill();
+      ctx.strokeStyle = stroke;
+      ctx.shadowColor = "rgba(20, 108, 99, 0.24)";
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 8;
+      ctx.stroke();
     }
+    ctx.restore();
 
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * 0.58, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, radius * 0.62, 0, Math.PI * 2);
     ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
     ctx.fill();
 
     ctx.fillStyle = canvasColor("--ink", "#20231f");
-    ctx.font = "800 34px system-ui";
+    ctx.font = "850 36px system-ui";
     ctx.textAlign = "center";
     ctx.fillText(`${Math.round(rate * progress)}%`, centerX, centerY + 8);
     ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
@@ -1786,7 +1842,7 @@ function renderCompletionPie() {
       t("pie.pending", { value: formatMetricValue(pending, pieMetric) }),
     );
   };
-  animateCanvas("pie", draw, 680);
+  animateCanvas("pie", draw, 900);
 }
 
 function renderGoalReport() {
@@ -1835,9 +1891,11 @@ function renderGoalReport() {
 
 function drawLegend(ctx, x, y, color, text) {
   ctx.fillStyle = color;
-  ctx.fillRect(x, y - 10, 12, 12);
+  ctx.beginPath();
+  ctx.arc(x + 6, y - 4, 6, 0, Math.PI * 2);
+  ctx.fill();
   ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
-  ctx.font = "12px system-ui";
+  ctx.font = "700 12px system-ui";
   ctx.textAlign = "left";
   ctx.fillText(text, x + 18, y);
 }
@@ -1883,7 +1941,7 @@ function animateCanvas(kind, draw, duration) {
   const start = performance.now();
   const step = (now) => {
     const progress = Math.min(1, (now - start) / duration);
-    draw(easeOutCubic(progress));
+    draw(easeOutQuint(progress));
     if (progress < 1) {
       if (frameKey === "pieAnimationFrame") {
         pieAnimationFrame = window.requestAnimationFrame(step);
@@ -1901,6 +1959,10 @@ function animateCanvas(kind, draw, duration) {
 
 function easeOutCubic(value) {
   return 1 - Math.pow(1 - value, 3);
+}
+
+function easeOutQuint(value) {
+  return 1 - Math.pow(1 - value, 5);
 }
 
 function roundedRect(ctx, x, y, width, height, radius) {
@@ -2119,6 +2181,102 @@ function getGsap() {
   return window.gsap && canUseMotion() ? window.gsap : null;
 }
 
+function bindInteractionAudio() {
+  if (interactionAudioBound) return;
+  interactionAudioBound = true;
+  document.addEventListener("pointerover", (event) => {
+    if (event.pointerType !== "mouse") return;
+    const target = getInteractiveSoundTarget(event.target);
+    if (!target || target.contains(event.relatedTarget)) return;
+    playFocusSound(target);
+  });
+  document.addEventListener("focusin", (event) => {
+    const target = getInteractiveSoundTarget(event.target);
+    if (target) playFocusSound(target);
+  });
+  document.addEventListener("pointerdown", (event) => {
+    const target = getInteractiveSoundTarget(event.target);
+    if (target) playSelectSound();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const target = getInteractiveSoundTarget(event.target);
+    if (target) playSelectSound();
+  });
+}
+
+function getInteractiveSoundTarget(target) {
+  if (
+    !(target instanceof Element) ||
+    document.body.classList.contains("is-scheduling")
+  ) {
+    return null;
+  }
+  return target.closest(
+    "button, select, .goal-select, .bank-task, .scheduled-task, .today-task, .day-column, .category-chip",
+  );
+}
+
+function ensureInteractionSounds() {
+  if (!window.Howl) return false;
+  if (!focusSound) {
+    focusSound = new window.Howl({
+      src: [
+        createToneDataUrl({
+          duration: 0.055,
+          volume: 0.16,
+          tones: [
+            { from: 620, to: 760, gain: 0.7 },
+            { from: 1240, to: 1520, gain: 0.2 },
+          ],
+        }),
+      ],
+      volume: 0.15,
+      preload: true,
+    });
+  }
+  if (!selectSound) {
+    selectSound = new window.Howl({
+      src: [
+        createToneDataUrl({
+          duration: 0.075,
+          volume: 0.17,
+          tones: [
+            { from: 440, to: 520, gain: 0.7 },
+            { from: 880, to: 1040, gain: 0.24 },
+          ],
+        }),
+      ],
+      volume: 0.16,
+      preload: true,
+    });
+  }
+  return true;
+}
+
+function playFocusSound(target) {
+  if (!ensureInteractionSounds()) return;
+  const now = performance.now();
+  if (target === lastFocusSoundTarget && now - lastFocusSoundAt < 260) return;
+  if (now - lastFocusSoundAt < 70) return;
+  lastFocusSoundAt = now;
+  lastFocusSoundTarget = target;
+  try {
+    focusSound.play();
+  } catch {
+    // Browser audio unlock timing varies; interaction should never feel broken.
+  }
+}
+
+function playSelectSound() {
+  if (!ensureInteractionSounds()) return;
+  try {
+    selectSound.play();
+  } catch {
+    // Browser audio unlock timing varies; interaction should never feel broken.
+  }
+}
+
 function pulseElement(node, scale = 1.015) {
   const gsap = getGsap();
   if (!gsap || !node) return;
@@ -2131,6 +2289,7 @@ function pulseElement(node, scale = 1.015) {
 
 function playRenderMotion() {
   const gsap = getGsap();
+  bindInteractionAudio();
   document.body.setAttribute(
     "data-motion-ready",
     [
@@ -2145,28 +2304,35 @@ function playRenderMotion() {
   if (!gsap) return;
   if (!hasPlayedInitialMotion) {
     hasPlayedInitialMotion = true;
+    lastAnimatedScreen = activeScreen;
     gsap.from(".topbar, .screen-tabs, [data-view-panel='home']:not([hidden])", {
       autoAlpha: 0,
-      y: 12,
-      duration: 0.54,
-      ease: "power3.out",
-      stagger: 0.045,
+      y: 10,
+      filter: "blur(6px)",
+      duration: 0.58,
+      ease: "expo.out",
+      stagger: 0.035,
+      clearProps: "filter",
     });
     return;
   }
+  if (lastAnimatedScreen === activeScreen) return;
+  lastAnimatedScreen = activeScreen;
   const visiblePanels = [
     ...document.querySelectorAll("[data-view-panel]"),
   ].filter((node) => !node.hidden && node.offsetParent !== null);
   gsap.fromTo(
     visiblePanels,
-    { autoAlpha: 0.94, y: 5 },
+    { autoAlpha: 0, y: 8, filter: "blur(5px)" },
     {
       autoAlpha: 1,
       y: 0,
-      duration: 0.24,
-      ease: "power2.out",
-      stagger: 0.018,
+      filter: "blur(0px)",
+      duration: 0.36,
+      ease: "expo.out",
+      stagger: 0.025,
       overwrite: "auto",
+      clearProps: "filter",
     },
   );
 }
@@ -2202,23 +2368,65 @@ function playCompletionMotion(itemId) {
     `[data-scheduled-id="${CSS.escape(itemId)}"], .today-task.just-completed`,
   );
   if (item) {
+    const burst = createCompletionBurst();
+    item.append(burst);
     gsap.fromTo(
       item,
-      { y: 4, scale: 0.985 },
+      { y: 5, scale: 0.982 },
       {
         y: 0,
         scale: 1,
-        duration: 0.48,
-        ease: "back.out(1.8)",
+        duration: 0.52,
+        ease: "back.out(1.55)",
         overwrite: "auto",
+      },
+    );
+    gsap.fromTo(
+      burst.querySelector(".completion-ring"),
+      { autoAlpha: 0.8, scale: 0.36 },
+      { autoAlpha: 0, scale: 1.65, duration: 0.72, ease: "power2.out" },
+    );
+    gsap.fromTo(
+      burst.querySelectorAll("i"),
+      { autoAlpha: 1, x: 0, y: 0, scale: 0.6 },
+      {
+        autoAlpha: 0,
+        x: (_, dot) => dot.dataset.x,
+        y: (_, dot) => dot.dataset.y,
+        scale: 1,
+        duration: 0.7,
+        ease: "power3.out",
+        stagger: 0.015,
+        onComplete: () => burst.remove(),
       },
     );
   }
   gsap.fromTo(
     ".today-summary",
-    { scale: 1.01 },
-    { scale: 1, duration: 0.42, ease: "power3.out", overwrite: "auto" },
+    { scale: 1.018, filter: "brightness(1.06)" },
+    {
+      scale: 1,
+      filter: "brightness(1)",
+      duration: 0.55,
+      ease: "expo.out",
+      overwrite: "auto",
+      clearProps: "filter",
+    },
   );
+}
+
+function createCompletionBurst() {
+  const burst = document.createElement("span");
+  burst.className = "completion-burst";
+  burst.innerHTML = `<span class="completion-ring"></span>${Array.from(
+    { length: 8 },
+    (_, index) => {
+      const angle = (Math.PI * 2 * index) / 8 - Math.PI / 2;
+      const distance = index % 2 ? 36 : 28;
+      return `<i style="--i:${index}" data-x="${Math.cos(angle) * distance}" data-y="${Math.sin(angle) * distance}"></i>`;
+    },
+  ).join("")}`;
+  return burst;
 }
 
 function playCompletionSound() {
@@ -2226,8 +2434,18 @@ function playCompletionSound() {
   try {
     if (!completionSound) {
       completionSound = new window.Howl({
-        src: [createCompletionTone()],
-        volume: 0.18,
+        src: [
+          createToneDataUrl({
+            duration: 0.28,
+            volume: 0.18,
+            tones: [
+              { from: 523, to: 659, gain: 0.44 },
+              { from: 784, to: 988, gain: 0.4 },
+              { from: 1046, to: 1318, gain: 0.2 },
+            ],
+          }),
+        ],
+        volume: 0.22,
         preload: true,
       });
     }
@@ -2237,9 +2455,8 @@ function playCompletionSound() {
   }
 }
 
-function createCompletionTone() {
+function createToneDataUrl({ duration, tones, volume = 0.18 }) {
   const sampleRate = 22050;
-  const duration = 0.18;
   const samples = Math.floor(sampleRate * duration);
   const dataSize = samples * 2;
   const buffer = new ArrayBuffer(44 + dataSize);
@@ -2264,9 +2481,18 @@ function createCompletionTone() {
   view.setUint32(40, dataSize, true);
   for (let index = 0; index < samples; index += 1) {
     const t = index / sampleRate;
-    const envelope = Math.sin(Math.PI * Math.min(1, t / duration));
-    const sweep = 660 + 220 * Math.sin(t * 18);
-    const value = Math.sin(Math.PI * 2 * sweep * t) * envelope * 0.28;
+    const attack = Math.min(1, t / 0.012);
+    const release = Math.max(0, 1 - t / duration);
+    const envelope =
+      Math.sin(Math.PI * Math.min(1, t / duration)) * attack * release;
+    const value =
+      tones.reduce((sum, tone) => {
+        const ratio = t / duration;
+        const frequency = tone.from + (tone.to - tone.from) * ratio;
+        return sum + Math.sin(Math.PI * 2 * frequency * t) * tone.gain;
+      }, 0) *
+      envelope *
+      volume;
     view.setInt16(
       44 + index * 2,
       Math.max(-1, Math.min(1, value)) * 32767,
@@ -2867,7 +3093,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260520-motionui2")
+      .register("./sw.js?v=20260521-applefeel")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
