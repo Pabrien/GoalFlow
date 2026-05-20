@@ -216,8 +216,9 @@ function renderGoals() {
     `;
     card.querySelector(".goal-select").addEventListener("click", () => {
       selectedGoalId = goal.id;
-      openGoalDialog(goal);
+      render();
     });
+    bindDoubleActivate(card.querySelector(".goal-select"), () => openGoalDialog(goal));
     card.querySelector('[data-action="delete"]').addEventListener("click", () => deleteGoal(goal));
     els.goalList.append(card);
   });
@@ -340,6 +341,34 @@ function durationUnitOptions(selectedUnit) {
     <option value="minutes" ${selectedUnit === "minutes" ? "selected" : ""}>分</option>
     <option value="hours" ${selectedUnit === "hours" ? "selected" : ""}>時間</option>
   `;
+}
+
+function bindDoubleActivate(node, callback) {
+  if (!node) return;
+  let lastTapTime = 0;
+  let lastTapX = 0;
+  let lastTapY = 0;
+  const canActivate = (event) =>
+    event.target instanceof Element && !event.target.closest("button, input, textarea, select, form");
+  node.addEventListener("dblclick", (event) => {
+    if (!canActivate(event)) return;
+    event.preventDefault();
+    callback(event);
+  });
+  node.addEventListener("pointerup", (event) => {
+    if (event.pointerType === "mouse" || !canActivate(event)) return;
+    const now = Date.now();
+    const distance = Math.hypot(event.clientX - lastTapX, event.clientY - lastTapY);
+    if (now - lastTapTime < 340 && distance < 24) {
+      event.preventDefault();
+      lastTapTime = 0;
+      callback(event);
+      return;
+    }
+    lastTapTime = now;
+    lastTapX = event.clientX;
+    lastTapY = event.clientY;
+  });
 }
 
 function scheduledEditForm(item) {
@@ -563,6 +592,10 @@ function scheduledElement(item, isCompact = false) {
   `;
   node.addEventListener("click", (event) => {
     if (event.target.closest("button, input, textarea, select")) return;
+    activeScheduleControlId = activeScheduleControlId === item.id ? "" : item.id;
+    render();
+  });
+  bindDoubleActivate(node, () => {
     editingScheduledId = item.id;
     activeScheduleControlId = item.id;
     render();
@@ -626,6 +659,8 @@ function renderToday() {
       `;
       node.addEventListener("click", (event) => {
         if (event.target.closest("button, input, textarea, select")) return;
+      });
+      bindDoubleActivate(node, () => {
         editingScheduledId = item.id;
         render();
       });
@@ -784,8 +819,12 @@ function centerActiveScreenTab() {
 function renderSummary() {
   const done = state.scheduled.filter((item) => item.done).length;
   const total = state.scheduled.length;
-  const todayRate = calcCompletionRate((item) => item.date === toISO(today));
-  const weekRate = calcCompletionRate((item) => getCurrentWeekDates().includes(item.date));
+  const todayIso = toISO(today);
+  const weekDates = getCurrentWeekDates();
+  const todayTotal = state.scheduled.filter((item) => item.date === todayIso).length;
+  const weekTotal = state.scheduled.filter((item) => weekDates.includes(item.date)).length;
+  const todayRate = calcCompletionRate((item) => item.date === todayIso);
+  const weekRate = calcCompletionRate((item) => weekDates.includes(item.date));
   const overallRate = total ? Math.round((done / total) * 100) : 0;
   els.summaryTodayRate.textContent = `${todayRate}%`;
   els.summaryWeekRate.textContent = `${weekRate}%`;
@@ -793,7 +832,10 @@ function renderSummary() {
   els.todayRateMeter.style.width = `${todayRate}%`;
   els.weekRateMeter.style.width = `${weekRate}%`;
   els.overallRateMeter.style.width = `${overallRate}%`;
-  els.summaryStreak.textContent = calcStreak();
+  els.summaryStreak.textContent = `${calcStreak()}日`;
+  document.body.classList.toggle("today-complete", todayTotal > 0 && todayRate === 100);
+  document.body.classList.toggle("week-complete", weekTotal > 0 && weekRate === 100);
+  document.body.classList.toggle("overall-complete", total > 0 && overallRate === 100);
 }
 
 function renderChart() {
@@ -1468,7 +1510,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260520-editflows")
+      .register("./sw.js?v=20260520-celebrate")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");

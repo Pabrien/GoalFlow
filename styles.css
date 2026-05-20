@@ -30,6 +30,87 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+body.today-complete .today-summary {
+  border-color: rgba(20, 108, 99, 0.62);
+  background: linear-gradient(180deg, #ffffff 0%, #e7fff2 100%);
+  box-shadow: 0 16px 34px rgba(20, 108, 99, 0.18);
+}
+
+body.today-complete .today-summary::after {
+  content: "達成";
+  background: #13a36f;
+}
+
+body.week-complete .summary-strip article:nth-child(2) {
+  border-color: rgba(241, 185, 60, 0.72);
+  background: linear-gradient(180deg, #fffef8 0%, #fff3c9 100%);
+  box-shadow: 0 18px 40px rgba(241, 185, 60, 0.22);
+}
+
+body.week-complete .summary-strip article:nth-child(2)::after {
+  content: "週間達成";
+  display: inline-flex;
+  margin-top: 9px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f1b93c;
+  color: #4e3510;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+body.overall-complete {
+  background:
+    radial-gradient(circle at 14% 12%, rgba(241, 185, 60, 0.28), transparent 24%),
+    radial-gradient(circle at 86% 18%, rgba(88, 204, 122, 0.22), transparent 24%),
+    linear-gradient(135deg, #fffdf3 0%, #ecfff4 52%, #f6f7ff 100%);
+}
+
+body.overall-complete::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(241, 185, 60, 0.65) 0 2px, transparent 3px) 8% 12% / 92px 92px,
+    radial-gradient(circle, rgba(20, 108, 99, 0.35) 0 2px, transparent 3px) 52% 18% / 112px 112px,
+    radial-gradient(circle, rgba(47, 105, 200, 0.32) 0 2px, transparent 3px) 86% 8% / 104px 104px;
+  animation: celebration-drift 6s linear infinite;
+}
+
+body.overall-complete .app-shell {
+  position: relative;
+  z-index: 1;
+}
+
+body.overall-complete .topbar h1 {
+  color: var(--accent-strong);
+  text-shadow: 0 8px 26px rgba(20, 108, 99, 0.18);
+}
+
+body.overall-complete .summary-strip article,
+body.overall-complete .panel,
+body.overall-complete .planner,
+body.overall-complete .next-step-card,
+body.overall-complete .buddy-card {
+  border-color: rgba(241, 185, 60, 0.48);
+  box-shadow: 0 22px 56px rgba(241, 185, 60, 0.18), 0 12px 34px rgba(20, 108, 99, 0.1);
+}
+
+body.overall-complete .summary-strip article:nth-child(3) {
+  background: linear-gradient(180deg, #fffaf0 0%, #e8fff2 100%);
+}
+
+@keyframes celebration-drift {
+  from {
+    background-position: 8% 12%, 52% 18%, 86% 8%;
+  }
+  to {
+    background-position: 8% 112%, 52% 118%, 86% 108%;
+  }
+}
+
 .launch-screen {
   position: fixed;
   inset: 0;
