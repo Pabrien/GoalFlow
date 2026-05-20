@@ -657,6 +657,19 @@ button {
   line-height: 1.4;
 }
 
+.panel-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.panel-controls select,
+.panel-heading > select {
+  width: auto;
+  min-width: 96px;
+}
+
 .goal-report {
   display: grid;
   gap: 8px;

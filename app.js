@@ -15,6 +15,10 @@ let editingGoalId = "";
 let editingScheduledId = "";
 let goalSelectTimer = null;
 let scheduleControlTimer = null;
+let chartMetric = "count";
+let pieMetric = "count";
+let chartAnimationFrame = null;
+let pieAnimationFrame = null;
 const screenOrder = ["home", "goals", "schedule", "today"];
 
 const els = {
@@ -36,6 +40,10 @@ const els = {
   categoryOptions: document.querySelector("#categoryOptions"),
   categoryPicker: document.querySelector("#categoryPicker"),
   goalFilter: document.querySelector("#goalFilter"),
+  chartMetric: document.querySelector("#chartMetric"),
+  pieMetric: document.querySelector("#pieMetric"),
+  chartMetricNote: document.querySelector("#chartMetricNote"),
+  pieMetricNote: document.querySelector("#pieMetricNote"),
   chart: document.querySelector("#progressChart"),
   completionPie: document.querySelector("#completionPie"),
   goalReport: document.querySelector("#goalReport"),
@@ -720,6 +728,12 @@ function renderSelectors() {
   els.goalFilter.innerHTML = `<option value="">すべて</option>${options}`;
   els.taskGoalSelect.value = selectedGoalId || state.goals[0]?.id || "";
   els.goalFilter.value = selectedGoalId;
+  els.chartMetric.value = chartMetric;
+  els.pieMetric.value = pieMetric;
+  els.chartMetricNote.textContent =
+    chartMetric === "time" ? "完了したタスクの時間を日別に表示します。" : "完了したタスク数を日別に表示します。";
+  els.pieMetricNote.textContent =
+    pieMetric === "time" ? "完了した時間と未完了の時間の割合です。" : "完了と未完了の割合です。";
   els.weekView.classList.toggle("active", viewMode === "week");
   els.monthView.classList.toggle("active", viewMode === "month");
   els.weekView.setAttribute("aria-pressed", String(viewMode === "week"));
@@ -889,50 +903,75 @@ function renderChart() {
   els.chart.height = 260;
   const width = els.chart.width;
   const height = els.chart.height;
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#fbfcfa";
-  ctx.fillRect(0, 0, width, height);
   if (!state.scheduled.length) {
+    window.cancelAnimationFrame(chartAnimationFrame);
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = "#fbfcfa";
+    ctx.fillRect(0, 0, width, height);
     drawEmptyCanvas(ctx, width, height, "目標を作って、今日のタスクを完了するとグラフが育ちます。");
     return;
   }
   const days = Array.from({ length: 7 }, (_, index) => addDays(today, index - 6));
   const values = days.map((date) => {
     const iso = toISO(date);
-    return state.scheduled.filter((item) => item.date === iso && item.done && (!selectedGoalId || item.goalId === selectedGoalId)).length;
+    const doneItems = state.scheduled.filter((item) => item.date === iso && item.done && (!selectedGoalId || item.goalId === selectedGoalId));
+    return metricValue(doneItems, chartMetric);
   });
   const max = Math.max(1, ...values);
+  const labels = chartMetricLabels(chartMetric);
   const paddingX = width < 420 ? 22 : 34;
   const paddingTop = 30;
   const paddingBottom = 38;
   const gap = width < 420 ? 6 : 10;
   const barWidth = Math.max(14, (width - paddingX * 2 - gap * (values.length - 1)) / values.length);
-  ctx.strokeStyle = "#dfe3da";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(paddingX, height - paddingBottom);
-  ctx.lineTo(width - paddingX, height - paddingBottom);
-  ctx.stroke();
-  values.forEach((value, index) => {
-    const x = paddingX + index * (barWidth + gap);
-    const barHeight = ((height - paddingTop - paddingBottom) * value) / max;
-    const y = height - paddingBottom - barHeight;
-    ctx.fillStyle = index === values.length - 1 ? "#146c63" : "#2f69c8";
-    ctx.fillRect(x, y, barWidth, barHeight || 3);
+  const draw = (progress) => {
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = "#fbfcfa";
+    ctx.fillRect(0, 0, width, height);
+    ctx.strokeStyle = "#dfe3da";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(paddingX, height - paddingBottom);
+    ctx.lineTo(width - paddingX, height - paddingBottom);
+    ctx.stroke();
     ctx.fillStyle = "#6b7066";
     ctx.font = `${width < 420 ? 10 : 12}px system-ui`;
-    ctx.textAlign = "center";
-    ctx.fillText(`${days[index].getMonth() + 1}/${days[index].getDate()}`, x + barWidth / 2, height - 14);
-    ctx.fillText(value, x + barWidth / 2, Math.max(18, y - 8));
-  });
+    ctx.textAlign = "left";
+    ctx.fillText(labels.caption, paddingX, 18);
+    values.forEach((value, index) => {
+      const x = paddingX + index * (barWidth + gap);
+      const animatedValue = value * progress;
+      const barHeight = ((height - paddingTop - paddingBottom) * animatedValue) / max;
+      const y = height - paddingBottom - barHeight;
+      const radius = Math.min(8, barWidth / 2);
+      ctx.fillStyle = index === values.length - 1 ? "#146c63" : "#2f69c8";
+      roundedRect(ctx, x, y, barWidth, barHeight || 3, radius);
+      ctx.fill();
+      ctx.fillStyle = "#6b7066";
+      ctx.font = `${width < 420 ? 10 : 12}px system-ui`;
+      ctx.textAlign = "center";
+      ctx.fillText(`${days[index].getMonth() + 1}/${days[index].getDate()}`, x + barWidth / 2, height - 14);
+      if (value > 0) {
+        ctx.fillStyle = "#20231f";
+        ctx.font = `800 ${width < 420 ? 10 : 12}px system-ui`;
+        ctx.fillText(formatMetricValue(animatedValue, chartMetric), x + barWidth / 2, Math.max(18, y - 8));
+      }
+    });
+  };
+  animateCanvas("chart", draw, 620);
 }
 
 function renderCompletionPie() {
   const ctx = els.completionPie.getContext("2d");
+  const displayWidth = Math.round(els.completionPie.parentElement?.clientWidth || els.completionPie.clientWidth || 360);
+  els.completionPie.width = Math.max(280, displayWidth - 2);
+  els.completionPie.height = 260;
   const width = els.completionPie.width;
   const height = els.completionPie.height;
-  const total = state.scheduled.length;
-  const done = state.scheduled.filter((item) => item.done).length;
+  const filteredItems = state.scheduled.filter((item) => !selectedGoalId || item.goalId === selectedGoalId);
+  const doneItems = filteredItems.filter((item) => item.done);
+  const total = metricValue(filteredItems, pieMetric);
+  const done = metricValue(doneItems, pieMetric);
   const pending = Math.max(0, total - done);
   const rate = total ? Math.round((done / total) * 100) : 0;
   const centerX = width / 2;
@@ -940,46 +979,54 @@ function renderCompletionPie() {
   const radius = Math.min(width, height) * 0.3;
   const start = -Math.PI / 2;
   const doneAngle = total ? (Math.PI * 2 * done) / total : 0;
+  const labels = chartMetricLabels(pieMetric);
 
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#fbfcfa";
-  ctx.fillRect(0, 0, width, height);
   if (!total) {
+    window.cancelAnimationFrame(pieAnimationFrame);
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = "#fbfcfa";
+    ctx.fillRect(0, 0, width, height);
     drawEmptyCanvas(ctx, width, height, "完了したタスクがここに割合で表示されます。");
     return;
   }
 
-  ctx.beginPath();
-  ctx.moveTo(centerX, centerY);
-  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-  ctx.closePath();
-  ctx.fillStyle = "#e4e9df";
-  ctx.fill();
-
-  if (done > 0) {
+  const draw = (progress) => {
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = "#fbfcfa";
+    ctx.fillRect(0, 0, width, height);
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, radius, start, start + doneAngle);
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
     ctx.closePath();
-    ctx.fillStyle = "#146c63";
+    ctx.fillStyle = "#e4e9df";
     ctx.fill();
-  }
 
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius * 0.58, 0, Math.PI * 2);
-  ctx.fillStyle = "#fbfcfa";
-  ctx.fill();
+    if (done > 0) {
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, start, start + doneAngle * progress);
+      ctx.closePath();
+      ctx.fillStyle = "#146c63";
+      ctx.fill();
+    }
 
-  ctx.fillStyle = "#20231f";
-  ctx.font = "800 34px system-ui";
-  ctx.textAlign = "center";
-  ctx.fillText(`${rate}%`, centerX, centerY + 8);
-  ctx.fillStyle = "#6b7066";
-  ctx.font = "13px system-ui";
-  ctx.fillText("全体の達成率", centerX, centerY + 32);
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius * 0.58, 0, Math.PI * 2);
+    ctx.fillStyle = "#fbfcfa";
+    ctx.fill();
 
-  drawLegend(ctx, 36, height - 36, "#146c63", `完了 ${done}`);
-  drawLegend(ctx, width - 132, height - 36, "#e4e9df", `未完了 ${pending}`);
+    ctx.fillStyle = "#20231f";
+    ctx.font = "800 34px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(`${Math.round(rate * progress)}%`, centerX, centerY + 8);
+    ctx.fillStyle = "#6b7066";
+    ctx.font = "13px system-ui";
+    ctx.fillText(`${labels.name}の達成率`, centerX, centerY + 32);
+
+    drawLegend(ctx, 26, height - 36, "#146c63", `完了 ${formatMetricValue(done * progress, pieMetric)}`);
+    drawLegend(ctx, Math.max(26, width - 156), height - 36, "#e4e9df", `未完了 ${formatMetricValue(pending, pieMetric)}`);
+  };
+  animateCanvas("pie", draw, 680);
 }
 
 function renderGoalReport() {
@@ -1025,6 +1072,69 @@ function drawLegend(ctx, x, y, color, text) {
   ctx.font = "12px system-ui";
   ctx.textAlign = "left";
   ctx.fillText(text, x + 18, y);
+}
+
+function metricValue(items, metric) {
+  if (metric === "time") return items.reduce((sum, item) => sum + Number(item.minutes ?? 0), 0);
+  return items.length;
+}
+
+function chartMetricLabels(metric) {
+  if (metric === "time") {
+    return { name: "時間", caption: "完了した時間" };
+  }
+  return { name: "個数", caption: "完了した個数" };
+}
+
+function formatMetricValue(value, metric) {
+  if (metric === "time") {
+    const minutes = Math.round(value);
+    if (minutes >= 60) {
+      const hours = minutes / 60;
+      return `${Number.isInteger(hours) ? hours : hours.toFixed(1)}h`;
+    }
+    return `${minutes}分`;
+  }
+  return `${Math.round(value)}個`;
+}
+
+function animateCanvas(kind, draw, duration) {
+  const frameKey = kind === "pie" ? "pieAnimationFrame" : "chartAnimationFrame";
+  window.cancelAnimationFrame(kind === "pie" ? pieAnimationFrame : chartAnimationFrame);
+  const start = performance.now();
+  const step = (now) => {
+    const progress = Math.min(1, (now - start) / duration);
+    draw(easeOutCubic(progress));
+    if (progress < 1) {
+      if (frameKey === "pieAnimationFrame") {
+        pieAnimationFrame = window.requestAnimationFrame(step);
+      } else {
+        chartAnimationFrame = window.requestAnimationFrame(step);
+      }
+    }
+  };
+  if (frameKey === "pieAnimationFrame") {
+    pieAnimationFrame = window.requestAnimationFrame(step);
+  } else {
+    chartAnimationFrame = window.requestAnimationFrame(step);
+  }
+}
+
+function easeOutCubic(value) {
+  return 1 - Math.pow(1 - value, 3);
+}
+
+function roundedRect(ctx, x, y, width, height, radius) {
+  const safeRadius = Math.min(radius, width / 2, Math.abs(height) / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + safeRadius, y);
+  ctx.lineTo(x + width - safeRadius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  ctx.lineTo(x + width, y + height);
+  ctx.lineTo(x, y + height);
+  ctx.lineTo(x, y + safeRadius);
+  ctx.quadraticCurveTo(x, y, x + safeRadius, y);
+  ctx.closePath();
 }
 
 function drawEmptyCanvas(ctx, width, height, text) {
@@ -1521,6 +1631,16 @@ els.goalFilter.addEventListener("change", (event) => {
   render();
 });
 
+els.chartMetric.addEventListener("change", (event) => {
+  chartMetric = event.target.value;
+  render();
+});
+
+els.pieMetric.addEventListener("change", (event) => {
+  pieMetric = event.target.value;
+  render();
+});
+
 els.startFirstGoal.addEventListener("click", () => {
   activeScreen = "goals";
   render();
@@ -1567,7 +1687,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260520-quietactions")
+      .register("./sw.js?v=20260520-fluidcharts")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");

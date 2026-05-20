@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260520-quietactions" />
+    <link rel="stylesheet" href="./styles.css?v=20260520-fluidcharts" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -127,21 +127,31 @@
           <div class="panel-heading">
             <div>
               <h2>7日間の積み上げ</h2>
-              <p class="panel-note">完了したタスク数を日別に表示します。</p>
+              <p class="panel-note" id="chartMetricNote">完了したタスク数を日別に表示します。</p>
             </div>
-            <select id="goalFilter" aria-label="表示する目標"></select>
+            <div class="panel-controls">
+              <select id="goalFilter" aria-label="表示する目標"></select>
+              <select id="chartMetric" aria-label="7日間の表示単位">
+                <option value="count">個数</option>
+                <option value="time">時間</option>
+              </select>
+            </div>
           </div>
-          <canvas id="progressChart" width="760" height="260" aria-label="過去7日間の達成数"></canvas>
+          <canvas id="progressChart" width="760" height="260" aria-label="過去7日間の積み上げ"></canvas>
         </section>
 
         <section class="panel dashboard-panel">
           <div class="panel-heading">
             <div>
               <h2>全体の達成状況</h2>
-              <p class="panel-note">完了と未完了の割合です。</p>
+              <p class="panel-note" id="pieMetricNote">完了と未完了の割合です。</p>
             </div>
+            <select id="pieMetric" aria-label="全体の表示単位">
+              <option value="count">個数</option>
+              <option value="time">時間</option>
+            </select>
           </div>
-          <canvas id="completionPie" width="360" height="260" aria-label="全体の達成率円グラフ"></canvas>
+          <canvas id="completionPie" width="360" height="260" aria-label="全体の達成状況"></canvas>
         </section>
 
         <section class="panel dashboard-panel wide-panel">
@@ -296,6 +306,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script defer src="./app.js?v=20260520-quietactions"></script>
+    <script defer src="./app.js?v=20260520-fluidcharts"></script>
   </body>
 </html>
