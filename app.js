@@ -67,6 +67,8 @@ const els = {
   emptyStart: document.querySelector("#emptyStart"),
   emptyCreateGoal: document.querySelector("#emptyCreateGoal"),
   saveStatus: document.querySelector("#saveStatus"),
+  themeToggle: document.querySelector("#themeToggle"),
+  themeToggleLabel: document.querySelector("#themeToggleLabel"),
   launchScreen: document.querySelector("#launchScreen"),
   nextActionTitle: document.querySelector("#nextActionTitle"),
   nextActionBody: document.querySelector("#nextActionBody"),
@@ -87,6 +89,7 @@ function createEmptyState() {
       onboardingDismissed: false,
       lastVisitDate: "",
       visitStreak: 0,
+      theme: "light",
     },
   };
 }
@@ -143,6 +146,7 @@ function loadState() {
         onboardingDismissed: Boolean(parsed.meta?.onboardingDismissed),
         lastVisitDate: parsed.meta?.lastVisitDate ?? "",
         visitStreak: Number(parsed.meta?.visitStreak ?? 0),
+        theme: parsed.meta?.theme === "dark" ? "dark" : "light",
       },
     };
   } catch {
@@ -166,6 +170,7 @@ function saveState() {
 }
 
 function render() {
+  renderTheme();
   renderFileWarning();
   document.body.dataset.viewMode = viewMode;
   document.body.dataset.activeScreen = activeScreen;
@@ -187,6 +192,15 @@ function render() {
   renderCompletionPie();
   renderGoalReport();
   saveState();
+}
+
+function renderTheme() {
+  const theme = state.meta.theme === "dark" ? "dark" : "light";
+  document.body.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
+  els.themeToggle?.setAttribute("aria-pressed", String(theme === "dark"));
+  if (els.themeToggleLabel) els.themeToggleLabel.textContent = theme === "dark" ? "ライト" : "ダーク";
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#0f172a" : "#146c63");
 }
 
 function renderFileWarning() {
@@ -906,7 +920,7 @@ function renderChart() {
   if (!state.scheduled.length) {
     window.cancelAnimationFrame(chartAnimationFrame);
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#fbfcfa";
+    ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
     ctx.fillRect(0, 0, width, height);
     drawEmptyCanvas(ctx, width, height, "目標を作って、今日のタスクを完了するとグラフが育ちます。");
     return;
@@ -926,15 +940,15 @@ function renderChart() {
   const barWidth = Math.max(14, (width - paddingX * 2 - gap * (values.length - 1)) / values.length);
   const draw = (progress) => {
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#fbfcfa";
+    ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
     ctx.fillRect(0, 0, width, height);
-    ctx.strokeStyle = "#dfe3da";
+    ctx.strokeStyle = canvasColor("--canvas-line", "#dfe3da");
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(paddingX, height - paddingBottom);
     ctx.lineTo(width - paddingX, height - paddingBottom);
     ctx.stroke();
-    ctx.fillStyle = "#6b7066";
+    ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
     ctx.font = `${width < 420 ? 10 : 12}px system-ui`;
     ctx.textAlign = "left";
     ctx.fillText(labels.caption, paddingX, 18);
@@ -944,15 +958,15 @@ function renderChart() {
       const barHeight = ((height - paddingTop - paddingBottom) * animatedValue) / max;
       const y = height - paddingBottom - barHeight;
       const radius = Math.min(8, barWidth / 2);
-      ctx.fillStyle = index === values.length - 1 ? "#146c63" : "#2f69c8";
+      ctx.fillStyle = index === values.length - 1 ? canvasColor("--accent", "#146c63") : canvasColor("--blue", "#2f69c8");
       roundedRect(ctx, x, y, barWidth, barHeight || 3, radius);
       ctx.fill();
-      ctx.fillStyle = "#6b7066";
+      ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
       ctx.font = `${width < 420 ? 10 : 12}px system-ui`;
       ctx.textAlign = "center";
       ctx.fillText(`${days[index].getMonth() + 1}/${days[index].getDate()}`, x + barWidth / 2, height - 14);
       if (value > 0) {
-        ctx.fillStyle = "#20231f";
+        ctx.fillStyle = canvasColor("--ink", "#20231f");
         ctx.font = `800 ${width < 420 ? 10 : 12}px system-ui`;
         ctx.fillText(formatMetricValue(animatedValue, chartMetric), x + barWidth / 2, Math.max(18, y - 8));
       }
@@ -984,7 +998,7 @@ function renderCompletionPie() {
   if (!total) {
     window.cancelAnimationFrame(pieAnimationFrame);
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#fbfcfa";
+    ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
     ctx.fillRect(0, 0, width, height);
     drawEmptyCanvas(ctx, width, height, "完了したタスクがここに割合で表示されます。");
     return;
@@ -992,13 +1006,13 @@ function renderCompletionPie() {
 
   const draw = (progress) => {
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#fbfcfa";
+    ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
     ctx.fillRect(0, 0, width, height);
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
     ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
     ctx.closePath();
-    ctx.fillStyle = "#e4e9df";
+    ctx.fillStyle = canvasColor("--canvas-line", "#e4e9df");
     ctx.fill();
 
     if (done > 0) {
@@ -1006,25 +1020,25 @@ function renderCompletionPie() {
       ctx.moveTo(centerX, centerY);
       ctx.arc(centerX, centerY, radius, start, start + doneAngle * progress);
       ctx.closePath();
-      ctx.fillStyle = "#146c63";
+      ctx.fillStyle = canvasColor("--accent", "#146c63");
       ctx.fill();
     }
 
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius * 0.58, 0, Math.PI * 2);
-    ctx.fillStyle = "#fbfcfa";
+    ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
     ctx.fill();
 
-    ctx.fillStyle = "#20231f";
+    ctx.fillStyle = canvasColor("--ink", "#20231f");
     ctx.font = "800 34px system-ui";
     ctx.textAlign = "center";
     ctx.fillText(`${Math.round(rate * progress)}%`, centerX, centerY + 8);
-    ctx.fillStyle = "#6b7066";
+    ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
     ctx.font = "13px system-ui";
     ctx.fillText(`${labels.name}の達成率`, centerX, centerY + 32);
 
-    drawLegend(ctx, 26, height - 36, "#146c63", `完了 ${formatMetricValue(done * progress, pieMetric)}`);
-    drawLegend(ctx, Math.max(26, width - 156), height - 36, "#e4e9df", `未完了 ${formatMetricValue(pending, pieMetric)}`);
+    drawLegend(ctx, 26, height - 36, canvasColor("--accent", "#146c63"), `完了 ${formatMetricValue(done * progress, pieMetric)}`);
+    drawLegend(ctx, Math.max(26, width - 156), height - 36, canvasColor("--canvas-line", "#e4e9df"), `未完了 ${formatMetricValue(pending, pieMetric)}`);
   };
   animateCanvas("pie", draw, 680);
 }
@@ -1068,10 +1082,14 @@ function renderGoalReport() {
 function drawLegend(ctx, x, y, color, text) {
   ctx.fillStyle = color;
   ctx.fillRect(x, y - 10, 12, 12);
-  ctx.fillStyle = "#6b7066";
+  ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
   ctx.font = "12px system-ui";
   ctx.textAlign = "left";
   ctx.fillText(text, x + 18, y);
+}
+
+function canvasColor(name, fallback) {
+  return getComputedStyle(document.body).getPropertyValue(name).trim() || fallback;
 }
 
 function metricValue(items, metric) {
@@ -1138,9 +1156,9 @@ function roundedRect(ctx, x, y, width, height, radius) {
 }
 
 function drawEmptyCanvas(ctx, width, height, text) {
-  ctx.fillStyle = "#fbfcfa";
+  ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
   ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = "#6b7066";
+  ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
   ctx.font = "14px system-ui";
   ctx.textAlign = "center";
   ctx.fillText(text, width / 2, height / 2);
@@ -1641,6 +1659,11 @@ els.pieMetric.addEventListener("change", (event) => {
   render();
 });
 
+els.themeToggle.addEventListener("click", () => {
+  state.meta.theme = state.meta.theme === "dark" ? "light" : "dark";
+  render();
+});
+
 els.startFirstGoal.addEventListener("click", () => {
   activeScreen = "goals";
   render();
@@ -1687,7 +1710,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260520-fluidcharts")
+      .register("./sw.js?v=20260520-darkmode")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");
