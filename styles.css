@@ -1240,6 +1240,57 @@ body[data-calendar-size="large"] .planner {
   --month-day-height: 170px;
 }
 
+body[data-calendar-size="size-1"] .planner {
+  --day-width: 106px;
+  --month-day-width: 82px;
+  --week-day-height: 620px;
+  --month-day-height: 92px;
+}
+
+body[data-calendar-size="size-2"] .planner,
+body[data-calendar-size="compact"] .planner {
+  --day-width: 122px;
+  --month-day-width: 94px;
+  --week-day-height: 760px;
+  --month-day-height: 106px;
+}
+
+body[data-calendar-size="size-3"] .planner {
+  --day-width: 136px;
+  --month-day-width: 106px;
+  --week-day-height: 980px;
+  --month-day-height: 120px;
+}
+
+body[data-calendar-size="size-4"] .planner {
+  --day-width: 150px;
+  --month-day-width: 118px;
+  --week-day-height: 1240px;
+  --month-day-height: 134px;
+}
+
+body[data-calendar-size="size-5"] .planner {
+  --day-width: 166px;
+  --month-day-width: 132px;
+  --week-day-height: 1360px;
+  --month-day-height: 150px;
+}
+
+body[data-calendar-size="size-6"] .planner,
+body[data-calendar-size="large"] .planner {
+  --day-width: 184px;
+  --month-day-width: 148px;
+  --week-day-height: 1480px;
+  --month-day-height: 168px;
+}
+
+body[data-calendar-size="size-7"] .planner {
+  --day-width: 204px;
+  --month-day-width: 164px;
+  --week-day-height: 1640px;
+  --month-day-height: 186px;
+}
+
 .calendar-scroll {
   overflow-x: auto;
   overflow-y: visible;
@@ -2867,6 +2918,41 @@ body[data-theme="dark"] .topbar {
   background: rgba(7, 11, 20, 0.84);
 }
 
+body[data-theme="dark"] .onboarding {
+  border-color: rgba(100, 116, 139, 0.3);
+  background:
+    radial-gradient(circle at 86% 12%, rgba(79, 214, 154, 0.1), transparent 30%),
+    linear-gradient(135deg, rgba(7, 11, 20, 0.96) 0%, rgba(8, 13, 24, 0.94) 100%);
+}
+
+body[data-theme="dark"] .onboarding-steps li {
+  border-color: rgba(100, 116, 139, 0.3);
+  background: rgba(7, 11, 20, 0.78);
+}
+
+body[data-theme="dark"] .onboarding-steps span {
+  background: #0b2b22;
+  color: var(--accent-strong);
+}
+
+body[data-theme="dark"][data-active-screen="goals"] .workspace,
+body[data-theme="dark"][data-active-screen="tasks"] .workspace,
+body[data-theme="dark"][data-active-screen="today"] .workspace {
+  border-color: rgba(100, 116, 139, 0.26);
+  background:
+    linear-gradient(135deg, rgba(7, 11, 20, 0.94) 0%, rgba(8, 13, 24, 0.9) 52%, rgba(5, 8, 18, 0.96) 100%);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.26);
+}
+
+body[data-theme="dark"][data-active-screen="goals"] .workspace::before,
+body[data-theme="dark"][data-active-screen="tasks"] .workspace::before,
+body[data-theme="dark"][data-active-screen="today"] .workspace::before {
+  background:
+    linear-gradient(90deg, rgba(100, 116, 139, 0.1) 0 1px, transparent 1px),
+    linear-gradient(180deg, rgba(79, 214, 154, 0.06) 0 1px, transparent 1px);
+  opacity: 0.32;
+}
+
 body[data-theme="dark"] .product-line,
 body[data-theme="dark"] .screen-tab,
 body[data-theme="dark"] .goal-meta,
@@ -3075,9 +3161,4 @@ body[data-theme="dark"] .task-bank.return-target {
 
 body[data-theme="dark"] .today-task.done {
   background: #0a1714;
-}
-
-body[data-theme="dark"][data-active-screen="today"] .workspace,
-body[data-theme="dark"][data-active-screen="goals"] .workspace {
-  background: transparent;
 }

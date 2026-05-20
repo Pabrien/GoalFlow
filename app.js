@@ -1,5 +1,6 @@
 const storageKey = "goalflow-state-v1";
 const today = new Date();
+const calendarSizes = ["size-1", "size-2", "size-3", "size-4", "size-5", "size-6", "size-7"];
 let state = loadState();
 let selectedGoalId = state.goals[0]?.id ?? "";
 let weekStart = getWeekStart(today);
@@ -20,7 +21,7 @@ let pieMetric = "count";
 let chartAnimationFrame = null;
 let pieAnimationFrame = null;
 let taskBankReturnDropBound = false;
-let calendarSize = state.meta?.calendarSize ?? "normal";
+let calendarSize = normalizeCalendarSize(state.meta?.calendarSize);
 const screenOrder = ["home", "goals", "schedule", "today"];
 
 const els = {
@@ -153,7 +154,7 @@ function loadState() {
         lastVisitDate: parsed.meta?.lastVisitDate ?? "",
         visitStreak: Number(parsed.meta?.visitStreak ?? 0),
         theme: parsed.meta?.theme === "dark" ? "dark" : "light",
-        calendarSize: ["compact", "normal", "large"].includes(parsed.meta?.calendarSize) ? parsed.meta.calendarSize : "normal",
+        calendarSize: normalizeCalendarSize(parsed.meta?.calendarSize),
       },
     };
   } catch {
@@ -169,6 +170,13 @@ function normalizeGoal(goal) {
   };
 }
 
+function normalizeCalendarSize(size) {
+  if (calendarSizes.includes(size)) return size;
+  if (size === "compact") return "size-2";
+  if (size === "large") return "size-6";
+  return "size-4";
+}
+
 function saveState() {
   localStorage.setItem(storageKey, JSON.stringify(state));
   if (els.saveStatus) {
@@ -181,6 +189,7 @@ function render() {
   renderFileWarning();
   document.body.dataset.viewMode = viewMode;
   document.body.dataset.calendarSize = calendarSize;
+  state.meta.calendarSize = calendarSize;
   document.body.dataset.activeScreen = activeScreen;
   document.body.dataset.hasGoals = String(state.goals.length > 0);
   if (selectedGoalId && !state.goals.some((goal) => goal.id === selectedGoalId)) {
@@ -804,8 +813,8 @@ function renderSelectors() {
   els.todayPeriod.classList.toggle("needs-attention", !todayIsVisible);
   els.todayPeriod.setAttribute("aria-label", todayIsVisible ? "今日を表示中" : "今日に戻る");
   els.todayPeriod.title = todayIsVisible ? "今日を表示中" : "今日に戻る";
-  els.calendarZoomOut.disabled = calendarSize === "compact";
-  els.calendarZoomIn.disabled = calendarSize === "large";
+  els.calendarZoomOut.disabled = calendarSize === calendarSizes[0];
+  els.calendarZoomIn.disabled = calendarSize === calendarSizes.at(-1);
 }
 
 function renderCategoryOptions() {
@@ -1627,15 +1636,13 @@ els.monthView.addEventListener("click", () => {
 });
 
 els.calendarZoomOut.addEventListener("click", () => {
-  const sizes = ["compact", "normal", "large"];
-  calendarSize = sizes[Math.max(0, sizes.indexOf(calendarSize) - 1)];
+  calendarSize = calendarSizes[Math.max(0, calendarSizes.indexOf(calendarSize) - 1)];
   state.meta.calendarSize = calendarSize;
   render();
 });
 
 els.calendarZoomIn.addEventListener("click", () => {
-  const sizes = ["compact", "normal", "large"];
-  calendarSize = sizes[Math.min(sizes.length - 1, sizes.indexOf(calendarSize) + 1)];
+  calendarSize = calendarSizes[Math.min(calendarSizes.length - 1, calendarSizes.indexOf(calendarSize) + 1)];
   state.meta.calendarSize = calendarSize;
   render();
 });
@@ -1804,7 +1811,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260520-calendarpan")
+      .register("./sw.js?v=20260520-darkstage7")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");
