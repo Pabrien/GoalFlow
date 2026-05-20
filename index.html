@@ -8,9 +8,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="GoalFlow" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <script>
+      try {
+        const saved = JSON.parse(localStorage.getItem("goalflow-state-v1") || "{}");
+        if (saved.meta?.theme === "dark") document.documentElement.dataset.themePreload = "dark";
+      } catch {}
+    </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260520-todaybutton" />
+    <link rel="stylesheet" href="./styles.css?v=20260520-returnlaunch" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -310,6 +316,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script defer src="./app.js?v=20260520-todaybutton"></script>
+    <script defer src="./app.js?v=20260520-returnlaunch"></script>
   </body>
 </html>

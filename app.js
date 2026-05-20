@@ -19,6 +19,7 @@ let chartMetric = "count";
 let pieMetric = "count";
 let chartAnimationFrame = null;
 let pieAnimationFrame = null;
+let taskBankReturnDropBound = false;
 const screenOrder = ["home", "goals", "schedule", "today"];
 
 const els = {
@@ -262,6 +263,7 @@ function renderGoals() {
 
 function renderTaskBank() {
   els.taskBank.innerHTML = "";
+  bindTaskBankReturnDrop();
   const tasks = state.tasks.filter((task) => !selectedGoalId || task.goalId === selectedGoalId);
   if (!tasks.length) {
     els.taskBank.append(empty("保存タスクを作ると、カレンダーへドラッグできます。"));
@@ -363,6 +365,43 @@ function renderTaskBank() {
     item.querySelector('[data-action="delete-task"]')?.addEventListener("click", () => deleteSavedTask(task));
     els.taskBank.append(item);
   });
+}
+
+function bindTaskBankReturnDrop() {
+  if (taskBankReturnDropBound) return;
+  taskBankReturnDropBound = true;
+  els.taskBank.addEventListener("dragover", handleTaskBankReturnDrag);
+  els.taskBank.addEventListener("dragleave", handleTaskBankReturnLeave);
+  els.taskBank.addEventListener("drop", handleTaskBankReturnDrop);
+}
+
+function isScheduledDrag(event) {
+  return [...(event.dataTransfer?.types ?? [])].includes("application/x-goalflow-scheduled");
+}
+
+function handleTaskBankReturnDrag(event) {
+  if (!isScheduledDrag(event)) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "move";
+  els.taskBank.classList.add("return-target");
+}
+
+function handleTaskBankReturnLeave(event) {
+  if (!els.taskBank.contains(event.relatedTarget)) {
+    els.taskBank.classList.remove("return-target");
+  }
+}
+
+function handleTaskBankReturnDrop(event) {
+  const scheduledId = event.dataTransfer.getData("application/x-goalflow-scheduled");
+  if (!scheduledId) return;
+  event.preventDefault();
+  els.taskBank.classList.remove("return-target");
+  document.body.classList.remove("is-scheduling", "is-returning-scheduled");
+  const item = state.scheduled.find((candidate) => candidate.id === scheduledId);
+  if (item) {
+    deleteScheduledItem(item, "保存タスクに戻しました。");
+  }
 }
 
 function taskGoalOptions(selectedId) {
@@ -649,7 +688,7 @@ function scheduledElement(item, isCompact = false) {
       return;
     }
     activeScheduleControlId = "";
-    document.body.classList.add("is-scheduling");
+    document.body.classList.add("is-scheduling", "is-returning-scheduled");
     node.classList.add("dragging");
     vibrate(6);
     event.dataTransfer.effectAllowed = "move";
@@ -661,7 +700,8 @@ function scheduledElement(item, isCompact = false) {
     requestAnimationFrame(() => preview.remove());
   });
   node.addEventListener("dragend", () => {
-    document.body.classList.remove("is-scheduling");
+    document.body.classList.remove("is-scheduling", "is-returning-scheduled");
+    els.taskBank.classList.remove("return-target");
     document.querySelectorAll(".day-column.drop-target").forEach((column) => clearDropTargets(column));
     node.classList.remove("dragging");
   });
@@ -1197,11 +1237,11 @@ function deleteSavedTask(task) {
   render();
 }
 
-function deleteScheduledItem(item) {
+function deleteScheduledItem(item, message = "予定から削除しました。") {
   state.scheduled = state.scheduled.filter((candidate) => candidate.id !== item.id);
   if (activeScheduleControlId === item.id) activeScheduleControlId = "";
   if (editingScheduledId === item.id) editingScheduledId = "";
-  showToast("予定から削除しました。");
+  showToast(message);
   render();
 }
 
@@ -1710,7 +1750,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260520-todaybutton")
+      .register("./sw.js?v=20260520-returnlaunch")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");
