@@ -16,7 +16,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260520-darkcelebrate" />
+    <link rel="stylesheet" href="./styles.css?v=20260520-calendarpan" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -211,9 +211,15 @@
               <button class="icon-button" id="prevPeriod" type="button" aria-label="前へ" title="前へ">‹</button>
               <button class="ghost-button" id="todayPeriod" type="button">今日に戻る</button>
               <button class="icon-button" id="nextPeriod" type="button" aria-label="次へ" title="次へ">›</button>
+              <div class="calendar-zoom" aria-label="カレンダーサイズ">
+                <button class="icon-button" id="calendarZoomOut" type="button" aria-label="小さく" title="小さく">−</button>
+                <button class="icon-button" id="calendarZoomIn" type="button" aria-label="大きく" title="大きく">＋</button>
+              </div>
             </div>
           </div>
-          <div class="calendar-grid" id="calendarGrid"></div>
+          <div class="calendar-scroll" id="calendarScroll">
+            <div class="calendar-grid" id="calendarGrid"></div>
+          </div>
         </section>
 
         <aside class="insights" aria-label="可視化と今日の予定">
@@ -316,6 +322,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script defer src="./app.js?v=20260520-darkcelebrate"></script>
+    <script defer src="./app.js?v=20260520-calendarpan"></script>
   </body>
 </html>

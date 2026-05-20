@@ -1219,25 +1219,61 @@ body.is-returning-scheduled .task-bank {
 .planner {
   padding: 18px;
   min-width: 0;
+  overflow: hidden;
+  --day-width: 148px;
+  --month-day-width: 118px;
+  --week-day-height: 1240px;
+  --month-day-height: 132px;
+}
+
+body[data-calendar-size="compact"] .planner {
+  --day-width: 118px;
+  --month-day-width: 92px;
+  --week-day-height: 760px;
+  --month-day-height: 104px;
+}
+
+body[data-calendar-size="large"] .planner {
+  --day-width: 188px;
+  --month-day-width: 152px;
+  --week-day-height: 1480px;
+  --month-day-height: 170px;
+}
+
+.calendar-scroll {
   overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 8px;
+  cursor: grab;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.calendar-scroll:active {
+  cursor: grabbing;
+}
+
+.calendar-zoom {
+  display: inline-flex;
+  gap: 6px;
 }
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(148px, 1fr));
+  grid-template-columns: repeat(7, minmax(var(--day-width), 1fr));
   gap: 8px;
   margin-top: 16px;
-  min-width: 1080px;
+  min-width: calc(var(--day-width) * 7 + 64px);
 }
 
 .calendar-grid.month-mode {
-  grid-template-columns: repeat(7, minmax(118px, 1fr));
+  grid-template-columns: repeat(7, minmax(var(--month-day-width), 1fr));
   gap: 6px;
-  min-width: 860px;
+  min-width: calc(var(--month-day-width) * 7 + 48px);
 }
 
 .day-column {
-  min-height: 1240px;
+  min-height: var(--week-day-height);
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1246,7 +1282,7 @@ body.is-returning-scheduled .task-bank {
 }
 
 .month-mode .day-column {
-  min-height: 132px;
+  min-height: var(--month-day-height);
   padding: 8px;
 }
 
@@ -2564,7 +2600,7 @@ dialog {
   body[data-active-screen="schedule"] .week-controls {
     width: 100%;
     display: grid;
-    grid-template-columns: 1fr 40px auto 40px;
+    grid-template-columns: 1fr 40px auto 40px auto;
     gap: 6px;
   }
 
@@ -2581,9 +2617,7 @@ dialog {
 
   body[data-active-screen="schedule"] .calendar-grid,
   body[data-active-screen="schedule"] .calendar-grid.month-mode {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 4px;
-    min-width: 0;
     margin-top: 8px;
   }
 

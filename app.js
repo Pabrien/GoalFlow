@@ -20,12 +20,14 @@ let pieMetric = "count";
 let chartAnimationFrame = null;
 let pieAnimationFrame = null;
 let taskBankReturnDropBound = false;
+let calendarSize = state.meta?.calendarSize ?? "normal";
 const screenOrder = ["home", "goals", "schedule", "today"];
 
 const els = {
   goalList: document.querySelector("#goalList"),
   taskBank: document.querySelector("#taskBank"),
   calendarGrid: document.querySelector("#calendarGrid"),
+  calendarScroll: document.querySelector("#calendarScroll"),
   todayList: document.querySelector("#todayList"),
   goalDialog: document.querySelector("#goalDialog"),
   taskDialog: document.querySelector("#taskDialog"),
@@ -61,6 +63,8 @@ const els = {
   weekView: document.querySelector("#weekView"),
   monthView: document.querySelector("#monthView"),
   todayPeriod: document.querySelector("#todayPeriod"),
+  calendarZoomOut: document.querySelector("#calendarZoomOut"),
+  calendarZoomIn: document.querySelector("#calendarZoomIn"),
   screenTabs: document.querySelectorAll("[data-screen-target]"),
   onboarding: document.querySelector("#onboarding"),
   startFirstGoal: document.querySelector("#startFirstGoal"),
@@ -91,6 +95,7 @@ function createEmptyState() {
       lastVisitDate: "",
       visitStreak: 0,
       theme: "light",
+      calendarSize: "normal",
     },
   };
 }
@@ -148,6 +153,7 @@ function loadState() {
         lastVisitDate: parsed.meta?.lastVisitDate ?? "",
         visitStreak: Number(parsed.meta?.visitStreak ?? 0),
         theme: parsed.meta?.theme === "dark" ? "dark" : "light",
+        calendarSize: ["compact", "normal", "large"].includes(parsed.meta?.calendarSize) ? parsed.meta.calendarSize : "normal",
       },
     };
   } catch {
@@ -174,6 +180,7 @@ function render() {
   renderTheme();
   renderFileWarning();
   document.body.dataset.viewMode = viewMode;
+  document.body.dataset.calendarSize = calendarSize;
   document.body.dataset.activeScreen = activeScreen;
   document.body.dataset.hasGoals = String(state.goals.length > 0);
   if (selectedGoalId && !state.goals.some((goal) => goal.id === selectedGoalId)) {
@@ -797,6 +804,8 @@ function renderSelectors() {
   els.todayPeriod.classList.toggle("needs-attention", !todayIsVisible);
   els.todayPeriod.setAttribute("aria-label", todayIsVisible ? "今日を表示中" : "今日に戻る");
   els.todayPeriod.title = todayIsVisible ? "今日を表示中" : "今日に戻る";
+  els.calendarZoomOut.disabled = calendarSize === "compact";
+  els.calendarZoomIn.disabled = calendarSize === "large";
 }
 
 function renderCategoryOptions() {
@@ -1617,6 +1626,51 @@ els.monthView.addEventListener("click", () => {
   render();
 });
 
+els.calendarZoomOut.addEventListener("click", () => {
+  const sizes = ["compact", "normal", "large"];
+  calendarSize = sizes[Math.max(0, sizes.indexOf(calendarSize) - 1)];
+  state.meta.calendarSize = calendarSize;
+  render();
+});
+
+els.calendarZoomIn.addEventListener("click", () => {
+  const sizes = ["compact", "normal", "large"];
+  calendarSize = sizes[Math.min(sizes.length - 1, sizes.indexOf(calendarSize) + 1)];
+  state.meta.calendarSize = calendarSize;
+  render();
+});
+
+let calendarDragScroll = null;
+
+els.calendarScroll.addEventListener("pointerdown", (event) => {
+  if (event.pointerType !== "mouse" || event.button !== 0) return;
+  if (event.target.closest(".scheduled-task, button, input, textarea, select")) return;
+  calendarDragScroll = {
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    scrollLeft: els.calendarScroll.scrollLeft,
+    moved: false,
+  };
+  els.calendarScroll.setPointerCapture?.(event.pointerId);
+});
+
+els.calendarScroll.addEventListener("pointermove", (event) => {
+  if (!calendarDragScroll || calendarDragScroll.pointerId !== event.pointerId) return;
+  const deltaX = event.clientX - calendarDragScroll.startX;
+  if (Math.abs(deltaX) > 4) calendarDragScroll.moved = true;
+  els.calendarScroll.scrollLeft = calendarDragScroll.scrollLeft - deltaX;
+  if (calendarDragScroll.moved) event.preventDefault();
+});
+
+els.calendarScroll.addEventListener("pointerup", (event) => {
+  if (!calendarDragScroll || calendarDragScroll.pointerId !== event.pointerId) return;
+  calendarDragScroll = null;
+});
+
+els.calendarScroll.addEventListener("pointercancel", () => {
+  calendarDragScroll = null;
+});
+
 els.screenTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
     setActiveScreen(tab.dataset.screenTarget);
@@ -1750,7 +1804,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260520-darkcelebrate")
+      .register("./sw.js?v=20260520-calendarpan")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");
