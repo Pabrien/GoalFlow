@@ -24,6 +24,367 @@ let taskBankReturnDropBound = false;
 let calendarSize = normalizeCalendarSize(state.meta?.calendarSize);
 const screenOrder = ["home", "goals", "schedule", "today"];
 
+const translations = {
+  ja: {
+    "app.kicker": "Goal planner",
+    "app.tagline": "目標から逆算して、今日やることに落とし込む。",
+    "status.autoSave": "自動保存",
+    "status.saved": "保存済み {time}",
+    "theme.dark": "ダーク",
+    "theme.light": "ライト",
+    "language.switch": "English",
+    "language.aria": "言語を英語に切り替え",
+    "onboarding.aria": "初回チュートリアル",
+    "onboarding.kicker": "Start small",
+    "onboarding.title": "最初は3ステップだけ",
+    "onboarding.step1.title": "目標を1つ作る",
+    "onboarding.step1.body": "筋トレ、勉強、習慣など、続けたい理由を残します。",
+    "onboarding.step2.title": "小さなタスクに分ける",
+    "onboarding.step2.body": "今日できるサイズにすると、続けやすくなります。",
+    "onboarding.step3.title": "今日に入れて完了する",
+    "onboarding.step3.body": "進捗がグラフに残り、次の一歩が見えます。",
+    "onboarding.primary": "最初の目標を作る",
+    "onboarding.secondary": "あとで見る",
+    "tabs.aria": "画面切替",
+    "tabs.home": "ホーム",
+    "tabs.goals": "目標",
+    "tabs.schedule": "スケジュール",
+    "tabs.today": "今日",
+    "summary.today": "今日の達成率",
+    "summary.week": "今週の達成率",
+    "summary.overall": "全体の達成率",
+    "summary.streak": "連続記録",
+    "summary.streakValue": "{count}日",
+    "focus.kicker": "今日のフォーカス",
+    "focus.pill": "今日やること",
+    "focus.defaultTitle": "次の一手",
+    "focus.defaultBody": "GoalFlowが、目標から今日やることまでの流れを案内します。",
+    "focus.defaultButton": "始める",
+    "buddy.kicker": "ひとこと",
+    "buddy.defaultTitle": "今日の流れ",
+    "buddy.defaultMessage": "小さく始めて、完了を1つ残しましょう。",
+    "empty.kicker": "GoalFlow method",
+    "empty.title": "まず最初の目標を作りましょう",
+    "empty.body": "目標を作ると、タスクを保存して、今日の予定に落とし込めます。進捗はここにグラフで残ります。",
+    "empty.button": "目標を作る",
+    "chart.title": "7日間の積み上げ",
+    "chart.note.count": "完了したタスク数を日別に表示します。",
+    "chart.note.time": "完了したタスクの時間を日別に表示します。",
+    "chart.aria": "過去7日間の積み上げ",
+    "chart.empty": "目標を作って、今日のタスクを完了するとグラフが育ちます。",
+    "pie.title": "全体の達成状況",
+    "pie.note.count": "完了と未完了の割合です。",
+    "pie.note.time": "完了した時間と未完了の時間の割合です。",
+    "pie.empty": "完了したタスクがここに割合で表示されます。",
+    "pie.rateLabel": "{metric}の達成率",
+    "pie.done": "完了 {value}",
+    "pie.pending": "未完了 {value}",
+    "metric.count": "個数",
+    "metric.time": "時間",
+    "metric.countCaption": "完了した個数",
+    "metric.timeCaption": "完了した時間",
+    "report.title": "目標別レポート",
+    "report.note": "どの目標が前に進んでいるかを確認できます。",
+    "report.head.goal": "目標",
+    "report.head.start": "開始",
+    "report.head.record": "記録（個）",
+    "report.head.progress": "進み具合",
+    "report.empty": "目標を追加すると、ここに進捗表が出ます。",
+    "report.unplanned": "未予定",
+    "report.progress": "{done}/{total}個",
+    "report.start": "{date}から{days}日目",
+    "report.deadlineLeft": "期限まであと{days}日",
+    "report.deadlinePassed": "期限から{days}日",
+    "report.aria": "{goal}の達成率 {rate}%",
+    "goals.title": "目標",
+    "goals.add": "目標を追加",
+    "goals.empty": "まずは目標を1つ作ると、タスクを紐づけられます。",
+    "goals.unspecified": "未分類",
+    "goals.startDeadline": "開始 {start}・期限 {deadline}・{tone}",
+    "goals.deadlineLeft": "あと{days}日",
+    "goals.deadlinePassed": "{days}日経過",
+    "goals.scheduledFirst": "まず1件予定化",
+    "goals.doneTotal": "{done}/{total} 完了",
+    "goals.progress": "進み具合 {percent}%",
+    "tasks.title": "保存タスク",
+    "tasks.add": "追加",
+    "tasks.empty": "保存タスクを作ると、カレンダーへドラッグできます。",
+    "tasks.dragAria": "カレンダーへドラッグ",
+    "tasks.addToday": "今日に追加",
+    "tasks.noGoal": "未設定",
+    "schedule.kicker": "ドラッグで予定化",
+    "schedule.week": "週",
+    "schedule.month": "月",
+    "schedule.prev": "前へ",
+    "schedule.next": "次へ",
+    "schedule.todayButton": "今日に戻る",
+    "schedule.todayVisible": "今日を表示中",
+    "schedule.zoomOut": "小さく",
+    "schedule.zoomIn": "大きく",
+    "schedule.returned": "保存タスクに戻しました。",
+    "schedule.deleted": "予定から削除しました。",
+    "schedule.updated": "予定を更新しました。",
+    "schedule.addedToday": "今日に追加しました。あとは1つ完了するだけです。",
+    "schedule.added": "予定を追加しました。",
+    "schedule.moved": "予定を移動しました。",
+    "today.title": "今日やること",
+    "today.empty": "今日やることはまだありません。",
+    "today.completedToast": "完了を記録しました。今日の流れが少し前に進みました。",
+    "actions.save": "保存",
+    "actions.delete": "削除",
+    "actions.close": "閉じる",
+    "actions.done": "完了",
+    "actions.undo": "戻す",
+    "dialog.close": "閉じる",
+    "goalDialog.createTitle": "目標を作る",
+    "goalDialog.editTitle": "目標を編集",
+    "goalDialog.name": "目標名",
+    "goalDialog.namePlaceholder": "例：3か月でベンチプレス +10kg",
+    "goalDialog.category": "カテゴリ",
+    "goalDialog.categoryPlaceholder": "例：筋トレ、勉強、副業",
+    "goalDialog.deadline": "期限",
+    "goalDialog.startDate": "開始日",
+    "goalDialog.note": "目標メモ",
+    "goalDialog.notePlaceholder": "達成条件や理由",
+    "goalDialog.confirmDelete": "「{name}」を削除しますか？\n紐づく保存タスクと予定も削除されます。",
+    "goalDialog.deleted": "目標を削除しました。",
+    "taskDialog.title": "タスクを保存",
+    "taskDialog.name": "タスク名",
+    "taskDialog.namePlaceholder": "例：英単語 30個",
+    "taskDialog.goal": "紐づける目標",
+    "taskDialog.duration": "所要時間",
+    "taskDialog.unit": "単位",
+    "taskEdit.name": "タスク名",
+    "taskEdit.goal": "目標",
+    "taskEdit.duration": "時間",
+    "taskEdit.unit": "単位",
+    "taskEdit.updated": "保存タスクを更新しました。",
+    "taskEdit.confirmDelete": "「{title}」を削除しますか？",
+    "taskEdit.confirmDeleteWithRelated": "「{title}」を削除しますか？\nカレンダー上の同じ予定 {count}件も削除されます。",
+    "taskEdit.deleted": "保存タスクを削除しました。",
+    "unit.minutes": "分",
+    "unit.hours": "時間",
+    "duration.minutes": "{value}分",
+    "duration.hours": "{value}時間",
+    "categories.training": "筋トレ",
+    "categories.study": "勉強",
+    "categories.work": "仕事",
+    "categories.health": "健康",
+    "categories.habit": "習慣",
+    "dayDialog.kicker": "Day plan",
+    "dayDialog.title": "{date}の予定",
+    "dayDialog.empty": "この日の予定はまだありません。",
+    "dayDialog.noGoal": "目標なし",
+    "next.noGoal.title": "最初の目標を作成",
+    "next.noGoal.body": "まずは続けたい理由がある目標を1つだけ作りましょう。",
+    "next.noGoal.button": "目標を作る",
+    "next.noGoal.buddyTitle": "はじめの一歩",
+    "next.noGoal.buddyMessage": "大きな計画より、続けたい理由が1つあるだけで十分です。",
+    "next.noTask.title": "今日できるサイズに分ける",
+    "next.noTask.body": "目標を作れました。次は15分から30分で終わる小さなタスクを保存しましょう。",
+    "next.noTask.button": "タスクを追加",
+    "next.noTask.buddyTitle": "逆算を始める",
+    "next.noTask.buddyMessage": "目標があるなら、次は今日できる形に小さくします。",
+    "next.noToday.title": "今日やることを追加",
+    "next.noToday.body": "保存タスクを今日に入れると、予定ではなく行動に変わります。",
+    "next.noToday.button": "スケジュールで追加",
+    "next.noToday.buddyTitle": "今日に落とす",
+    "next.noToday.buddyMessage": "目標は遠くても、今日の1つなら動かせます。",
+    "next.inProgress.title": "今日の1つを完了する",
+    "next.inProgress.body": "今日は{total}件中{done}件完了です。まず1件だけ終わらせて、流れを作りましょう。",
+    "next.inProgress.button": "今日のタスクを見る",
+    "next.inProgress.buddyTitle": "あと少し",
+    "next.inProgress.buddyMessage": "完璧より記録です。1つ完了すると、明日の自分が楽になります。",
+    "next.done.title": "今日の流れは完了",
+    "next.done.body": "今日のタスクは完了しています。余力があれば明日の自分に渡すタスクを1つだけ用意しましょう。",
+    "next.done.button": "スケジュールを見る",
+    "next.done.buddyTitle": "いい継続です",
+    "next.done.buddyMessage": "完了が記録に変わりました。この小さい積み上げがGoalFlowの中心です。",
+    "file.title": "ローカルサーバーで開いてください",
+    "file.body": "この画面は直接ファイルとして開かれています。動かない場合は http://127.0.0.1:4174/index.html を開いてください。",
+    "offline.failed": "オフライン準備に失敗しました。",
+  },
+  en: {
+    "app.kicker": "Goal planner",
+    "app.tagline": "Plan backward from goals into what you can do today.",
+    "status.autoSave": "Auto-save",
+    "status.saved": "Saved {time}",
+    "theme.dark": "Dark",
+    "theme.light": "Light",
+    "language.switch": "日本語",
+    "language.aria": "Switch language to Japanese",
+    "onboarding.aria": "Getting started",
+    "onboarding.kicker": "Start small",
+    "onboarding.title": "Start with 3 steps",
+    "onboarding.step1.title": "Create one goal",
+    "onboarding.step1.body": "Keep the reason you want to continue, whether it is training, study, or a habit.",
+    "onboarding.step2.title": "Break it into small tasks",
+    "onboarding.step2.body": "Tasks that fit into today are much easier to keep going.",
+    "onboarding.step3.title": "Put it on today and finish it",
+    "onboarding.step3.body": "Your progress stays visible, so the next step is clear.",
+    "onboarding.primary": "Create first goal",
+    "onboarding.secondary": "Later",
+    "tabs.aria": "Screens",
+    "tabs.home": "Home",
+    "tabs.goals": "Goals",
+    "tabs.schedule": "Schedule",
+    "tabs.today": "Today",
+    "summary.today": "Today",
+    "summary.week": "This week",
+    "summary.overall": "Overall",
+    "summary.streak": "Streak",
+    "summary.streakValue": "{count} days",
+    "focus.kicker": "Today’s focus",
+    "focus.pill": "Today’s tasks",
+    "focus.defaultTitle": "Next step",
+    "focus.defaultBody": "GoalFlow guides the path from your goals to today’s actions.",
+    "focus.defaultButton": "Start",
+    "buddy.kicker": "Note",
+    "buddy.defaultTitle": "Today’s flow",
+    "buddy.defaultMessage": "Start small and leave one completed task behind.",
+    "empty.kicker": "GoalFlow method",
+    "empty.title": "Create your first goal",
+    "empty.body": "Once you create a goal, you can save tasks, place them on today, and see progress here.",
+    "empty.button": "Create goal",
+    "chart.title": "Last 7 days",
+    "chart.note.count": "Shows completed task count by day.",
+    "chart.note.time": "Shows completed task time by day.",
+    "chart.aria": "Last 7 days progress",
+    "chart.empty": "Create a goal and complete today’s tasks to grow this chart.",
+    "pie.title": "Overall progress",
+    "pie.note.count": "Ratio of completed and unfinished tasks.",
+    "pie.note.time": "Ratio of completed and unfinished time.",
+    "pie.empty": "Completed tasks will appear here as a ratio.",
+    "pie.rateLabel": "{metric} completion",
+    "pie.done": "Done {value}",
+    "pie.pending": "Left {value}",
+    "metric.count": "Count",
+    "metric.time": "Time",
+    "metric.countCaption": "Completed count",
+    "metric.timeCaption": "Completed time",
+    "report.title": "Goal report",
+    "report.note": "See which goals are moving forward.",
+    "report.head.goal": "Goal",
+    "report.head.start": "Start",
+    "report.head.record": "Record",
+    "report.head.progress": "Progress",
+    "report.empty": "Add a goal and its progress table will appear here.",
+    "report.unplanned": "Not scheduled",
+    "report.progress": "{done}/{total}",
+    "report.start": "Day {days} from {date}",
+    "report.deadlineLeft": "{days} days left",
+    "report.deadlinePassed": "{days} days past deadline",
+    "report.aria": "{goal} completion {rate}%",
+    "goals.title": "Goals",
+    "goals.add": "Add goal",
+    "goals.empty": "Create one goal first, then connect tasks to it.",
+    "goals.unspecified": "Uncategorized",
+    "goals.startDeadline": "Start {start} · Due {deadline} · {tone}",
+    "goals.deadlineLeft": "{days} days left",
+    "goals.deadlinePassed": "{days} days passed",
+    "goals.scheduledFirst": "Schedule one task",
+    "goals.doneTotal": "{done}/{total} done",
+    "goals.progress": "Progress {percent}%",
+    "tasks.title": "Saved tasks",
+    "tasks.add": "Add",
+    "tasks.empty": "Save a task, then drag it onto the calendar.",
+    "tasks.dragAria": "Drag to calendar",
+    "tasks.addToday": "Add to today",
+    "tasks.noGoal": "No goal",
+    "schedule.kicker": "Drag to schedule",
+    "schedule.week": "Week",
+    "schedule.month": "Month",
+    "schedule.prev": "Previous",
+    "schedule.next": "Next",
+    "schedule.todayButton": "Back to today",
+    "schedule.todayVisible": "Today is visible",
+    "schedule.zoomOut": "Smaller",
+    "schedule.zoomIn": "Larger",
+    "schedule.returned": "Moved back to saved tasks.",
+    "schedule.deleted": "Removed from schedule.",
+    "schedule.updated": "Schedule updated.",
+    "schedule.addedToday": "Added to today. Now finish one task.",
+    "schedule.added": "Added to schedule.",
+    "schedule.moved": "Moved schedule item.",
+    "today.title": "Today’s tasks",
+    "today.empty": "No tasks for today yet.",
+    "today.completedToast": "Completed. Today’s flow moved forward a little.",
+    "actions.save": "Save",
+    "actions.delete": "Delete",
+    "actions.close": "Close",
+    "actions.done": "Done",
+    "actions.undo": "Undo",
+    "dialog.close": "Close",
+    "goalDialog.createTitle": "Create goal",
+    "goalDialog.editTitle": "Edit goal",
+    "goalDialog.name": "Goal name",
+    "goalDialog.namePlaceholder": "Example: Bench press +10kg in 3 months",
+    "goalDialog.category": "Category",
+    "goalDialog.categoryPlaceholder": "Example: Training, Study, Side project",
+    "goalDialog.deadline": "Deadline",
+    "goalDialog.startDate": "Start date",
+    "goalDialog.note": "Goal note",
+    "goalDialog.notePlaceholder": "Success condition or reason",
+    "goalDialog.confirmDelete": "Delete “{name}”?\nSaved tasks and scheduled items linked to it will also be deleted.",
+    "goalDialog.deleted": "Goal deleted.",
+    "taskDialog.title": "Save task",
+    "taskDialog.name": "Task name",
+    "taskDialog.namePlaceholder": "Example: Review 30 words",
+    "taskDialog.goal": "Linked goal",
+    "taskDialog.duration": "Duration",
+    "taskDialog.unit": "Unit",
+    "taskEdit.name": "Task name",
+    "taskEdit.goal": "Goal",
+    "taskEdit.duration": "Time",
+    "taskEdit.unit": "Unit",
+    "taskEdit.updated": "Saved task updated.",
+    "taskEdit.confirmDelete": "Delete “{title}”?",
+    "taskEdit.confirmDeleteWithRelated": "Delete “{title}”?\n{count} matching calendar items will also be deleted.",
+    "taskEdit.deleted": "Saved task deleted.",
+    "unit.minutes": "min",
+    "unit.hours": "hours",
+    "duration.minutes": "{value} min",
+    "duration.hours": "{value} h",
+    "categories.training": "Training",
+    "categories.study": "Study",
+    "categories.work": "Work",
+    "categories.health": "Health",
+    "categories.habit": "Habit",
+    "dayDialog.kicker": "Day plan",
+    "dayDialog.title": "{date} plan",
+    "dayDialog.empty": "No tasks scheduled for this day.",
+    "dayDialog.noGoal": "No goal",
+    "next.noGoal.title": "Create your first goal",
+    "next.noGoal.body": "Start with one goal that has a reason you want to keep going.",
+    "next.noGoal.button": "Create goal",
+    "next.noGoal.buddyTitle": "First step",
+    "next.noGoal.buddyMessage": "One clear reason is enough to begin.",
+    "next.noTask.title": "Make it small enough for today",
+    "next.noTask.body": "Goal created. Now save a small task that takes 15 to 30 minutes.",
+    "next.noTask.button": "Add task",
+    "next.noTask.buddyTitle": "Start planning backward",
+    "next.noTask.buddyMessage": "A goal becomes easier when it turns into today’s shape.",
+    "next.noToday.title": "Add a task to today",
+    "next.noToday.body": "Put a saved task on today and it becomes an action, not just a plan.",
+    "next.noToday.button": "Open schedule",
+    "next.noToday.buddyTitle": "Bring it to today",
+    "next.noToday.buddyMessage": "Even a distant goal can move through one task today.",
+    "next.inProgress.title": "Finish one task today",
+    "next.inProgress.body": "{done} of {total} tasks are done today. Finish just one to build momentum.",
+    "next.inProgress.button": "View today’s tasks",
+    "next.inProgress.buddyTitle": "Almost there",
+    "next.inProgress.buddyMessage": "Record beats perfection. One completion helps tomorrow’s you.",
+    "next.done.title": "Today’s flow is complete",
+    "next.done.body": "Today’s tasks are done. If you have energy, prepare one task for tomorrow.",
+    "next.done.button": "View schedule",
+    "next.done.buddyTitle": "Good streak",
+    "next.done.buddyMessage": "Completion turned into a record. That small accumulation is the heart of GoalFlow.",
+    "file.title": "Open with a local server",
+    "file.body": "This screen was opened as a file. If it does not work, open http://127.0.0.1:4174/index.html.",
+    "offline.failed": "Offline setup failed.",
+  },
+};
+
 const els = {
   goalList: document.querySelector("#goalList"),
   taskBank: document.querySelector("#taskBank"),
@@ -75,6 +436,8 @@ const els = {
   saveStatus: document.querySelector("#saveStatus"),
   themeToggle: document.querySelector("#themeToggle"),
   themeToggleLabel: document.querySelector("#themeToggleLabel"),
+  languageToggle: document.querySelector("#languageToggle"),
+  languageToggleLabel: document.querySelector("#languageToggleLabel"),
   launchScreen: document.querySelector("#launchScreen"),
   nextActionTitle: document.querySelector("#nextActionTitle"),
   nextActionBody: document.querySelector("#nextActionBody"),
@@ -96,6 +459,7 @@ function createEmptyState() {
       lastVisitDate: "",
       visitStreak: 0,
       theme: "light",
+      language: "ja",
       calendarSize: "normal",
     },
   };
@@ -154,6 +518,7 @@ function loadState() {
         lastVisitDate: parsed.meta?.lastVisitDate ?? "",
         visitStreak: Number(parsed.meta?.visitStreak ?? 0),
         theme: parsed.meta?.theme === "dark" ? "dark" : "light",
+        language: parsed.meta?.language === "en" ? "en" : "ja",
         calendarSize: normalizeCalendarSize(parsed.meta?.calendarSize),
       },
     };
@@ -177,14 +542,50 @@ function normalizeCalendarSize(size) {
   return "size-4";
 }
 
+function currentLanguage() {
+  return state.meta.language === "en" ? "en" : "ja";
+}
+
+function t(key, values = {}) {
+  const template = translations[currentLanguage()]?.[key] ?? translations.ja[key] ?? key;
+  return template.replace(/\{(\w+)\}/g, (_, name) => values[name] ?? "");
+}
+
+function localizeStaticContent() {
+  const lang = currentLanguage();
+  document.documentElement.lang = lang;
+  document.body.dataset.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach((node) => {
+    node.textContent = t(node.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-aria]").forEach((node) => {
+    node.setAttribute("aria-label", t(node.dataset.i18nAria));
+  });
+  document.querySelectorAll("[data-i18n-title]").forEach((node) => {
+    node.setAttribute("title", t(node.dataset.i18nTitle));
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
+    node.setAttribute("placeholder", t(node.dataset.i18nPlaceholder));
+  });
+  if (els.languageToggle) {
+    els.languageToggle.setAttribute("aria-label", t("language.aria"));
+  }
+  if (els.languageToggleLabel) {
+    els.languageToggleLabel.textContent = t("language.switch");
+  }
+}
+
 function saveState() {
   localStorage.setItem(storageKey, JSON.stringify(state));
   if (els.saveStatus) {
-    els.saveStatus.textContent = `保存済み ${new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}`;
+    const locale = currentLanguage() === "en" ? "en-US" : "ja-JP";
+    const time = new Date().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+    els.saveStatus.textContent = t("status.saved", { time });
   }
 }
 
 function render() {
+  localizeStaticContent();
   renderTheme();
   renderFileWarning();
   document.body.dataset.viewMode = viewMode;
@@ -216,20 +617,22 @@ function renderTheme() {
   document.body.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
   els.themeToggle?.setAttribute("aria-pressed", String(theme === "dark"));
-  if (els.themeToggleLabel) els.themeToggleLabel.textContent = theme === "dark" ? "ライト" : "ダーク";
+  if (els.themeToggleLabel) els.themeToggleLabel.textContent = theme === "dark" ? t("theme.light") : t("theme.dark");
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#0f172a" : "#146c63");
 }
 
 function renderFileWarning() {
   if (!els.fileWarning) return;
   els.fileWarning.hidden = window.location.protocol !== "file:";
+  els.fileWarning.querySelector("strong").textContent = t("file.title");
+  els.fileWarning.querySelector("p").textContent = t("file.body");
 }
 
 function renderGoals() {
   els.goalCount.textContent = state.goals.length;
   els.goalList.innerHTML = "";
   if (!state.goals.length) {
-    els.goalList.append(empty("まずは目標を1つ作ると、タスクを紐づけられます。"));
+    els.goalList.append(empty(t("goals.empty")));
     return;
   }
   state.goals.forEach((goal) => {
@@ -239,20 +642,21 @@ function renderGoals() {
     const daysLeft = daysBetween(today, goal.deadline);
     const startLabel = formatDate(goal.createdAt);
     const deadlineLabel = formatDate(goal.deadline);
-    const paceLabel = total ? `${done}/${total} 完了` : "まず1件予定化";
-    const deadlineTone = daysLeft >= 0 ? `あと${daysLeft}日` : `${Math.abs(daysLeft)}日経過`;
+    const paceLabel = total ? t("goals.doneTotal", { done, total }) : t("goals.scheduledFirst");
+    const deadlineTone =
+      daysLeft >= 0 ? t("goals.deadlineLeft", { days: daysLeft }) : t("goals.deadlinePassed", { days: Math.abs(daysLeft) });
     const card = document.createElement("article");
     card.className = `goal-card ${goal.id === selectedGoalId ? "active" : ""}`;
     card.innerHTML = `
       <div class="goal-card-head">
         <button type="button" class="goal-select">
           <span class="goal-title"><span>${escapeHtml(goal.name)}</span><span class="tag">${escapeHtml(goal.category)}</span></span>
-          <p class="goal-meta">開始 ${startLabel}・期限 ${deadlineLabel}・${escapeHtml(deadlineTone)}</p>
+          <p class="goal-meta">${escapeHtml(t("goals.startDeadline", { start: startLabel, deadline: deadlineLabel, tone: deadlineTone }))}</p>
         </button>
       </div>
       <div class="goal-stats">
         <span>${escapeHtml(paceLabel)}</span>
-        <span>進み具合 ${percent}%</span>
+        <span>${escapeHtml(t("goals.progress", { percent }))}</span>
       </div>
       <div class="progress-track"><div class="progress-fill" style="width: ${percent}%"></div></div>
     `;
@@ -282,7 +686,7 @@ function renderTaskBank() {
   bindTaskBankReturnDrop();
   const tasks = state.tasks.filter((task) => !selectedGoalId || task.goalId === selectedGoalId);
   if (!tasks.length) {
-    els.taskBank.append(empty("保存タスクを作ると、カレンダーへドラッグできます。"));
+    els.taskBank.append(empty(t("tasks.empty")));
     return;
   }
   tasks.forEach((task) => {
@@ -294,30 +698,30 @@ function renderTaskBank() {
     let nativeDragging = false;
     item.innerHTML = `
       <div class="bank-task-main">
-        <span class="task-drag-handle" data-drag-handle draggable="true" role="button" tabindex="0" aria-label="カレンダーへドラッグ"></span>
+        <span class="task-drag-handle" data-drag-handle draggable="true" role="button" tabindex="0" aria-label="${escapeHtml(t("tasks.dragAria"))}"></span>
         <div class="bank-task-copy">${taskMarkup(task, goal)}</div>
       </div>
       ${
         editingTaskId === task.id
           ? `
             <form class="task-edit-form" data-task-edit="${escapeHtml(task.id)}">
-              <label>タスク名<input name="title" required maxlength="28" value="${escapeHtml(task.title)}" /></label>
-              <label>目標<select name="goalId">${taskGoalOptions(task.goalId)}</select></label>
+              <label>${escapeHtml(t("taskEdit.name"))}<input name="title" required maxlength="28" value="${escapeHtml(task.title)}" /></label>
+              <label>${escapeHtml(t("taskEdit.goal"))}<select name="goalId">${taskGoalOptions(task.goalId)}</select></label>
               <div class="field-row">
-                <label>時間<input name="durationValue" type="number" min="1" max="240" step="1" value="${escapeHtml(task.durationValue ?? task.minutes ?? 30)}" /></label>
-                <label>単位<select name="durationUnit">${durationUnitOptions(task.durationUnit ?? "minutes")}</select></label>
+                <label>${escapeHtml(t("taskEdit.duration"))}<input name="durationValue" type="number" min="1" max="240" step="1" value="${escapeHtml(task.durationValue ?? task.minutes ?? 30)}" /></label>
+                <label>${escapeHtml(t("taskEdit.unit"))}<select name="durationUnit">${durationUnitOptions(task.durationUnit ?? "minutes")}</select></label>
               </div>
               <div class="task-edit-actions">
-                <button class="mini-button danger-button" type="button" data-action="delete-task">削除</button>
-                <button class="mini-button" type="submit">保存</button>
-                <button class="mini-button" type="button" data-action="close-edit">閉じる</button>
+                <button class="mini-button danger-button" type="button" data-action="delete-task">${escapeHtml(t("actions.delete"))}</button>
+                <button class="mini-button" type="submit">${escapeHtml(t("actions.save"))}</button>
+                <button class="mini-button" type="button" data-action="close-edit">${escapeHtml(t("actions.close"))}</button>
               </div>
             </form>
           `
           : ""
       }
       <div class="bank-task-actions">
-        <button class="mini-button" type="button" data-action="today">今日に追加</button>
+        <button class="mini-button" type="button" data-action="today">${escapeHtml(t("tasks.addToday"))}</button>
       </div>
     `;
     const dragHandle = item.querySelector("[data-drag-handle]");
@@ -416,7 +820,7 @@ function handleTaskBankReturnDrop(event) {
   document.body.classList.remove("is-scheduling", "is-returning-scheduled");
   const item = state.scheduled.find((candidate) => candidate.id === scheduledId);
   if (item) {
-    deleteScheduledItem(item, "保存タスクに戻しました。");
+    deleteScheduledItem(item, t("schedule.returned"));
   }
 }
 
@@ -428,8 +832,8 @@ function taskGoalOptions(selectedId) {
 
 function durationUnitOptions(selectedUnit) {
   return `
-    <option value="minutes" ${selectedUnit === "minutes" ? "selected" : ""}>分</option>
-    <option value="hours" ${selectedUnit === "hours" ? "selected" : ""}>時間</option>
+    <option value="minutes" ${selectedUnit === "minutes" ? "selected" : ""}>${escapeHtml(t("unit.minutes"))}</option>
+    <option value="hours" ${selectedUnit === "hours" ? "selected" : ""}>${escapeHtml(t("unit.hours"))}</option>
   `;
 }
 
@@ -467,16 +871,16 @@ function bindDoubleActivate(node, callback) {
 function scheduledEditForm(item) {
   return `
     <form class="task-edit-form scheduled-edit-form" data-scheduled-edit="${escapeHtml(item.id)}">
-      <label>タスク名<input name="title" required maxlength="28" value="${escapeHtml(item.title)}" /></label>
-      <label>目標<select name="goalId">${taskGoalOptions(item.goalId)}</select></label>
+      <label>${escapeHtml(t("taskEdit.name"))}<input name="title" required maxlength="28" value="${escapeHtml(item.title)}" /></label>
+      <label>${escapeHtml(t("taskEdit.goal"))}<select name="goalId">${taskGoalOptions(item.goalId)}</select></label>
       <div class="field-row">
-        <label>時間<input name="durationValue" type="number" min="1" max="240" step="1" value="${escapeHtml(item.durationValue ?? item.minutes ?? 30)}" /></label>
-        <label>単位<select name="durationUnit">${durationUnitOptions(item.durationUnit ?? "minutes")}</select></label>
+        <label>${escapeHtml(t("taskEdit.duration"))}<input name="durationValue" type="number" min="1" max="240" step="1" value="${escapeHtml(item.durationValue ?? item.minutes ?? 30)}" /></label>
+        <label>${escapeHtml(t("taskEdit.unit"))}<select name="durationUnit">${durationUnitOptions(item.durationUnit ?? "minutes")}</select></label>
       </div>
       <div class="task-edit-actions">
-        <button class="mini-button danger-button" type="button" data-action="delete-scheduled-edit">削除</button>
-        <button class="mini-button" type="submit">保存</button>
-        <button class="mini-button" type="button" data-action="close-scheduled-edit">閉じる</button>
+        <button class="mini-button danger-button" type="button" data-action="delete-scheduled-edit">${escapeHtml(t("actions.delete"))}</button>
+        <button class="mini-button" type="submit">${escapeHtml(t("actions.save"))}</button>
+        <button class="mini-button" type="button" data-action="close-scheduled-edit">${escapeHtml(t("actions.close"))}</button>
       </div>
     </form>
   `;
@@ -487,7 +891,7 @@ function createDragPreview(task, goal) {
   preview.className = "drag-preview";
   preview.innerHTML = `
     <strong>${escapeHtml(task.title)}</strong>
-    <span>${escapeHtml(goal?.category ?? "タスク")}・${escapeHtml(formatDuration(task))}</span>
+    <span>${escapeHtml(goal?.category ?? t("tasks.title"))}・${escapeHtml(formatDuration(task))}</span>
   `;
   return preview;
 }
@@ -604,7 +1008,7 @@ function renderCalendar() {
     column.dataset.date = iso;
     column.innerHTML = `
       <div class="day-head">
-        <span class="day-name">${["日", "月", "火", "水", "木", "金", "土"][date.getDay()]}</span>
+        <span class="day-name">${escapeHtml(formatWeekday(date))}</span>
         <span class="day-number">${date.getDate()}</span>
       </div>
       <div class="day-tasks"></div>
@@ -679,7 +1083,7 @@ function scheduledElement(item, isCompact = false) {
   node.innerHTML = `
     ${taskMarkup({ ...task, title: item.title, minutes: item.minutes }, goal, isCompact)}
     <div class="task-actions">
-      <button class="mini-button" type="button" data-action="done">${item.done ? "戻す" : "完了"}</button>
+      <button class="mini-button" type="button" data-action="done">${escapeHtml(item.done ? t("actions.undo") : t("actions.done"))}</button>
     </div>
     ${isEditing ? scheduledEditForm(item) : ""}
   `;
@@ -738,11 +1142,11 @@ function renderToday() {
   els.todayList.innerHTML = "";
   const items = state.scheduled.filter((item) => item.date === toISO(today));
   if (!items.length) {
-    els.todayList.append(empty("今日の予定はまだありません。"));
+    els.todayList.append(empty(t("today.empty")));
     return;
   }
   items
-    .sort((a, b) => a.title.localeCompare(b.title, "ja"))
+    .sort((a, b) => a.title.localeCompare(b.title, currentLanguage() === "en" ? "en" : "ja"))
     .forEach((item) => {
       const task = state.tasks.find((candidate) => candidate.id === item.taskId) ?? item;
       const goal = findGoal(item.goalId);
@@ -751,7 +1155,7 @@ function renderToday() {
       node.innerHTML = `
         ${taskMarkup({ ...task, title: item.title, minutes: item.minutes }, goal)}
         <div class="task-actions">
-          <button class="mini-button" type="button" data-action="done">${item.done ? "戻す" : "完了"}</button>
+          <button class="mini-button" type="button" data-action="done">${escapeHtml(item.done ? t("actions.undo") : t("actions.done"))}</button>
         </div>
         ${editingScheduledId === item.id ? scheduledEditForm(item) : ""}
       `;
@@ -779,7 +1183,7 @@ function toggleScheduledDone(item) {
   item.done = !item.done;
   if (item.done) {
     highlightedCompletionId = item.id;
-    showToast("完了を記録しました。今日の流れが少し前に進みました。");
+    showToast(t("today.completedToast"));
     render();
     window.setTimeout(() => {
       if (highlightedCompletionId === item.id) {
@@ -795,31 +1199,31 @@ function toggleScheduledDone(item) {
 function renderSelectors() {
   const options = state.goals.map((goal) => `<option value="${goal.id}">${escapeHtml(goal.name)}</option>`).join("");
   els.taskGoalSelect.innerHTML = options;
-  els.goalFilter.innerHTML = `<option value="">すべて</option>${options}`;
+  els.goalFilter.innerHTML = `<option value="">${escapeHtml(currentLanguage() === "en" ? "All goals" : "すべて")}</option>${options}`;
   els.taskGoalSelect.value = selectedGoalId || state.goals[0]?.id || "";
   els.goalFilter.value = selectedGoalId;
   els.chartMetric.value = chartMetric;
   els.pieMetric.value = pieMetric;
   els.chartMetricNote.textContent =
-    chartMetric === "time" ? "完了したタスクの時間を日別に表示します。" : "完了したタスク数を日別に表示します。";
+    chartMetric === "time" ? t("chart.note.time") : t("chart.note.count");
   els.pieMetricNote.textContent =
-    pieMetric === "time" ? "完了した時間と未完了の時間の割合です。" : "完了と未完了の割合です。";
+    pieMetric === "time" ? t("pie.note.time") : t("pie.note.count");
   els.weekView.classList.toggle("active", viewMode === "week");
   els.monthView.classList.toggle("active", viewMode === "month");
   els.weekView.setAttribute("aria-pressed", String(viewMode === "week"));
   els.monthView.setAttribute("aria-pressed", String(viewMode === "month"));
-  els.todayPeriod.textContent = "今日に戻る";
+  els.todayPeriod.textContent = t("schedule.todayButton");
   const todayIsVisible = isTodayVisibleInSchedule();
   els.todayPeriod.classList.toggle("needs-attention", !todayIsVisible);
-  els.todayPeriod.setAttribute("aria-label", todayIsVisible ? "今日を表示中" : "今日に戻る");
-  els.todayPeriod.title = todayIsVisible ? "今日を表示中" : "今日に戻る";
+  els.todayPeriod.setAttribute("aria-label", todayIsVisible ? t("schedule.todayVisible") : t("schedule.todayButton"));
+  els.todayPeriod.title = todayIsVisible ? t("schedule.todayVisible") : t("schedule.todayButton");
   els.calendarZoomOut.disabled = calendarSize === calendarSizes[0];
   els.calendarZoomIn.disabled = calendarSize === calendarSizes.at(-1);
 }
 
 function renderCategoryOptions() {
   if (!els.categoryOptions && !els.categoryPicker) return;
-  const categories = new Set(["筋トレ", "勉強", "仕事", "健康", "習慣"]);
+  const categories = new Set([t("categories.training"), t("categories.study"), t("categories.work"), t("categories.health"), t("categories.habit")]);
   state.goals.forEach((goal) => {
     if (goal.category) categories.add(goal.category);
   });
@@ -880,55 +1284,55 @@ function renderNextAction() {
 function getNextAction(todaysItems, todaysDone) {
   if (!state.goals.length) {
     return {
-      title: "最初の目標を作成",
-      body: "GoalFlowは目標から逆算するアプリです。まずは続けたい理由がある目標を1つだけ作りましょう。",
-      button: "目標を作る",
+      title: t("next.noGoal.title"),
+      body: t("next.noGoal.body"),
+      button: t("next.noGoal.button"),
       action: "createGoal",
-      buddyTitle: "はじめの一歩",
-      buddyMessage: "大きな計画より、続けたい理由が1つあるだけで十分です。",
+      buddyTitle: t("next.noGoal.buddyTitle"),
+      buddyMessage: t("next.noGoal.buddyMessage"),
     };
   }
 
   if (!state.tasks.length) {
     return {
-      title: "今日やれるサイズに分ける",
-      body: "目標を作れました。次は15分から30分で終わる小さなタスクを保存しましょう。",
-      button: "タスクを追加",
+      title: t("next.noTask.title"),
+      body: t("next.noTask.body"),
+      button: t("next.noTask.button"),
       action: "createTask",
-      buddyTitle: "逆算を始める",
-      buddyMessage: "目標があるなら、次は今日できる形に小さくします。",
+      buddyTitle: t("next.noTask.buddyTitle"),
+      buddyMessage: t("next.noTask.buddyMessage"),
     };
   }
 
   if (!todaysItems.length) {
     return {
-      title: "今日やることを追加",
-      body: "保存タスクを今日に入れると、予定ではなく行動に変わります。タスク画面の「今日に追加」からすぐ追加できます。",
-      button: "スケジュールで追加",
+      title: t("next.noToday.title"),
+      body: t("next.noToday.body"),
+      button: t("next.noToday.button"),
       action: "openTasks",
-      buddyTitle: "今日に落とす",
-      buddyMessage: "目標は遠くても、今日の1つなら動かせます。",
+      buddyTitle: t("next.noToday.buddyTitle"),
+      buddyMessage: t("next.noToday.buddyMessage"),
     };
   }
 
   if (todaysDone < todaysItems.length) {
     return {
-      title: "今日の1つを完了する",
-      body: `今日は${todaysItems.length}件中${todaysDone}件完了です。まず1件だけ終わらせて、流れを作りましょう。`,
-      button: "今日のタスクを見る",
+      title: t("next.inProgress.title"),
+      body: t("next.inProgress.body", { total: todaysItems.length, done: todaysDone }),
+      button: t("next.inProgress.button"),
       action: "openToday",
-      buddyTitle: "あと少し",
-      buddyMessage: "完璧より記録です。1つ完了すると、明日の自分が楽になります。",
+      buddyTitle: t("next.inProgress.buddyTitle"),
+      buddyMessage: t("next.inProgress.buddyMessage"),
     };
   }
 
   return {
-    title: "今日の流れは完了",
-    body: "今日のタスクは完了しています。余力があれば明日の自分に渡すタスクを1つだけ用意しましょう。",
-    button: "スケジュールを見る",
+    title: t("next.done.title"),
+    body: t("next.done.body"),
+    button: t("next.done.button"),
     action: "openSchedule",
-    buddyTitle: "いい継続です",
-    buddyMessage: "完了が記録に変わりました。この小さい積み上げがGoalFlowの中心です。",
+    buddyTitle: t("next.done.buddyTitle"),
+    buddyMessage: t("next.done.buddyMessage"),
   };
 }
 
@@ -962,7 +1366,7 @@ function renderSummary() {
   els.todayRateMeter.style.width = `${todayRate}%`;
   els.weekRateMeter.style.width = `${weekRate}%`;
   els.overallRateMeter.style.width = `${overallRate}%`;
-  els.summaryStreak.textContent = `${calcStreak()}日`;
+  els.summaryStreak.textContent = t("summary.streakValue", { count: calcStreak() });
   document.body.classList.toggle("today-complete", todayTotal > 0 && todayRate === 100);
   document.body.classList.toggle("week-complete", weekTotal > 0 && weekRate === 100);
   document.body.classList.toggle("overall-complete", total > 0 && overallRate === 100);
@@ -980,7 +1384,7 @@ function renderChart() {
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
     ctx.fillRect(0, 0, width, height);
-    drawEmptyCanvas(ctx, width, height, "目標を作って、今日のタスクを完了するとグラフが育ちます。");
+    drawEmptyCanvas(ctx, width, height, t("chart.empty"));
     return;
   }
   const days = Array.from({ length: 7 }, (_, index) => addDays(today, index - 6));
@@ -1058,7 +1462,7 @@ function renderCompletionPie() {
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
     ctx.fillRect(0, 0, width, height);
-    drawEmptyCanvas(ctx, width, height, "完了したタスクがここに割合で表示されます。");
+    drawEmptyCanvas(ctx, width, height, t("pie.empty"));
     return;
   }
 
@@ -1093,10 +1497,10 @@ function renderCompletionPie() {
     ctx.fillText(`${Math.round(rate * progress)}%`, centerX, centerY + 8);
     ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
     ctx.font = "13px system-ui";
-    ctx.fillText(`${labels.name}の達成率`, centerX, centerY + 32);
+    ctx.fillText(t("pie.rateLabel", { metric: labels.name }), centerX, centerY + 32);
 
-    drawLegend(ctx, 26, height - 36, canvasColor("--accent", "#146c63"), `完了 ${formatMetricValue(done * progress, pieMetric)}`);
-    drawLegend(ctx, Math.max(26, width - 156), height - 36, canvasColor("--canvas-line", "#e4e9df"), `未完了 ${formatMetricValue(pending, pieMetric)}`);
+    drawLegend(ctx, 26, height - 36, canvasColor("--accent", "#146c63"), t("pie.done", { value: formatMetricValue(done * progress, pieMetric) }));
+    drawLegend(ctx, Math.max(26, width - 156), height - 36, canvasColor("--canvas-line", "#e4e9df"), t("pie.pending", { value: formatMetricValue(pending, pieMetric) }));
   };
   animateCanvas("pie", draw, 680);
 }
@@ -1105,11 +1509,11 @@ function renderGoalReport() {
   els.goalReport.innerHTML = "";
   const head = document.createElement("div");
   head.className = "report-head";
-  head.innerHTML = "<span>目標</span><span>開始</span><span>記録（個）</span><span>進み具合</span>";
+  head.innerHTML = `<span>${escapeHtml(t("report.head.goal"))}</span><span>${escapeHtml(t("report.head.start"))}</span><span>${escapeHtml(t("report.head.record"))}</span><span>${escapeHtml(t("report.head.progress"))}</span>`;
   els.goalReport.append(head);
 
   if (!state.goals.length) {
-    els.goalReport.append(empty("目標を追加すると、ここに進捗表が出ます。"));
+    els.goalReport.append(empty(t("report.empty")));
     return;
   }
 
@@ -1119,9 +1523,9 @@ function renderGoalReport() {
     const rate = items.length ? Math.round((done / items.length) * 100) : 0;
     const daysActive = Math.max(1, daysBetween(goal.createdAt, today) + 1);
     const daysLeft = daysBetween(today, goal.deadline);
-    const progressText = items.length ? `${done}/${items.length}個` : "未予定";
-    const startText = `${formatDate(goal.createdAt)}から${daysActive}日目`;
-    const supportText = daysLeft >= 0 ? `期限まであと${daysLeft}日` : `期限から${Math.abs(daysLeft)}日`;
+    const progressText = items.length ? t("report.progress", { done, total: items.length }) : t("report.unplanned");
+    const startText = t("report.start", { date: formatDate(goal.createdAt), days: daysActive });
+    const supportText = daysLeft >= 0 ? t("report.deadlineLeft", { days: daysLeft }) : t("report.deadlinePassed", { days: Math.abs(daysLeft) });
     const row = document.createElement("div");
     row.className = "report-row";
     row.innerHTML = `
@@ -1129,7 +1533,7 @@ function renderGoalReport() {
       <span class="report-start">${escapeHtml(startText)}</span>
       <span class="report-rate">${escapeHtml(progressText)}</span>
       <div class="report-progress-cell">
-        <div class="report-progress" aria-label="${escapeHtml(goal.name)}の達成率 ${rate}%"><span style="width: ${rate}%"></span></div>
+        <div class="report-progress" aria-label="${escapeHtml(t("report.aria", { goal: goal.name, rate }))}"><span style="width: ${rate}%"></span></div>
         <span class="report-support">${escapeHtml(supportText)}</span>
       </div>
     `;
@@ -1157,9 +1561,9 @@ function metricValue(items, metric) {
 
 function chartMetricLabels(metric) {
   if (metric === "time") {
-    return { name: "時間", caption: "完了した時間" };
+    return { name: t("metric.time"), caption: t("metric.timeCaption") };
   }
-  return { name: "個数", caption: "完了した個数" };
+  return { name: t("metric.count"), caption: t("metric.countCaption") };
 }
 
 function formatMetricValue(value, metric) {
@@ -1169,9 +1573,9 @@ function formatMetricValue(value, metric) {
       const hours = minutes / 60;
       return `${Number.isInteger(hours) ? hours : hours.toFixed(1)}h`;
     }
-    return `${minutes}分`;
+    return t("duration.minutes", { value: minutes });
   }
-  return `${Math.round(value)}個`;
+  return currentLanguage() === "en" ? String(Math.round(value)) : `${Math.round(value)}個`;
 }
 
 function animateCanvas(kind, draw, duration) {
@@ -1224,7 +1628,8 @@ function drawEmptyCanvas(ctx, width, height, text) {
 
 function taskMarkup(task, goal, isCompact = false) {
   const duration = formatDuration(task);
-  const meta = isCompact ? `${goal?.name ?? "未設定"}` : `${goal?.name ?? "未設定"}・${duration}`;
+  const goalName = goal?.name ?? t("tasks.noGoal");
+  const meta = isCompact ? `${goalName}` : `${goalName}・${duration}`;
   return `
     <div class="task-title"><span>${escapeHtml(task.title)}</span></div>
     <p class="task-meta">${escapeHtml(meta)}</p>
@@ -1232,13 +1637,13 @@ function taskMarkup(task, goal, isCompact = false) {
 }
 
 function deleteGoal(goal) {
-  const ok = window.confirm(`「${goal.name}」を削除しますか？\n紐づく保存タスクと予定も削除されます。`);
+  const ok = window.confirm(t("goalDialog.confirmDelete", { name: goal.name }));
   if (!ok) return false;
   state.goals = state.goals.filter((candidate) => candidate.id !== goal.id);
   state.tasks = state.tasks.filter((task) => task.goalId !== goal.id);
   state.scheduled = state.scheduled.filter((item) => item.goalId !== goal.id);
   selectedGoalId = state.goals[0]?.id ?? "";
-  showToast("目標を削除しました。");
+  showToast(t("goalDialog.deleted"));
   render();
   return true;
 }
@@ -1246,16 +1651,16 @@ function deleteGoal(goal) {
 function deleteSavedTask(task) {
   const relatedCount = state.scheduled.filter((item) => item.taskId === task.id).length;
   const message = relatedCount
-    ? `「${task.title}」を削除しますか？\nカレンダー上の同じ予定 ${relatedCount}件も削除されます。`
-    : `「${task.title}」を削除しますか？`;
+    ? t("taskEdit.confirmDeleteWithRelated", { title: task.title, count: relatedCount })
+    : t("taskEdit.confirmDelete", { title: task.title });
   if (!window.confirm(message)) return;
   state.tasks = state.tasks.filter((candidate) => candidate.id !== task.id);
   state.scheduled = state.scheduled.filter((item) => item.taskId !== task.id);
-  showToast("保存タスクを削除しました。");
+  showToast(t("taskEdit.deleted"));
   render();
 }
 
-function deleteScheduledItem(item, message = "予定から削除しました。") {
+function deleteScheduledItem(item, message = t("schedule.deleted")) {
   state.scheduled = state.scheduled.filter((candidate) => candidate.id !== item.id);
   if (activeScheduleControlId === item.id) activeScheduleControlId = "";
   if (editingScheduledId === item.id) editingScheduledId = "";
@@ -1285,7 +1690,7 @@ function saveTaskEdit(event, task) {
   });
   selectedGoalId = task.goalId;
   editingTaskId = "";
-  showToast("保存タスクを更新しました。");
+  showToast(t("taskEdit.updated"));
   render();
 }
 
@@ -1304,15 +1709,15 @@ function saveScheduledEdit(event, item) {
   selectedGoalId = item.goalId;
   editingScheduledId = "";
   activeScheduleControlId = item.id;
-  showToast("予定を更新しました。");
+  showToast(t("schedule.updated"));
   render();
 }
 
 function openDayDialog(date) {
   const items = state.scheduled
     .filter((item) => item.date === date && (!selectedGoalId || item.goalId === selectedGoalId))
-    .sort((a, b) => a.title.localeCompare(b.title, "ja"));
-  els.dayDialogTitle.textContent = `${formatDateWithWeekday(date)}の予定`;
+    .sort((a, b) => a.title.localeCompare(b.title, currentLanguage() === "en" ? "en" : "ja"));
+  els.dayDialogTitle.textContent = t("dayDialog.title", { date: formatDateWithWeekday(date) });
   els.dayDialogList.innerHTML = items.length
     ? items
         .map((item) => {
@@ -1321,14 +1726,14 @@ function openDayDialog(date) {
             <article class="day-dialog-item ${item.done ? "done" : ""}">
               <div>
                 <strong>${escapeHtml(item.title)}</strong>
-                <span>${escapeHtml(goal?.name ?? "目標なし")}・${escapeHtml(formatDuration(item))}</span>
+                <span>${escapeHtml(goal?.name ?? t("dayDialog.noGoal"))}・${escapeHtml(formatDuration(item))}</span>
               </div>
-              <button class="mini-button" type="button" data-day-done="${escapeHtml(item.id)}">${item.done ? "戻す" : "完了"}</button>
+              <button class="mini-button" type="button" data-day-done="${escapeHtml(item.id)}">${escapeHtml(item.done ? t("actions.undo") : t("actions.done"))}</button>
             </article>
           `;
         })
         .join("")
-    : `<div class="empty-state">この日の予定はまだありません。</div>`;
+    : `<div class="empty-state">${escapeHtml(t("dayDialog.empty"))}</div>`;
   els.dayDialogList.querySelectorAll("[data-day-done]").forEach((button) => {
     button.addEventListener("click", () => {
       const item = state.scheduled.find((candidate) => candidate.id === button.dataset.dayDone);
@@ -1342,7 +1747,10 @@ function openDayDialog(date) {
 
 function formatDateWithWeekday(dateString) {
   const date = new Date(`${dateString}T00:00:00`);
-  return `${date.getMonth() + 1}/${date.getDate()}（${["日", "月", "火", "水", "木", "金", "土"][date.getDay()]}）`;
+  if (currentLanguage() === "en") {
+    return `${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })} (${formatWeekday(date)})`;
+  }
+  return `${date.getMonth() + 1}/${date.getDate()}（${formatWeekday(date)}）`;
 }
 
 function scheduleTask(taskId, date) {
@@ -1357,7 +1765,7 @@ function scheduleTask(taskId, date) {
     render();
   }, 720);
   vibrate(date === toISO(today) ? 18 : 10);
-  showToast(date === toISO(today) ? "今日に追加しました。あとは1つ完了するだけです。" : "予定を追加しました。");
+  showToast(date === toISO(today) ? t("schedule.addedToday") : t("schedule.added"));
   render();
 }
 
@@ -1373,7 +1781,7 @@ function moveScheduledTask(scheduledId, date) {
     render();
   }, 720);
   vibrate(12);
-  showToast("予定を移動しました。");
+  showToast(t("schedule.moved"));
   render();
 }
 
@@ -1421,8 +1829,8 @@ function getCurrentWeekDates() {
 function formatDuration(task) {
   const unit = task.durationUnit ?? "minutes";
   const value = task.durationValue ?? task.minutes;
-  if (unit === "hours") return `${value}時間`;
-  return `${value}分`;
+  if (unit === "hours") return t("duration.hours", { value });
+  return t("duration.minutes", { value });
 }
 
 function findGoal(goalId) {
@@ -1465,11 +1873,23 @@ function toISO(date) {
 
 function formatDate(value) {
   const date = typeof value === "string" ? new Date(`${value}T00:00:00`) : value;
+  if (currentLanguage() === "en") {
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
 function formatMonthTitle(date) {
+  if (currentLanguage() === "en") {
+    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  }
   return `${date.getFullYear()}年 ${date.getMonth() + 1}月`;
+}
+
+function formatWeekday(date) {
+  return currentLanguage() === "en"
+    ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getDay()]
+    : ["日", "月", "火", "水", "木", "金", "土"][date.getDay()];
 }
 
 function daysBetween(start, end) {
@@ -1504,7 +1924,7 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
-els.openGoalDialog.addEventListener("click", openGoalDialog);
+els.openGoalDialog.addEventListener("click", () => openGoalDialog());
 
 els.openTaskDialog.addEventListener("click", () => {
   if (!state.goals.length) {
@@ -1524,7 +1944,7 @@ function openGoalDialog(goal = null) {
   editingGoalId = goal?.id ?? "";
   els.goalForm.dataset.editingGoalId = editingGoalId;
   els.deleteGoalFromDialog.hidden = !goal;
-  els.goalForm.querySelector("h2").textContent = goal ? "目標を編集" : "目標を作る";
+  els.goalForm.querySelector("h2").textContent = goal ? t("goalDialog.editTitle") : t("goalDialog.createTitle");
   els.goalForm.elements.namedItem("name").value = goal?.name ?? "";
   els.goalForm.elements.namedItem("category").value = goal?.category ?? "";
   els.goalForm.elements.namedItem("createdAt").value = goal?.createdAt ?? toISO(today);
@@ -1543,7 +1963,7 @@ els.goalForm.addEventListener("submit", (event) => {
   };
   Object.assign(goal, {
     name: data.get("name").trim(),
-    category: data.get("category").trim() || "未分類",
+    category: data.get("category").trim() || t("goals.unspecified"),
     createdAt: data.get("createdAt"),
     deadline: data.get("deadline"),
     note: data.get("note").trim(),
@@ -1765,6 +2185,11 @@ els.themeToggle.addEventListener("click", () => {
   render();
 });
 
+els.languageToggle.addEventListener("click", () => {
+  state.meta.language = currentLanguage() === "en" ? "ja" : "en";
+  render();
+});
+
 els.startFirstGoal.addEventListener("click", () => {
   activeScreen = "goals";
   render();
@@ -1811,10 +2236,10 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260520-darkstage7")
+      .register("./sw.js?v=20260520-i18ncopy")
       .then((registration) => registration.update())
       .catch(() => {
-        showToast("オフライン準備に失敗しました。");
+        showToast(t("offline.failed"));
       });
   });
 }

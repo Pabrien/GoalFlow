@@ -41,6 +41,10 @@ body.today-complete .today-summary::after {
   background: #13a36f;
 }
 
+body[data-lang="en"].today-complete .today-summary::after {
+  content: "Done";
+}
+
 body.week-complete .summary-strip article:nth-child(2) {
   border-color: rgba(241, 185, 60, 0.72);
   background: linear-gradient(180deg, #fffef8 0%, #fff3c9 100%);
@@ -57,6 +61,10 @@ body.week-complete .summary-strip article:nth-child(2)::after {
   color: #4e3510;
   font-size: 11px;
   font-weight: 900;
+}
+
+body[data-lang="en"].week-complete .summary-strip article:nth-child(2)::after {
+  content: "Week done";
 }
 
 body.overall-complete {
@@ -2843,7 +2851,8 @@ dialog {
   }
 }
 
-.theme-toggle {
+.theme-toggle,
+.language-toggle {
   min-height: 34px;
   display: inline-flex;
   align-items: center;
@@ -2862,6 +2871,21 @@ dialog {
 
 .theme-toggle:hover {
   transform: translateY(-1px);
+}
+
+.language-toggle {
+  padding: 0 12px;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.language-toggle:hover {
+  transform: translateY(-1px);
+  background: #f8fafc;
 }
 
 .theme-toggle-icon {
@@ -2994,7 +3018,8 @@ body[data-theme="dark"] textarea,
 body[data-theme="dark"] .ghost-button,
 body[data-theme="dark"] .icon-button,
 body[data-theme="dark"] .mini-button,
-body[data-theme="dark"] .theme-toggle {
+body[data-theme="dark"] .theme-toggle,
+body[data-theme="dark"] .language-toggle {
   border-color: var(--line);
   background: rgba(7, 11, 20, 0.92);
   color: var(--ink);
@@ -3076,6 +3101,10 @@ body[data-theme="dark"] .report-progress {
 body[data-theme="dark"] .theme-toggle-icon {
   background: radial-gradient(circle at 62% 38%, #f8d36b 0 34%, transparent 36%), #0f172a;
   box-shadow: inset 0 0 0 1px rgba(248, 211, 107, 0.38), 0 0 18px rgba(248, 211, 107, 0.12);
+}
+
+body[data-theme="dark"] .language-toggle:hover {
+  background: rgba(31, 41, 55, 0.92);
 }
 
 body[data-theme="dark"].today-complete .today-summary,

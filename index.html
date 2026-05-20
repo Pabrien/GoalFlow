@@ -16,7 +16,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260520-darkstage7" />
+    <link rel="stylesheet" href="./styles.css?v=20260520-i18ncopy" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -25,91 +25,94 @@
     <main class="app-shell">
       <aside class="file-warning" id="fileWarning" hidden>
         <strong>ローカルサーバーで開いてください</strong>
-        <p>この画面は直接ファイルとして開かれています。動かない場合は <code>http://127.0.0.1:4173/index.html</code> を開いてください。</p>
+        <p>この画面は直接ファイルとして開かれています。動かない場合は <code>http://127.0.0.1:4174/index.html</code> を開いてください。</p>
       </aside>
 
       <header class="topbar">
         <div>
-          <p class="eyebrow">Goal planner</p>
+          <p class="eyebrow" data-i18n="app.kicker">Goal planner</p>
           <h1>GoalFlow</h1>
-          <p class="product-line">目標から逆算して、今日やることへ落とし込む。</p>
+          <p class="product-line" data-i18n="app.tagline">目標から逆算して、今日やることに落とし込む。</p>
         </div>
         <div class="topbar-actions">
+          <button class="language-toggle" id="languageToggle" type="button" aria-label="言語を切り替え">
+            <span id="languageToggleLabel">English</span>
+          </button>
           <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">
             <span class="theme-toggle-icon" aria-hidden="true"></span>
             <span id="themeToggleLabel">ダーク</span>
           </button>
-          <div class="save-status" id="saveStatus" aria-live="polite">自動保存</div>
+          <div class="save-status" id="saveStatus" aria-live="polite" data-i18n="status.autoSave">自動保存</div>
         </div>
       </header>
 
-      <section class="onboarding" id="onboarding" data-view-panel="home" aria-label="初回チュートリアル">
+      <section class="onboarding" id="onboarding" data-view-panel="home" aria-label="初回チュートリアル" data-i18n-aria="onboarding.aria">
         <div>
-          <p class="eyebrow">Start small</p>
-          <h2>最初は3ステップだけ</h2>
+          <p class="eyebrow" data-i18n="onboarding.kicker">Start small</p>
+          <h2 data-i18n="onboarding.title">最初は3ステップだけ</h2>
         </div>
         <ol class="onboarding-steps">
           <li>
             <span>1</span>
             <div>
-              <strong>目標を1つ作る</strong>
-              <p>筋トレ、勉強、習慣など、続けたい理由を残します。</p>
+              <strong data-i18n="onboarding.step1.title">目標を1つ作る</strong>
+              <p data-i18n="onboarding.step1.body">筋トレ、勉強、習慣など、続けたい理由を残します。</p>
             </div>
           </li>
           <li>
             <span>2</span>
             <div>
-              <strong>小さなタスクに分ける</strong>
-              <p>今日できるサイズにすると、続けやすくなります。</p>
+              <strong data-i18n="onboarding.step2.title">小さなタスクに分ける</strong>
+              <p data-i18n="onboarding.step2.body">今日できるサイズにすると、続けやすくなります。</p>
             </div>
           </li>
           <li>
             <span>3</span>
             <div>
-              <strong>今日に入れて完了する</strong>
-              <p>進捗がグラフに残り、次の一歩が見えます。</p>
+              <strong data-i18n="onboarding.step3.title">今日に入れて完了する</strong>
+              <p data-i18n="onboarding.step3.body">進捗がグラフに残り、次の一歩が見えます。</p>
             </div>
           </li>
         </ol>
         <div class="onboarding-actions">
-          <button class="primary-button" id="startFirstGoal" type="button">最初の目標を作る</button>
-          <button class="ghost-button" id="dismissOnboarding" type="button">あとで見る</button>
+          <button class="primary-button" id="startFirstGoal" type="button" data-i18n="onboarding.primary">最初の目標を作る</button>
+          <button class="ghost-button" id="dismissOnboarding" type="button" data-i18n="onboarding.secondary">あとで見る</button>
         </div>
       </section>
 
-      <nav class="screen-tabs" aria-label="画面切替">
-        <button class="screen-tab active" type="button" data-screen-target="home" aria-pressed="true">ホーム</button>
-        <button class="screen-tab" type="button" data-screen-target="goals" aria-pressed="false">目標</button>
-        <button class="screen-tab" type="button" data-screen-target="schedule" aria-pressed="false">スケジュール</button>
-        <button class="screen-tab" type="button" data-screen-target="today" aria-pressed="false">今日</button>
+      <nav class="screen-tabs" aria-label="画面切替" data-i18n-aria="tabs.aria">
+        <button class="screen-tab active" type="button" data-screen-target="home" aria-pressed="true" data-i18n="tabs.home">ホーム</button>
+        <button class="screen-tab" type="button" data-screen-target="goals" aria-pressed="false" data-i18n="tabs.goals">目標</button>
+        <button class="screen-tab" type="button" data-screen-target="schedule" aria-pressed="false" data-i18n="tabs.schedule">スケジュール</button>
+        <button class="screen-tab" type="button" data-screen-target="today" aria-pressed="false" data-i18n="tabs.today">今日</button>
       </nav>
 
       <section class="summary-strip" data-view-panel="home" aria-label="進捗サマリー">
         <article class="rate-summary today-summary">
           <span id="summaryTodayRate">0%</span>
-          <p>今日の達成率</p>
+          <p data-i18n="summary.today">今日の達成率</p>
           <div class="summary-meter"><span id="todayRateMeter"></span></div>
         </article>
         <article class="rate-summary">
           <span id="summaryWeekRate">0%</span>
-          <p>今週の達成率</p>
+          <p data-i18n="summary.week">今週の達成率</p>
           <div class="summary-meter"><span id="weekRateMeter"></span></div>
         </article>
         <article class="rate-summary">
           <span id="summaryOverallRate">0%</span>
-          <p>全体の達成率</p>
+          <p data-i18n="summary.overall">全体の達成率</p>
           <div class="summary-meter"><span id="overallRateMeter"></span></div>
         </article>
         <article>
           <span id="summaryStreak">0</span>
-          <p>連続記録</p>
+          <p data-i18n="summary.streak">連続記録</p>
         </article>
       </section>
 
       <section class="flow-focus" data-view-panel="home" aria-label="次の一手">
         <article class="next-step-card">
-          <p class="eyebrow">今日の集中</p>
-          <span class="today-focus-pill">今日やること</span>
+          <p class="eyebrow" data-i18n="focus.kicker">今日のフォーカス</p>
+          <span class="today-focus-pill" data-i18n="focus.pill">今日やること</span>
           <h2 id="nextActionTitle">次の一手</h2>
           <p id="nextActionBody">GoalFlowが、目標から今日やることまでの流れを案内します。</p>
           <div class="next-action-buttons">
@@ -117,7 +120,7 @@
           </div>
         </article>
         <article class="buddy-card">
-          <p class="eyebrow">Momentum</p>
+          <p class="eyebrow" data-i18n="buddy.kicker">ひとこと</p>
           <h2 id="buddyTitle">今日の流れ</h2>
           <p id="buddyMessage">小さく始めて、完了を1つ残しましょう。</p>
         </article>
@@ -126,24 +129,24 @@
       <section class="home-dashboard" id="progressSection" data-view-panel="home" aria-label="ホームダッシュボード">
         <section class="empty-start" id="emptyStart">
           <div>
-            <p class="eyebrow">GoalFlow method</p>
-            <h2>まず最初の目標を作りましょう</h2>
-            <p>目標を作ると、タスクを保存して、今日の予定に落とし込めます。進捗はここにグラフで残ります。</p>
+            <p class="eyebrow" data-i18n="empty.kicker">GoalFlow method</p>
+            <h2 data-i18n="empty.title">まず最初の目標を作りましょう</h2>
+            <p data-i18n="empty.body">目標を作ると、タスクを保存して、今日の予定に落とし込めます。進捗はここにグラフで残ります。</p>
           </div>
-          <button class="primary-button" id="emptyCreateGoal" type="button">目標を作る</button>
+          <button class="primary-button" id="emptyCreateGoal" type="button" data-i18n="empty.button">目標を作る</button>
         </section>
 
         <section class="panel dashboard-panel wide-panel">
           <div class="panel-heading">
             <div>
-              <h2>7日間の積み上げ</h2>
+              <h2 data-i18n="chart.title">7日間の積み上げ</h2>
               <p class="panel-note" id="chartMetricNote">完了したタスク数を日別に表示します。</p>
             </div>
             <div class="panel-controls">
               <select id="goalFilter" aria-label="表示する目標"></select>
               <select id="chartMetric" aria-label="7日間の表示単位">
-                <option value="count">個数</option>
-                <option value="time">時間</option>
+                <option value="count" data-i18n="metric.count">個数</option>
+                <option value="time" data-i18n="metric.time">時間</option>
               </select>
             </div>
           </div>
@@ -153,12 +156,12 @@
         <section class="panel dashboard-panel">
           <div class="panel-heading">
             <div>
-              <h2>全体の達成状況</h2>
+              <h2 data-i18n="pie.title">全体の達成状況</h2>
               <p class="panel-note" id="pieMetricNote">完了と未完了の割合です。</p>
             </div>
             <select id="pieMetric" aria-label="全体の表示単位">
-              <option value="count">個数</option>
-              <option value="time">時間</option>
+              <option value="count" data-i18n="metric.count">個数</option>
+              <option value="time" data-i18n="metric.time">時間</option>
             </select>
           </div>
           <canvas id="completionPie" width="360" height="260" aria-label="全体の達成状況"></canvas>
@@ -167,8 +170,8 @@
         <section class="panel dashboard-panel wide-panel">
           <div class="panel-heading">
             <div>
-              <h2>目標別レポート</h2>
-              <p class="panel-note">どの目標が前に進んでいるかを確認できます。</p>
+              <h2 data-i18n="report.title">目標別レポート</h2>
+              <p class="panel-note" data-i18n="report.note">どの目標が前に進んでいるかを確認できます。</p>
             </div>
           </div>
           <div class="goal-report" id="goalReport"></div>
@@ -179,10 +182,10 @@
         <aside class="sidebar" aria-label="目標とタスク">
           <section class="panel" data-view-panel="goals">
             <div class="panel-heading">
-              <h2>目標</h2>
+              <h2 data-i18n="goals.title">目標</h2>
               <div class="panel-actions">
                 <span id="goalCount">0</span>
-                <button class="primary-button" id="openGoalDialog" type="button">目標を追加</button>
+                <button class="primary-button" id="openGoalDialog" type="button" data-i18n="goals.add">目標を追加</button>
               </div>
             </div>
             <div class="goal-list" id="goalList"></div>
@@ -190,8 +193,8 @@
 
           <section class="panel" data-view-panel="tasks">
             <div class="panel-heading">
-              <h2>保存タスク</h2>
-              <button class="ghost-button" id="openTaskDialog" type="button">追加</button>
+              <h2 data-i18n="tasks.title">保存タスク</h2>
+              <button class="ghost-button" id="openTaskDialog" type="button" data-i18n="tasks.add">追加</button>
             </div>
             <div class="task-bank" id="taskBank"></div>
           </section>
@@ -200,20 +203,20 @@
         <section class="planner" data-view-panel="schedule" aria-label="スケジュールカレンダー">
           <div class="planner-head">
             <div>
-              <p class="eyebrow">Drag to schedule</p>
+              <p class="eyebrow" data-i18n="schedule.kicker">ドラッグで予定化</p>
               <h2 id="weekTitle">今週</h2>
             </div>
             <div class="week-controls">
               <div class="view-switch" aria-label="表示切替">
-                <button class="switch-button active" id="weekView" type="button" aria-pressed="true">週</button>
-                <button class="switch-button" id="monthView" type="button" aria-pressed="false">月</button>
+                <button class="switch-button active" id="weekView" type="button" aria-pressed="true" data-i18n="schedule.week">週</button>
+                <button class="switch-button" id="monthView" type="button" aria-pressed="false" data-i18n="schedule.month">月</button>
               </div>
-              <button class="icon-button" id="prevPeriod" type="button" aria-label="前へ" title="前へ">‹</button>
+              <button class="icon-button" id="prevPeriod" type="button" aria-label="前へ" title="前へ" data-i18n-aria="schedule.prev" data-i18n-title="schedule.prev">‹</button>
               <button class="ghost-button" id="todayPeriod" type="button">今日に戻る</button>
-              <button class="icon-button" id="nextPeriod" type="button" aria-label="次へ" title="次へ">›</button>
+              <button class="icon-button" id="nextPeriod" type="button" aria-label="次へ" title="次へ" data-i18n-aria="schedule.next" data-i18n-title="schedule.next">›</button>
               <div class="calendar-zoom" aria-label="カレンダーサイズ">
-                <button class="icon-button" id="calendarZoomOut" type="button" aria-label="小さく" title="小さく">−</button>
-                <button class="icon-button" id="calendarZoomIn" type="button" aria-label="大きく" title="大きく">＋</button>
+                <button class="icon-button" id="calendarZoomOut" type="button" aria-label="小さく" title="小さく" data-i18n-aria="schedule.zoomOut" data-i18n-title="schedule.zoomOut">−</button>
+                <button class="icon-button" id="calendarZoomIn" type="button" aria-label="大きく" title="大きく" data-i18n-aria="schedule.zoomIn" data-i18n-title="schedule.zoomIn">＋</button>
               </div>
             </div>
           </div>
@@ -225,7 +228,7 @@
         <aside class="insights" aria-label="可視化と今日の予定">
           <section class="panel" data-view-panel="today">
             <div class="panel-heading">
-              <h2>今日やること</h2>
+              <h2 data-i18n="today.title">今日やること</h2>
               <span id="todayDate"></span>
             </div>
             <div class="today-list" id="todayList"></div>
@@ -238,16 +241,16 @@
     <dialog id="goalDialog">
       <form class="dialog-card" id="goalForm">
         <div class="dialog-head">
-          <h2>目標を作る</h2>
-          <button class="icon-button" data-close-dialog type="button" aria-label="閉じる">×</button>
+          <h2 data-i18n="goalDialog.createTitle">目標を作る</h2>
+          <button class="icon-button" data-close-dialog type="button" aria-label="閉じる" data-i18n-aria="dialog.close">×</button>
         </div>
         <label>
-          目標名
-          <input name="name" required maxlength="32" placeholder="例：3か月でベンチプレス +10kg" />
+          <span data-i18n="goalDialog.name">目標名</span>
+          <input name="name" required maxlength="32" placeholder="例：3か月でベンチプレス +10kg" data-i18n-placeholder="goalDialog.namePlaceholder" />
         </label>
         <label>
-          カテゴリ
-          <input name="category" required maxlength="16" placeholder="例：筋トレ、勉強、副業" />
+          <span data-i18n="goalDialog.category">カテゴリ</span>
+          <input name="category" required maxlength="16" placeholder="例：筋トレ、勉強、副業" data-i18n-placeholder="goalDialog.categoryPlaceholder" />
           <datalist id="categoryOptions">
             <option value="筋トレ"></option>
             <option value="勉強"></option>
@@ -258,20 +261,20 @@
           <div class="category-picker" id="categoryPicker" aria-label="カテゴリ候補"></div>
         </label>
         <label>
-          期限
+          <span data-i18n="goalDialog.deadline">期限</span>
           <input name="deadline" type="date" required />
         </label>
         <label>
-          開始日
+          <span data-i18n="goalDialog.startDate">開始日</span>
           <input name="createdAt" type="date" required />
         </label>
         <label>
-          目標メモ
-          <textarea name="note" rows="3" maxlength="120" placeholder="達成条件や理由"></textarea>
+          <span data-i18n="goalDialog.note">目標メモ</span>
+          <textarea name="note" rows="3" maxlength="120" placeholder="達成条件や理由" data-i18n-placeholder="goalDialog.notePlaceholder"></textarea>
         </label>
         <div class="dialog-actions">
-          <button class="mini-button danger-button" id="deleteGoalFromDialog" type="button" hidden>削除</button>
-          <button class="primary-button" type="submit">保存</button>
+          <button class="mini-button danger-button" id="deleteGoalFromDialog" type="button" hidden data-i18n="actions.delete">削除</button>
+          <button class="primary-button" type="submit" data-i18n="actions.save">保存</button>
         </div>
       </form>
     </dialog>
@@ -279,31 +282,31 @@
     <dialog id="taskDialog">
       <form class="dialog-card" id="taskForm">
         <div class="dialog-head">
-          <h2>タスクを保存</h2>
-          <button class="icon-button" data-close-dialog type="button" aria-label="閉じる">×</button>
+          <h2 data-i18n="taskDialog.title">タスクを保存</h2>
+          <button class="icon-button" data-close-dialog type="button" aria-label="閉じる" data-i18n-aria="dialog.close">×</button>
         </div>
         <label>
-          タスク名
-          <input name="title" required maxlength="28" placeholder="例：英単語 30個" />
+          <span data-i18n="taskDialog.name">タスク名</span>
+          <input name="title" required maxlength="28" placeholder="例：英単語 30個" data-i18n-placeholder="taskDialog.namePlaceholder" />
         </label>
         <label>
-          紐づける目標
+          <span data-i18n="taskDialog.goal">紐づける目標</span>
           <select name="goalId" id="taskGoalSelect"></select>
         </label>
         <div class="field-row">
           <label>
-            所要時間
+            <span data-i18n="taskDialog.duration">所要時間</span>
             <input name="minutes" type="number" min="5" max="240" step="5" value="30" />
           </label>
           <label>
-            単位
+            <span data-i18n="taskDialog.unit">単位</span>
             <select name="durationUnit">
-              <option value="minutes">分</option>
-              <option value="hours">時間</option>
+              <option value="minutes" data-i18n="unit.minutes">分</option>
+              <option value="hours" data-i18n="unit.hours">時間</option>
             </select>
           </label>
         </div>
-        <button class="primary-button" type="submit">保存</button>
+        <button class="primary-button" type="submit" data-i18n="actions.save">保存</button>
       </form>
     </dialog>
 
@@ -311,10 +314,10 @@
       <section class="dialog-card day-dialog-card" aria-labelledby="dayDialogTitle">
         <div class="dialog-head">
           <div>
-            <p class="eyebrow">Day plan</p>
+            <p class="eyebrow" data-i18n="dayDialog.kicker">Day plan</p>
             <h2 id="dayDialogTitle">予定</h2>
           </div>
-          <button class="icon-button" data-close-dialog type="button" aria-label="閉じる">×</button>
+          <button class="icon-button" data-close-dialog type="button" aria-label="閉じる" data-i18n-aria="dialog.close">×</button>
         </div>
         <div class="day-dialog-list" id="dayDialogList"></div>
       </section>
@@ -322,6 +325,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script defer src="./app.js?v=20260520-darkstage7"></script>
+    <script defer src="./app.js?v=20260520-i18ncopy"></script>
   </body>
 </html>
