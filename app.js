@@ -1,6 +1,14 @@
 const storageKey = "goalflow-state-v1";
 const today = new Date();
-const calendarSizes = ["size-1", "size-2", "size-3", "size-4", "size-5", "size-6", "size-7"];
+const calendarSizes = [
+  "size-1",
+  "size-2",
+  "size-3",
+  "size-4",
+  "size-5",
+  "size-6",
+  "size-7",
+];
 let state = loadState();
 let selectedGoalId = state.goals[0]?.id ?? "";
 let weekStart = getWeekStart(today);
@@ -22,6 +30,9 @@ let chartAnimationFrame = null;
 let pieAnimationFrame = null;
 let taskBankReturnDropBound = false;
 let calendarSize = normalizeCalendarSize(state.meta?.calendarSize);
+let hasPlayedInitialMotion = false;
+let completionSound = null;
+let flowOrbitAnimation = null;
 const screenOrder = ["home", "goals", "schedule", "today"];
 
 const translations = {
@@ -58,14 +69,16 @@ const translations = {
     "focus.kicker": "今日のフォーカス",
     "focus.pill": "今日やること",
     "focus.defaultTitle": "次の一手",
-    "focus.defaultBody": "GoalFlowが、目標から今日やることまでの流れを案内します。",
+    "focus.defaultBody":
+      "GoalFlowが、目標から今日やることまでの流れを案内します。",
     "focus.defaultButton": "始める",
     "buddy.kicker": "ひとこと",
     "buddy.defaultTitle": "今日の流れ",
     "buddy.defaultMessage": "小さく始めて、完了を1つ残しましょう。",
     "empty.kicker": "GoalFlow method",
     "empty.title": "まず最初の目標を作りましょう",
-    "empty.body": "目標を作ると、タスクを保存して、今日の予定に落とし込めます。進捗はここにグラフで残ります。",
+    "empty.body":
+      "目標を作ると、タスクを保存して、今日の予定に落とし込めます。進捗はここにグラフで残ります。",
     "empty.button": "目標を作る",
     "chart.title": "7日間の積み上げ",
     "chart.note.count": "完了したタスク数を日別に表示します。",
@@ -129,7 +142,8 @@ const translations = {
     "schedule.moved": "予定を移動しました。",
     "today.title": "今日やること",
     "today.empty": "今日やることはまだありません。",
-    "today.completedToast": "完了を記録しました。今日の流れが少し前に進みました。",
+    "today.completedToast":
+      "完了を記録しました。今日の流れが少し前に進みました。",
     "actions.save": "保存",
     "actions.delete": "削除",
     "actions.close": "閉じる",
@@ -146,7 +160,8 @@ const translations = {
     "goalDialog.startDate": "開始日",
     "goalDialog.note": "目標メモ",
     "goalDialog.notePlaceholder": "達成条件や理由",
-    "goalDialog.confirmDelete": "「{name}」を削除しますか？\n紐づく保存タスクと予定も削除されます。",
+    "goalDialog.confirmDelete":
+      "「{name}」を削除しますか？\n紐づく保存タスクと予定も削除されます。",
     "goalDialog.deleted": "目標を削除しました。",
     "taskDialog.title": "タスクを保存",
     "taskDialog.name": "タスク名",
@@ -160,7 +175,8 @@ const translations = {
     "taskEdit.unit": "単位",
     "taskEdit.updated": "保存タスクを更新しました。",
     "taskEdit.confirmDelete": "「{title}」を削除しますか？",
-    "taskEdit.confirmDeleteWithRelated": "「{title}」を削除しますか？\nカレンダー上の同じ予定 {count}件も削除されます。",
+    "taskEdit.confirmDeleteWithRelated":
+      "「{title}」を削除しますか？\nカレンダー上の同じ予定 {count}件も削除されます。",
     "taskEdit.deleted": "保存タスクを削除しました。",
     "unit.minutes": "分",
     "unit.hours": "時間",
@@ -179,29 +195,38 @@ const translations = {
     "next.noGoal.body": "まずは続けたい理由がある目標を1つだけ作りましょう。",
     "next.noGoal.button": "目標を作る",
     "next.noGoal.buddyTitle": "はじめの一歩",
-    "next.noGoal.buddyMessage": "大きな計画より、続けたい理由が1つあるだけで十分です。",
+    "next.noGoal.buddyMessage":
+      "大きな計画より、続けたい理由が1つあるだけで十分です。",
     "next.noTask.title": "今日できるサイズに分ける",
-    "next.noTask.body": "目標を作れました。次は15分から30分で終わる小さなタスクを保存しましょう。",
+    "next.noTask.body":
+      "目標を作れました。次は15分から30分で終わる小さなタスクを保存しましょう。",
     "next.noTask.button": "タスクを追加",
     "next.noTask.buddyTitle": "逆算を始める",
-    "next.noTask.buddyMessage": "目標があるなら、次は今日できる形に小さくします。",
+    "next.noTask.buddyMessage":
+      "目標があるなら、次は今日できる形に小さくします。",
     "next.noToday.title": "今日やることを追加",
-    "next.noToday.body": "保存タスクを今日に入れると、予定ではなく行動に変わります。",
+    "next.noToday.body":
+      "保存タスクを今日に入れると、予定ではなく行動に変わります。",
     "next.noToday.button": "スケジュールで追加",
     "next.noToday.buddyTitle": "今日に落とす",
     "next.noToday.buddyMessage": "目標は遠くても、今日の1つなら動かせます。",
     "next.inProgress.title": "今日の1つを完了する",
-    "next.inProgress.body": "今日は{total}件中{done}件完了です。まず1件だけ終わらせて、流れを作りましょう。",
+    "next.inProgress.body":
+      "今日は{total}件中{done}件完了です。まず1件だけ終わらせて、流れを作りましょう。",
     "next.inProgress.button": "今日のタスクを見る",
     "next.inProgress.buddyTitle": "あと少し",
-    "next.inProgress.buddyMessage": "完璧より記録です。1つ完了すると、明日の自分が楽になります。",
+    "next.inProgress.buddyMessage":
+      "完璧より記録です。1つ完了すると、明日の自分が楽になります。",
     "next.done.title": "今日の流れは完了",
-    "next.done.body": "今日のタスクは完了しています。余力があれば明日の自分に渡すタスクを1つだけ用意しましょう。",
+    "next.done.body":
+      "今日のタスクは完了しています。余力があれば明日の自分に渡すタスクを1つだけ用意しましょう。",
     "next.done.button": "スケジュールを見る",
     "next.done.buddyTitle": "いい継続です",
-    "next.done.buddyMessage": "完了が記録に変わりました。この小さい積み上げがGoalFlowの中心です。",
+    "next.done.buddyMessage":
+      "完了が記録に変わりました。この小さい積み上げがGoalFlowの中心です。",
     "file.title": "ローカルサーバーで開いてください",
-    "file.body": "この画面は直接ファイルとして開かれています。動かない場合は http://127.0.0.1:4174/index.html を開いてください。",
+    "file.body":
+      "この画面は直接ファイルとして開かれています。動かない場合は http://127.0.0.1:4174/index.html を開いてください。",
     "offline.failed": "オフライン準備に失敗しました。",
   },
   en: {
@@ -217,11 +242,14 @@ const translations = {
     "onboarding.kicker": "Start small",
     "onboarding.title": "Start with 3 steps",
     "onboarding.step1.title": "Create one goal",
-    "onboarding.step1.body": "Keep the reason you want to continue, whether it is training, study, or a habit.",
+    "onboarding.step1.body":
+      "Keep the reason you want to continue, whether it is training, study, or a habit.",
     "onboarding.step2.title": "Break it into small tasks",
-    "onboarding.step2.body": "Tasks that fit into today are much easier to keep going.",
+    "onboarding.step2.body":
+      "Tasks that fit into today are much easier to keep going.",
     "onboarding.step3.title": "Put it on today and finish it",
-    "onboarding.step3.body": "Your progress stays visible, so the next step is clear.",
+    "onboarding.step3.body":
+      "Your progress stays visible, so the next step is clear.",
     "onboarding.primary": "Create first goal",
     "onboarding.secondary": "Later",
     "tabs.aria": "Screens",
@@ -237,20 +265,23 @@ const translations = {
     "focus.kicker": "Today’s focus",
     "focus.pill": "Today’s tasks",
     "focus.defaultTitle": "Next step",
-    "focus.defaultBody": "GoalFlow guides the path from your goals to today’s actions.",
+    "focus.defaultBody":
+      "GoalFlow guides the path from your goals to today’s actions.",
     "focus.defaultButton": "Start",
     "buddy.kicker": "Note",
     "buddy.defaultTitle": "Today’s flow",
     "buddy.defaultMessage": "Start small and leave one completed task behind.",
     "empty.kicker": "GoalFlow method",
     "empty.title": "Create your first goal",
-    "empty.body": "Once you create a goal, you can save tasks, place them on today, and see progress here.",
+    "empty.body":
+      "Once you create a goal, you can save tasks, place them on today, and see progress here.",
     "empty.button": "Create goal",
     "chart.title": "Last 7 days",
     "chart.note.count": "Shows completed task count by day.",
     "chart.note.time": "Shows completed task time by day.",
     "chart.aria": "Last 7 days progress",
-    "chart.empty": "Create a goal and complete today’s tasks to grow this chart.",
+    "chart.empty":
+      "Create a goal and complete today’s tasks to grow this chart.",
     "pie.title": "Overall progress",
     "pie.note.count": "Ratio of completed and unfinished tasks.",
     "pie.note.time": "Ratio of completed and unfinished time.",
@@ -325,7 +356,8 @@ const translations = {
     "goalDialog.startDate": "Start date",
     "goalDialog.note": "Goal note",
     "goalDialog.notePlaceholder": "Success condition or reason",
-    "goalDialog.confirmDelete": "Delete “{name}”?\nSaved tasks and scheduled items linked to it will also be deleted.",
+    "goalDialog.confirmDelete":
+      "Delete “{name}”?\nSaved tasks and scheduled items linked to it will also be deleted.",
     "goalDialog.deleted": "Goal deleted.",
     "taskDialog.title": "Save task",
     "taskDialog.name": "Task name",
@@ -339,7 +371,8 @@ const translations = {
     "taskEdit.unit": "Unit",
     "taskEdit.updated": "Saved task updated.",
     "taskEdit.confirmDelete": "Delete “{title}”?",
-    "taskEdit.confirmDeleteWithRelated": "Delete “{title}”?\n{count} matching calendar items will also be deleted.",
+    "taskEdit.confirmDeleteWithRelated":
+      "Delete “{title}”?\n{count} matching calendar items will also be deleted.",
     "taskEdit.deleted": "Saved task deleted.",
     "unit.minutes": "min",
     "unit.hours": "hours",
@@ -355,32 +388,42 @@ const translations = {
     "dayDialog.empty": "No tasks scheduled for this day.",
     "dayDialog.noGoal": "No goal",
     "next.noGoal.title": "Create your first goal",
-    "next.noGoal.body": "Start with one goal that has a reason you want to keep going.",
+    "next.noGoal.body":
+      "Start with one goal that has a reason you want to keep going.",
     "next.noGoal.button": "Create goal",
     "next.noGoal.buddyTitle": "First step",
     "next.noGoal.buddyMessage": "One clear reason is enough to begin.",
     "next.noTask.title": "Make it small enough for today",
-    "next.noTask.body": "Goal created. Now save a small task that takes 15 to 30 minutes.",
+    "next.noTask.body":
+      "Goal created. Now save a small task that takes 15 to 30 minutes.",
     "next.noTask.button": "Add task",
     "next.noTask.buddyTitle": "Start planning backward",
-    "next.noTask.buddyMessage": "A goal becomes easier when it turns into today’s shape.",
+    "next.noTask.buddyMessage":
+      "A goal becomes easier when it turns into today’s shape.",
     "next.noToday.title": "Add a task to today",
-    "next.noToday.body": "Put a saved task on today and it becomes an action, not just a plan.",
+    "next.noToday.body":
+      "Put a saved task on today and it becomes an action, not just a plan.",
     "next.noToday.button": "Open schedule",
     "next.noToday.buddyTitle": "Bring it to today",
-    "next.noToday.buddyMessage": "Even a distant goal can move through one task today.",
+    "next.noToday.buddyMessage":
+      "Even a distant goal can move through one task today.",
     "next.inProgress.title": "Finish one task today",
-    "next.inProgress.body": "{done} of {total} tasks are done today. Finish just one to build momentum.",
+    "next.inProgress.body":
+      "{done} of {total} tasks are done today. Finish just one to build momentum.",
     "next.inProgress.button": "View today’s tasks",
     "next.inProgress.buddyTitle": "Almost there",
-    "next.inProgress.buddyMessage": "Record beats perfection. One completion helps tomorrow’s you.",
+    "next.inProgress.buddyMessage":
+      "Record beats perfection. One completion helps tomorrow’s you.",
     "next.done.title": "Today’s flow is complete",
-    "next.done.body": "Today’s tasks are done. If you have energy, prepare one task for tomorrow.",
+    "next.done.body":
+      "Today’s tasks are done. If you have energy, prepare one task for tomorrow.",
     "next.done.button": "View schedule",
     "next.done.buddyTitle": "Good streak",
-    "next.done.buddyMessage": "Completion turned into a record. That small accumulation is the heart of GoalFlow.",
+    "next.done.buddyMessage":
+      "Completion turned into a record. That small accumulation is the heart of GoalFlow.",
     "file.title": "Open with a local server",
-    "file.body": "This screen was opened as a file. If it does not work, open http://127.0.0.1:4174/index.html.",
+    "file.body":
+      "This screen was opened as a file. If it does not work, open http://127.0.0.1:4174/index.html.",
     "offline.failed": "Offline setup failed.",
   },
 };
@@ -443,6 +486,7 @@ const els = {
   nextActionBody: document.querySelector("#nextActionBody"),
   nextActionButton: document.querySelector("#nextActionButton"),
   progressSection: document.querySelector("#progressSection"),
+  flowOrbit: document.querySelector("#flowOrbit"),
   buddyTitle: document.querySelector("#buddyTitle"),
   buddyMessage: document.querySelector("#buddyMessage"),
   toast: document.querySelector("#toast"),
@@ -467,7 +511,9 @@ function createEmptyState() {
 
 function seedState() {
   const start = getWeekStart(today);
-  const dates = Array.from({ length: 7 }, (_, index) => addDays(start, index).toISOString().slice(0, 10));
+  const dates = Array.from({ length: 7 }, (_, index) =>
+    addDays(start, index).toISOString().slice(0, 10),
+  );
   const goals = [
     {
       id: crypto.randomUUID(),
@@ -487,10 +533,38 @@ function seedState() {
     },
   ];
   const tasks = [
-    { id: crypto.randomUUID(), goalId: goals[0].id, title: "胸・肩トレ", minutes: 70, durationValue: 70, durationUnit: "minutes" },
-    { id: crypto.randomUUID(), goalId: goals[0].id, title: "フォーム動画チェック", minutes: 15, durationValue: 15, durationUnit: "minutes" },
-    { id: crypto.randomUUID(), goalId: goals[1].id, title: "英語ニュース 1本", minutes: 20, durationValue: 20, durationUnit: "minutes" },
-    { id: crypto.randomUUID(), goalId: goals[1].id, title: "単語レビュー 30個", minutes: 15, durationValue: 15, durationUnit: "minutes" },
+    {
+      id: crypto.randomUUID(),
+      goalId: goals[0].id,
+      title: "胸・肩トレ",
+      minutes: 70,
+      durationValue: 70,
+      durationUnit: "minutes",
+    },
+    {
+      id: crypto.randomUUID(),
+      goalId: goals[0].id,
+      title: "フォーム動画チェック",
+      minutes: 15,
+      durationValue: 15,
+      durationUnit: "minutes",
+    },
+    {
+      id: crypto.randomUUID(),
+      goalId: goals[1].id,
+      title: "英語ニュース 1本",
+      minutes: 20,
+      durationValue: 20,
+      durationUnit: "minutes",
+    },
+    {
+      id: crypto.randomUUID(),
+      goalId: goals[1].id,
+      title: "単語レビュー 30個",
+      minutes: 15,
+      durationValue: 15,
+      durationUnit: "minutes",
+    },
   ];
   return {
     goals,
@@ -547,7 +621,8 @@ function currentLanguage() {
 }
 
 function t(key, values = {}) {
-  const template = translations[currentLanguage()]?.[key] ?? translations.ja[key] ?? key;
+  const template =
+    translations[currentLanguage()]?.[key] ?? translations.ja[key] ?? key;
   return template.replace(/\{(\w+)\}/g, (_, name) => values[name] ?? "");
 }
 
@@ -579,7 +654,10 @@ function saveState() {
   localStorage.setItem(storageKey, JSON.stringify(state));
   if (els.saveStatus) {
     const locale = currentLanguage() === "en" ? "en-US" : "ja-JP";
-    const time = new Date().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+    const time = new Date().toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
     els.saveStatus.textContent = t("status.saved", { time });
   }
 }
@@ -593,7 +671,10 @@ function render() {
   state.meta.calendarSize = calendarSize;
   document.body.dataset.activeScreen = activeScreen;
   document.body.dataset.hasGoals = String(state.goals.length > 0);
-  if (selectedGoalId && !state.goals.some((goal) => goal.id === selectedGoalId)) {
+  if (
+    selectedGoalId &&
+    !state.goals.some((goal) => goal.id === selectedGoalId)
+  ) {
     selectedGoalId = state.goals[0]?.id ?? "";
   }
   renderGoals();
@@ -604,12 +685,14 @@ function render() {
   renderCategoryOptions();
   renderScreenTabs();
   renderOnboarding();
-  renderNextAction();
+  renderNextAction();
+
   renderSummary();
   renderChart();
   renderCompletionPie();
   renderGoalReport();
   saveState();
+  requestAnimationFrame(playRenderMotion);
 }
 
 function renderTheme() {
@@ -617,8 +700,12 @@ function renderTheme() {
   document.body.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
   els.themeToggle?.setAttribute("aria-pressed", String(theme === "dark"));
-  if (els.themeToggleLabel) els.themeToggleLabel.textContent = theme === "dark" ? t("theme.light") : t("theme.dark");
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#0f172a" : "#146c63");
+  if (els.themeToggleLabel)
+    els.themeToggleLabel.textContent =
+      theme === "dark" ? t("theme.light") : t("theme.dark");
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", theme === "dark" ? "#0f172a" : "#146c63");
 }
 
 function renderFileWarning() {
@@ -636,15 +723,23 @@ function renderGoals() {
     return;
   }
   state.goals.forEach((goal) => {
-    const done = state.scheduled.filter((item) => item.goalId === goal.id && item.done).length;
-    const total = state.scheduled.filter((item) => item.goalId === goal.id).length;
+    const done = state.scheduled.filter(
+      (item) => item.goalId === goal.id && item.done,
+    ).length;
+    const total = state.scheduled.filter(
+      (item) => item.goalId === goal.id,
+    ).length;
     const percent = total ? Math.round((done / total) * 100) : 0;
     const daysLeft = daysBetween(today, goal.deadline);
     const startLabel = formatDate(goal.createdAt);
     const deadlineLabel = formatDate(goal.deadline);
-    const paceLabel = total ? t("goals.doneTotal", { done, total }) : t("goals.scheduledFirst");
+    const paceLabel = total
+      ? t("goals.doneTotal", { done, total })
+      : t("goals.scheduledFirst");
     const deadlineTone =
-      daysLeft >= 0 ? t("goals.deadlineLeft", { days: daysLeft }) : t("goals.deadlinePassed", { days: Math.abs(daysLeft) });
+      daysLeft >= 0
+        ? t("goals.deadlineLeft", { days: daysLeft })
+        : t("goals.deadlinePassed", { days: Math.abs(daysLeft) });
     const card = document.createElement("article");
     card.className = `goal-card ${goal.id === selectedGoalId ? "active" : ""}`;
     card.innerHTML = `
@@ -684,7 +779,9 @@ function renderGoals() {
 function renderTaskBank() {
   els.taskBank.innerHTML = "";
   bindTaskBankReturnDrop();
-  const tasks = state.tasks.filter((task) => !selectedGoalId || task.goalId === selectedGoalId);
+  const tasks = state.tasks.filter(
+    (task) => !selectedGoalId || task.goalId === selectedGoalId,
+  );
   if (!tasks.length) {
     els.taskBank.append(empty(t("tasks.empty")));
     return;
@@ -731,6 +828,7 @@ function renderTaskBank() {
       event.dataTransfer.effectAllowed = "copy";
       document.body.classList.add("is-scheduling");
       item.classList.add("dragging");
+      pulseElement(item, 0.985);
       vibrate(6);
       const preview = createDragPreview(task, goal);
       document.body.append(preview);
@@ -742,7 +840,10 @@ function renderTaskBank() {
         event.preventDefault();
         return;
       }
-      if (isCompactScheduleLayout() && !event.target.closest("[data-drag-handle]")) {
+      if (
+        isCompactScheduleLayout() &&
+        !event.target.closest("[data-drag-handle]")
+      ) {
         event.preventDefault();
         return;
       }
@@ -750,7 +851,9 @@ function renderTaskBank() {
     });
     item.addEventListener("dragend", () => {
       document.body.classList.remove("is-scheduling");
-      document.querySelectorAll(".day-column.drop-target").forEach((column) => clearDropTargets(column));
+      document
+        .querySelectorAll(".day-column.drop-target")
+        .forEach((column) => clearDropTargets(column));
       item.classList.remove("dragging");
       window.setTimeout(() => {
         nativeDragging = false;
@@ -763,26 +866,36 @@ function renderTaskBank() {
       activeScreen = "today";
       render();
     });
-    item.addEventListener("pointerdown", (event) => startTouchScheduleDrag(event, task, goal, item));
+    item.addEventListener("pointerdown", (event) =>
+      startTouchScheduleDrag(event, task, goal, item),
+    );
     item.addEventListener("selectstart", (event) => event.preventDefault());
     item.addEventListener("contextmenu", (event) => {
       if (isCompactScheduleLayout()) event.preventDefault();
     });
-    item.querySelector('[data-action="today"]').addEventListener("click", () => {
-      scheduleTask(task.id, toISO(today));
-      activeScreen = "today";
-      render();
-    });
+    item
+      .querySelector('[data-action="today"]')
+      .addEventListener("click", () => {
+        scheduleTask(task.id, toISO(today));
+        activeScreen = "today";
+        render();
+      });
     bindDoubleActivate(item.querySelector(".bank-task-copy"), () => {
       editingTaskId = editingTaskId === task.id ? "" : task.id;
       renderTaskBank();
     });
-    item.querySelector("[data-task-edit]")?.addEventListener("submit", (event) => saveTaskEdit(event, task));
-    item.querySelector('[data-action="close-edit"]')?.addEventListener("click", () => {
-      editingTaskId = "";
-      renderTaskBank();
-    });
-    item.querySelector('[data-action="delete-task"]')?.addEventListener("click", () => deleteSavedTask(task));
+    item
+      .querySelector("[data-task-edit]")
+      ?.addEventListener("submit", (event) => saveTaskEdit(event, task));
+    item
+      .querySelector('[data-action="close-edit"]')
+      ?.addEventListener("click", () => {
+        editingTaskId = "";
+        renderTaskBank();
+      });
+    item
+      .querySelector('[data-action="delete-task"]')
+      ?.addEventListener("click", () => deleteSavedTask(task));
     els.taskBank.append(item);
   });
 }
@@ -796,7 +909,9 @@ function bindTaskBankReturnDrop() {
 }
 
 function isScheduledDrag(event) {
-  return [...(event.dataTransfer?.types ?? [])].includes("application/x-goalflow-scheduled");
+  return [...(event.dataTransfer?.types ?? [])].includes(
+    "application/x-goalflow-scheduled",
+  );
 }
 
 function handleTaskBankReturnDrag(event) {
@@ -813,12 +928,16 @@ function handleTaskBankReturnLeave(event) {
 }
 
 function handleTaskBankReturnDrop(event) {
-  const scheduledId = event.dataTransfer.getData("application/x-goalflow-scheduled");
+  const scheduledId = event.dataTransfer.getData(
+    "application/x-goalflow-scheduled",
+  );
   if (!scheduledId) return;
   event.preventDefault();
   els.taskBank.classList.remove("return-target");
   document.body.classList.remove("is-scheduling", "is-returning-scheduled");
-  const item = state.scheduled.find((candidate) => candidate.id === scheduledId);
+  const item = state.scheduled.find(
+    (candidate) => candidate.id === scheduledId,
+  );
   if (item) {
     deleteScheduledItem(item, t("schedule.returned"));
   }
@@ -826,7 +945,10 @@ function handleTaskBankReturnDrop(event) {
 
 function taskGoalOptions(selectedId) {
   return state.goals
-    .map((goal) => `<option value="${escapeHtml(goal.id)}" ${goal.id === selectedId ? "selected" : ""}>${escapeHtml(goal.name)}</option>`)
+    .map(
+      (goal) =>
+        `<option value="${escapeHtml(goal.id)}" ${goal.id === selectedId ? "selected" : ""}>${escapeHtml(goal.name)}</option>`,
+    )
     .join("");
 }
 
@@ -844,7 +966,9 @@ function bindDoubleActivate(node, callback) {
   let lastTapY = 0;
   const canActivate = (event) => {
     if (!(event.target instanceof Element)) return false;
-    const interactive = event.target.closest("button, input, textarea, select, form");
+    const interactive = event.target.closest(
+      "button, input, textarea, select, form",
+    );
     return !interactive || interactive === node;
   };
   node.addEventListener("dblclick", (event) => {
@@ -855,7 +979,10 @@ function bindDoubleActivate(node, callback) {
   node.addEventListener("pointerup", (event) => {
     if (event.pointerType === "mouse" || !canActivate(event)) return;
     const now = Date.now();
-    const distance = Math.hypot(event.clientX - lastTapX, event.clientY - lastTapY);
+    const distance = Math.hypot(
+      event.clientX - lastTapX,
+      event.clientY - lastTapY,
+    );
     if (now - lastTapTime < 340 && distance < 24) {
       event.preventDefault();
       lastTapTime = 0;
@@ -897,7 +1024,11 @@ function createDragPreview(task, goal) {
 }
 
 function startTouchScheduleDrag(event, task, goal, item) {
-  if (event.pointerType === "mouse" || !event.target.closest("[data-drag-handle]")) return;
+  if (
+    event.pointerType === "mouse" ||
+    !event.target.closest("[data-drag-handle]")
+  )
+    return;
   event.preventDefault();
   const startX = event.clientX;
   const startY = event.clientY;
@@ -916,6 +1047,7 @@ function startTouchScheduleDrag(event, task, goal, item) {
     }
     document.body.classList.add("is-scheduling");
     item.classList.add("dragging");
+    pulseElement(item, 0.985);
     vibrate(6);
     preview = createDragPreview(task, goal);
     preview.classList.add("touch-drag-preview");
@@ -946,7 +1078,10 @@ function startTouchScheduleDrag(event, task, goal, item) {
     currentClientY = moveEvent.clientY;
     movePreview(moveEvent.clientX, moveEvent.clientY);
     preview.hidden = true;
-    const target = getScheduleColumnFromPoint(moveEvent.clientX, moveEvent.clientY);
+    const target = getScheduleColumnFromPoint(
+      moveEvent.clientX,
+      moveEvent.clientY,
+    );
     preview.hidden = false;
     if (target === currentTarget && currentTarget) {
       setColumnDropTarget(currentTarget, currentClientY);
@@ -973,7 +1108,9 @@ function startTouchScheduleDrag(event, task, goal, item) {
       return;
     }
     onMove(upEvent);
-    const landingTarget = currentTarget ?? getScheduleColumnFromPoint(upEvent.clientX, upEvent.clientY);
+    const landingTarget =
+      currentTarget ??
+      getScheduleColumnFromPoint(upEvent.clientX, upEvent.clientY);
     const date = landingTarget?.dataset.date;
     cleanup();
     if (date) {
@@ -995,13 +1132,17 @@ function renderCalendar() {
         ? getCompactMonthDays(monthCursor)
         : getMonthDays(monthCursor)
       : Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
-  els.weekTitle.textContent = viewMode === "month" ? formatMonthTitle(monthCursor) : `${formatDate(days[0])} - ${formatDate(days[6])}`;
+  els.weekTitle.textContent =
+    viewMode === "month"
+      ? formatMonthTitle(monthCursor)
+      : `${formatDate(days[0])} - ${formatDate(days[6])}`;
   els.calendarGrid.className = `calendar-grid ${viewMode === "month" ? "month-mode" : "week-mode"} ${compactMonth ? "compact-month-mode" : ""}`;
   els.calendarGrid.innerHTML = "";
   days.forEach((date) => {
     const iso = toISO(date);
     const column = document.createElement("section");
-    const isOutsideMonth = viewMode === "month" && date.getMonth() !== monthCursor.getMonth();
+    const isOutsideMonth =
+      viewMode === "month" && date.getMonth() !== monthCursor.getMonth();
     column.className = `day-column ${iso === toISO(today) ? "today" : ""} ${isOutsideMonth ? "outside-month" : ""} ${
       iso === highlightedScheduleDate ? "schedule-confirm" : ""
     }`;
@@ -1024,7 +1165,9 @@ function renderCalendar() {
       event.preventDefault();
       document.body.classList.remove("is-scheduling");
       clearDropTargets(column);
-      const scheduledId = event.dataTransfer.getData("application/x-goalflow-scheduled");
+      const scheduledId = event.dataTransfer.getData(
+        "application/x-goalflow-scheduled",
+      );
       if (scheduledId) {
         moveScheduledTask(scheduledId, iso);
         return;
@@ -1032,13 +1175,24 @@ function renderCalendar() {
       scheduleTask(event.dataTransfer.getData("text/plain"), iso);
     });
     column.addEventListener("click", (event) => {
-      if ((viewMode !== "month" && !isCompactScheduleLayout()) || document.body.classList.contains("is-scheduling") || event.target.closest(".scheduled-task")) return;
+      if (
+        (viewMode !== "month" && !isCompactScheduleLayout()) ||
+        document.body.classList.contains("is-scheduling") ||
+        event.target.closest(".scheduled-task")
+      )
+        return;
       openDayDialog(iso);
     });
     const list = column.querySelector(".day-tasks");
-    const scheduled = state.scheduled.filter((item) => item.date === iso && (!selectedGoalId || item.goalId === selectedGoalId));
+    const scheduled = state.scheduled.filter(
+      (item) =>
+        item.date === iso &&
+        (!selectedGoalId || item.goalId === selectedGoalId),
+    );
     if (scheduled.length) {
-      scheduled.forEach((item) => list.append(scheduledElement(item, viewMode === "month")));
+      scheduled.forEach((item) =>
+        list.append(scheduledElement(item, viewMode === "month")),
+      );
     }
     els.calendarGrid.append(column);
   });
@@ -1046,10 +1200,15 @@ function renderCalendar() {
 
 function setColumnDropTarget(column, clientY) {
   column.classList.add("drop-target");
+  if (column.dataset.dropReady !== "true") {
+    column.dataset.dropReady = "true";
+    pulseElement(column, 1.012);
+  }
 }
 
 function clearDropTargets(column) {
   column.classList.remove("drop-target");
+  delete column.dataset.dropReady;
 }
 
 function getScheduleColumnFromPoint(clientX, clientY) {
@@ -1070,7 +1229,8 @@ function getCompactMonthDays(date) {
 }
 
 function scheduledElement(item, isCompact = false) {
-  const task = state.tasks.find((candidate) => candidate.id === item.taskId) ?? item;
+  const task =
+    state.tasks.find((candidate) => candidate.id === item.taskId) ?? item;
   const goal = findGoal(item.goalId);
   const isEditing = editingScheduledId === item.id;
   const node = document.createElement("article");
@@ -1091,7 +1251,8 @@ function scheduledElement(item, isCompact = false) {
     if (event.target.closest("button, input, textarea, select")) return;
     window.clearTimeout(scheduleControlTimer);
     scheduleControlTimer = window.setTimeout(() => {
-      activeScheduleControlId = activeScheduleControlId === item.id ? "" : item.id;
+      activeScheduleControlId =
+        activeScheduleControlId === item.id ? "" : item.id;
       render();
     }, 180);
   });
@@ -1110,11 +1271,15 @@ function scheduledElement(item, isCompact = false) {
     activeScheduleControlId = "";
     document.body.classList.add("is-scheduling", "is-returning-scheduled");
     node.classList.add("dragging");
+    pulseElement(node, 0.985);
     vibrate(6);
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("application/x-goalflow-scheduled", item.id);
     event.dataTransfer.setData("text/plain", item.taskId);
-    const preview = createDragPreview({ ...task, title: item.title, minutes: item.minutes }, goal);
+    const preview = createDragPreview(
+      { ...task, title: item.title, minutes: item.minutes },
+      goal,
+    );
     document.body.append(preview);
     event.dataTransfer.setDragImage(preview, 18, 18);
     requestAnimationFrame(() => preview.remove());
@@ -1122,18 +1287,26 @@ function scheduledElement(item, isCompact = false) {
   node.addEventListener("dragend", () => {
     document.body.classList.remove("is-scheduling", "is-returning-scheduled");
     els.taskBank.classList.remove("return-target");
-    document.querySelectorAll(".day-column.drop-target").forEach((column) => clearDropTargets(column));
+    document
+      .querySelectorAll(".day-column.drop-target")
+      .forEach((column) => clearDropTargets(column));
     node.classList.remove("dragging");
   });
   node.querySelector('[data-action="done"]').addEventListener("click", () => {
     toggleScheduledDone(item);
   });
-  node.querySelector("[data-scheduled-edit]")?.addEventListener("submit", (event) => saveScheduledEdit(event, item));
-  node.querySelector('[data-action="delete-scheduled-edit"]')?.addEventListener("click", () => deleteScheduledItem(item));
-  node.querySelector('[data-action="close-scheduled-edit"]')?.addEventListener("click", () => {
-    editingScheduledId = "";
-    render();
-  });
+  node
+    .querySelector("[data-scheduled-edit]")
+    ?.addEventListener("submit", (event) => saveScheduledEdit(event, item));
+  node
+    .querySelector('[data-action="delete-scheduled-edit"]')
+    ?.addEventListener("click", () => deleteScheduledItem(item));
+  node
+    .querySelector('[data-action="close-scheduled-edit"]')
+    ?.addEventListener("click", () => {
+      editingScheduledId = "";
+      render();
+    });
   return node;
 }
 
@@ -1146,9 +1319,12 @@ function renderToday() {
     return;
   }
   items
-    .sort((a, b) => a.title.localeCompare(b.title, currentLanguage() === "en" ? "en" : "ja"))
+    .sort((a, b) =>
+      a.title.localeCompare(b.title, currentLanguage() === "en" ? "en" : "ja"),
+    )
     .forEach((item) => {
-      const task = state.tasks.find((candidate) => candidate.id === item.taskId) ?? item;
+      const task =
+        state.tasks.find((candidate) => candidate.id === item.taskId) ?? item;
       const goal = findGoal(item.goalId);
       const node = document.createElement("article");
       node.className = `today-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""}`;
@@ -1166,15 +1342,23 @@ function renderToday() {
         editingScheduledId = editingScheduledId === item.id ? "" : item.id;
         render();
       });
-      node.querySelector('[data-action="done"]').addEventListener("click", () => {
-        toggleScheduledDone(item);
-      });
-      node.querySelector("[data-scheduled-edit]")?.addEventListener("submit", (event) => saveScheduledEdit(event, item));
-      node.querySelector('[data-action="delete-scheduled-edit"]')?.addEventListener("click", () => deleteScheduledItem(item));
-      node.querySelector('[data-action="close-scheduled-edit"]')?.addEventListener("click", () => {
-        editingScheduledId = "";
-        render();
-      });
+      node
+        .querySelector('[data-action="done"]')
+        .addEventListener("click", () => {
+          toggleScheduledDone(item);
+        });
+      node
+        .querySelector("[data-scheduled-edit]")
+        ?.addEventListener("submit", (event) => saveScheduledEdit(event, item));
+      node
+        .querySelector('[data-action="delete-scheduled-edit"]')
+        ?.addEventListener("click", () => deleteScheduledItem(item));
+      node
+        .querySelector('[data-action="close-scheduled-edit"]')
+        ?.addEventListener("click", () => {
+          editingScheduledId = "";
+          render();
+        });
       els.todayList.append(node);
     });
 }
@@ -1183,8 +1367,10 @@ function toggleScheduledDone(item) {
   item.done = !item.done;
   if (item.done) {
     highlightedCompletionId = item.id;
+    playCompletionSound();
     showToast(t("today.completedToast"));
     render();
+    requestAnimationFrame(() => playCompletionMotion(item.id));
     window.setTimeout(() => {
       if (highlightedCompletionId === item.id) {
         highlightedCompletionId = "";
@@ -1197,7 +1383,11 @@ function toggleScheduledDone(item) {
 }
 
 function renderSelectors() {
-  const options = state.goals.map((goal) => `<option value="${goal.id}">${escapeHtml(goal.name)}</option>`).join("");
+  const options = state.goals
+    .map(
+      (goal) => `<option value="${goal.id}">${escapeHtml(goal.name)}</option>`,
+    )
+    .join("");
   els.taskGoalSelect.innerHTML = options;
   els.goalFilter.innerHTML = `<option value="">${escapeHtml(currentLanguage() === "en" ? "All goals" : "すべて")}</option>${options}`;
   els.taskGoalSelect.value = selectedGoalId || state.goals[0]?.id || "";
@@ -1215,28 +1405,42 @@ function renderSelectors() {
   els.todayPeriod.textContent = t("schedule.todayButton");
   const todayIsVisible = isTodayVisibleInSchedule();
   els.todayPeriod.classList.toggle("needs-attention", !todayIsVisible);
-  els.todayPeriod.setAttribute("aria-label", todayIsVisible ? t("schedule.todayVisible") : t("schedule.todayButton"));
-  els.todayPeriod.title = todayIsVisible ? t("schedule.todayVisible") : t("schedule.todayButton");
+  els.todayPeriod.setAttribute(
+    "aria-label",
+    todayIsVisible ? t("schedule.todayVisible") : t("schedule.todayButton"),
+  );
+  els.todayPeriod.title = todayIsVisible
+    ? t("schedule.todayVisible")
+    : t("schedule.todayButton");
   els.calendarZoomOut.disabled = calendarSize === calendarSizes[0];
   els.calendarZoomIn.disabled = calendarSize === calendarSizes.at(-1);
 }
 
 function renderCategoryOptions() {
   if (!els.categoryOptions && !els.categoryPicker) return;
-  const categories = new Set([t("categories.training"), t("categories.study"), t("categories.work"), t("categories.health"), t("categories.habit")]);
+  const categories = new Set([
+    t("categories.training"),
+    t("categories.study"),
+    t("categories.work"),
+    t("categories.health"),
+    t("categories.habit"),
+  ]);
   state.goals.forEach((goal) => {
     if (goal.category) categories.add(goal.category);
   });
   const categoryList = [...categories];
   if (els.categoryOptions) {
-    els.categoryOptions.innerHTML = categoryList.map((category) => `<option value="${escapeHtml(category)}"></option>`).join("");
+    els.categoryOptions.innerHTML = categoryList
+      .map((category) => `<option value="${escapeHtml(category)}"></option>`)
+      .join("");
   }
   renderCategoryPicker(categoryList);
 }
 
 function renderCategoryPicker(categories) {
   if (!els.categoryPicker) return;
-  const currentCategory = els.goalForm?.elements.namedItem("category")?.value ?? "";
+  const currentCategory =
+    els.goalForm?.elements.namedItem("category")?.value ?? "";
   els.categoryPicker.innerHTML = categories
     .map(
       (category) => `
@@ -1248,7 +1452,8 @@ function renderCategoryPicker(categories) {
     .join("");
   els.categoryPicker.querySelectorAll("[data-category]").forEach((button) => {
     button.addEventListener("click", () => {
-      els.goalForm.elements.namedItem("category").value = button.dataset.category;
+      els.goalForm.elements.namedItem("category").value =
+        button.dataset.category;
       renderCategoryPicker(categories);
     });
   });
@@ -1257,20 +1462,29 @@ function renderCategoryPicker(categories) {
 function isTodayVisibleInSchedule() {
   const todayIso = toISO(today);
   if (viewMode === "month") {
-    const days = isCompactMonthView() ? getCompactMonthDays(monthCursor) : getMonthDays(monthCursor);
+    const days = isCompactMonthView()
+      ? getCompactMonthDays(monthCursor)
+      : getMonthDays(monthCursor);
     return days.some((date) => toISO(date) === todayIso);
   }
-  return Array.from({ length: 7 }, (_, index) => toISO(addDays(weekStart, index))).includes(todayIso);
+  return Array.from({ length: 7 }, (_, index) =>
+    toISO(addDays(weekStart, index)),
+  ).includes(todayIso);
 }
 
 function renderOnboarding() {
-  const shouldShow = activeScreen === "home" && !state.meta.onboardingDismissed && state.goals.length === 0;
+  const shouldShow =
+    activeScreen === "home" &&
+    !state.meta.onboardingDismissed &&
+    state.goals.length === 0;
   els.onboarding.hidden = !shouldShow;
   els.emptyStart.hidden = state.goals.length > 0;
 }
 
 function renderNextAction() {
-  const todaysItems = state.scheduled.filter((item) => item.date === toISO(today));
+  const todaysItems = state.scheduled.filter(
+    (item) => item.date === toISO(today),
+  );
   const todaysDone = todaysItems.filter((item) => item.done).length;
   const next = getNextAction(todaysItems, todaysDone);
   els.nextActionTitle.textContent = next.title;
@@ -1318,7 +1532,10 @@ function getNextAction(todaysItems, todaysDone) {
   if (todaysDone < todaysItems.length) {
     return {
       title: t("next.inProgress.title"),
-      body: t("next.inProgress.body", { total: todaysItems.length, done: todaysDone }),
+      body: t("next.inProgress.body", {
+        total: todaysItems.length,
+        done: todaysDone,
+      }),
       button: t("next.inProgress.button"),
       action: "openToday",
       buddyTitle: t("next.inProgress.buddyTitle"),
@@ -1346,8 +1563,14 @@ function renderScreenTabs() {
 }
 
 function centerActiveScreenTab() {
-  const activeTab = [...els.screenTabs].find((tab) => tab.dataset.screenTarget === activeScreen);
-  activeTab?.scrollIntoView?.({ behavior: "smooth", inline: "center", block: "nearest" });
+  const activeTab = [...els.screenTabs].find(
+    (tab) => tab.dataset.screenTarget === activeScreen,
+  );
+  activeTab?.scrollIntoView?.({
+    behavior: "smooth",
+    inline: "center",
+    block: "nearest",
+  });
 }
 
 function renderSummary() {
@@ -1355,8 +1578,12 @@ function renderSummary() {
   const total = state.scheduled.length;
   const todayIso = toISO(today);
   const weekDates = getCurrentWeekDates();
-  const todayTotal = state.scheduled.filter((item) => item.date === todayIso).length;
-  const weekTotal = state.scheduled.filter((item) => weekDates.includes(item.date)).length;
+  const todayTotal = state.scheduled.filter(
+    (item) => item.date === todayIso,
+  ).length;
+  const weekTotal = state.scheduled.filter((item) =>
+    weekDates.includes(item.date),
+  ).length;
   const todayRate = calcCompletionRate((item) => item.date === todayIso);
   const weekRate = calcCompletionRate((item) => weekDates.includes(item.date));
   const overallRate = total ? Math.round((done / total) * 100) : 0;
@@ -1366,15 +1593,28 @@ function renderSummary() {
   els.todayRateMeter.style.width = `${todayRate}%`;
   els.weekRateMeter.style.width = `${weekRate}%`;
   els.overallRateMeter.style.width = `${overallRate}%`;
-  els.summaryStreak.textContent = t("summary.streakValue", { count: calcStreak() });
-  document.body.classList.toggle("today-complete", todayTotal > 0 && todayRate === 100);
-  document.body.classList.toggle("week-complete", weekTotal > 0 && weekRate === 100);
-  document.body.classList.toggle("overall-complete", total > 0 && overallRate === 100);
+  els.summaryStreak.textContent = t("summary.streakValue", {
+    count: calcStreak(),
+  });
+  document.body.classList.toggle(
+    "today-complete",
+    todayTotal > 0 && todayRate === 100,
+  );
+  document.body.classList.toggle(
+    "week-complete",
+    weekTotal > 0 && weekRate === 100,
+  );
+  document.body.classList.toggle(
+    "overall-complete",
+    total > 0 && overallRate === 100,
+  );
 }
 
 function renderChart() {
   const ctx = els.chart.getContext("2d");
-  const displayWidth = Math.round(els.chart.parentElement?.clientWidth || els.chart.clientWidth || 760);
+  const displayWidth = Math.round(
+    els.chart.parentElement?.clientWidth || els.chart.clientWidth || 760,
+  );
   els.chart.width = Math.max(320, displayWidth - 2);
   els.chart.height = 260;
   const width = els.chart.width;
@@ -1387,10 +1627,17 @@ function renderChart() {
     drawEmptyCanvas(ctx, width, height, t("chart.empty"));
     return;
   }
-  const days = Array.from({ length: 7 }, (_, index) => addDays(today, index - 6));
+  const days = Array.from({ length: 7 }, (_, index) =>
+    addDays(today, index - 6),
+  );
   const values = days.map((date) => {
     const iso = toISO(date);
-    const doneItems = state.scheduled.filter((item) => item.date === iso && item.done && (!selectedGoalId || item.goalId === selectedGoalId));
+    const doneItems = state.scheduled.filter(
+      (item) =>
+        item.date === iso &&
+        item.done &&
+        (!selectedGoalId || item.goalId === selectedGoalId),
+    );
     return metricValue(doneItems, chartMetric);
   });
   const max = Math.max(1, ...values);
@@ -1399,7 +1646,10 @@ function renderChart() {
   const paddingTop = 30;
   const paddingBottom = 38;
   const gap = width < 420 ? 6 : 10;
-  const barWidth = Math.max(14, (width - paddingX * 2 - gap * (values.length - 1)) / values.length);
+  const barWidth = Math.max(
+    14,
+    (width - paddingX * 2 - gap * (values.length - 1)) / values.length,
+  );
   const draw = (progress) => {
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = canvasColor("--canvas-bg", "#fbfcfa");
@@ -1417,20 +1667,32 @@ function renderChart() {
     values.forEach((value, index) => {
       const x = paddingX + index * (barWidth + gap);
       const animatedValue = value * progress;
-      const barHeight = ((height - paddingTop - paddingBottom) * animatedValue) / max;
+      const barHeight =
+        ((height - paddingTop - paddingBottom) * animatedValue) / max;
       const y = height - paddingBottom - barHeight;
       const radius = Math.min(8, barWidth / 2);
-      ctx.fillStyle = index === values.length - 1 ? canvasColor("--accent", "#146c63") : canvasColor("--blue", "#2f69c8");
+      ctx.fillStyle =
+        index === values.length - 1
+          ? canvasColor("--accent", "#146c63")
+          : canvasColor("--blue", "#2f69c8");
       roundedRect(ctx, x, y, barWidth, barHeight || 3, radius);
       ctx.fill();
       ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
       ctx.font = `${width < 420 ? 10 : 12}px system-ui`;
       ctx.textAlign = "center";
-      ctx.fillText(`${days[index].getMonth() + 1}/${days[index].getDate()}`, x + barWidth / 2, height - 14);
+      ctx.fillText(
+        `${days[index].getMonth() + 1}/${days[index].getDate()}`,
+        x + barWidth / 2,
+        height - 14,
+      );
       if (value > 0) {
         ctx.fillStyle = canvasColor("--ink", "#20231f");
         ctx.font = `800 ${width < 420 ? 10 : 12}px system-ui`;
-        ctx.fillText(formatMetricValue(animatedValue, chartMetric), x + barWidth / 2, Math.max(18, y - 8));
+        ctx.fillText(
+          formatMetricValue(animatedValue, chartMetric),
+          x + barWidth / 2,
+          Math.max(18, y - 8),
+        );
       }
     });
   };
@@ -1439,12 +1701,18 @@ function renderChart() {
 
 function renderCompletionPie() {
   const ctx = els.completionPie.getContext("2d");
-  const displayWidth = Math.round(els.completionPie.parentElement?.clientWidth || els.completionPie.clientWidth || 360);
+  const displayWidth = Math.round(
+    els.completionPie.parentElement?.clientWidth ||
+      els.completionPie.clientWidth ||
+      360,
+  );
   els.completionPie.width = Math.max(280, displayWidth - 2);
   els.completionPie.height = 260;
   const width = els.completionPie.width;
   const height = els.completionPie.height;
-  const filteredItems = state.scheduled.filter((item) => !selectedGoalId || item.goalId === selectedGoalId);
+  const filteredItems = state.scheduled.filter(
+    (item) => !selectedGoalId || item.goalId === selectedGoalId,
+  );
   const doneItems = filteredItems.filter((item) => item.done);
   const total = metricValue(filteredItems, pieMetric);
   const done = metricValue(doneItems, pieMetric);
@@ -1497,10 +1765,26 @@ function renderCompletionPie() {
     ctx.fillText(`${Math.round(rate * progress)}%`, centerX, centerY + 8);
     ctx.fillStyle = canvasColor("--canvas-muted", "#6b7066");
     ctx.font = "13px system-ui";
-    ctx.fillText(t("pie.rateLabel", { metric: labels.name }), centerX, centerY + 32);
+    ctx.fillText(
+      t("pie.rateLabel", { metric: labels.name }),
+      centerX,
+      centerY + 32,
+    );
 
-    drawLegend(ctx, 26, height - 36, canvasColor("--accent", "#146c63"), t("pie.done", { value: formatMetricValue(done * progress, pieMetric) }));
-    drawLegend(ctx, Math.max(26, width - 156), height - 36, canvasColor("--canvas-line", "#e4e9df"), t("pie.pending", { value: formatMetricValue(pending, pieMetric) }));
+    drawLegend(
+      ctx,
+      26,
+      height - 36,
+      canvasColor("--accent", "#146c63"),
+      t("pie.done", { value: formatMetricValue(done * progress, pieMetric) }),
+    );
+    drawLegend(
+      ctx,
+      Math.max(26, width - 156),
+      height - 36,
+      canvasColor("--canvas-line", "#e4e9df"),
+      t("pie.pending", { value: formatMetricValue(pending, pieMetric) }),
+    );
   };
   animateCanvas("pie", draw, 680);
 }
@@ -1523,9 +1807,17 @@ function renderGoalReport() {
     const rate = items.length ? Math.round((done / items.length) * 100) : 0;
     const daysActive = Math.max(1, daysBetween(goal.createdAt, today) + 1);
     const daysLeft = daysBetween(today, goal.deadline);
-    const progressText = items.length ? t("report.progress", { done, total: items.length }) : t("report.unplanned");
-    const startText = t("report.start", { date: formatDate(goal.createdAt), days: daysActive });
-    const supportText = daysLeft >= 0 ? t("report.deadlineLeft", { days: daysLeft }) : t("report.deadlinePassed", { days: Math.abs(daysLeft) });
+    const progressText = items.length
+      ? t("report.progress", { done, total: items.length })
+      : t("report.unplanned");
+    const startText = t("report.start", {
+      date: formatDate(goal.createdAt),
+      days: daysActive,
+    });
+    const supportText =
+      daysLeft >= 0
+        ? t("report.deadlineLeft", { days: daysLeft })
+        : t("report.deadlinePassed", { days: Math.abs(daysLeft) });
     const row = document.createElement("div");
     row.className = "report-row";
     row.innerHTML = `
@@ -1551,11 +1843,14 @@ function drawLegend(ctx, x, y, color, text) {
 }
 
 function canvasColor(name, fallback) {
-  return getComputedStyle(document.body).getPropertyValue(name).trim() || fallback;
+  return (
+    getComputedStyle(document.body).getPropertyValue(name).trim() || fallback
+  );
 }
 
 function metricValue(items, metric) {
-  if (metric === "time") return items.reduce((sum, item) => sum + Number(item.minutes ?? 0), 0);
+  if (metric === "time")
+    return items.reduce((sum, item) => sum + Number(item.minutes ?? 0), 0);
   return items.length;
 }
 
@@ -1575,12 +1870,16 @@ function formatMetricValue(value, metric) {
     }
     return t("duration.minutes", { value: minutes });
   }
-  return currentLanguage() === "en" ? String(Math.round(value)) : `${Math.round(value)}個`;
+  return currentLanguage() === "en"
+    ? String(Math.round(value))
+    : `${Math.round(value)}個`;
 }
 
 function animateCanvas(kind, draw, duration) {
   const frameKey = kind === "pie" ? "pieAnimationFrame" : "chartAnimationFrame";
-  window.cancelAnimationFrame(kind === "pie" ? pieAnimationFrame : chartAnimationFrame);
+  window.cancelAnimationFrame(
+    kind === "pie" ? pieAnimationFrame : chartAnimationFrame,
+  );
   const start = performance.now();
   const step = (now) => {
     const progress = Math.min(1, (now - start) / duration);
@@ -1649,9 +1948,14 @@ function deleteGoal(goal) {
 }
 
 function deleteSavedTask(task) {
-  const relatedCount = state.scheduled.filter((item) => item.taskId === task.id).length;
+  const relatedCount = state.scheduled.filter(
+    (item) => item.taskId === task.id,
+  ).length;
   const message = relatedCount
-    ? t("taskEdit.confirmDeleteWithRelated", { title: task.title, count: relatedCount })
+    ? t("taskEdit.confirmDeleteWithRelated", {
+        title: task.title,
+        count: relatedCount,
+      })
     : t("taskEdit.confirmDelete", { title: task.title });
   if (!window.confirm(message)) return;
   state.tasks = state.tasks.filter((candidate) => candidate.id !== task.id);
@@ -1661,7 +1965,9 @@ function deleteSavedTask(task) {
 }
 
 function deleteScheduledItem(item, message = t("schedule.deleted")) {
-  state.scheduled = state.scheduled.filter((candidate) => candidate.id !== item.id);
+  state.scheduled = state.scheduled.filter(
+    (candidate) => candidate.id !== item.id,
+  );
   if (activeScheduleControlId === item.id) activeScheduleControlId = "";
   if (editingScheduledId === item.id) editingScheduledId = "";
   showToast(message);
@@ -1715,9 +2021,17 @@ function saveScheduledEdit(event, item) {
 
 function openDayDialog(date) {
   const items = state.scheduled
-    .filter((item) => item.date === date && (!selectedGoalId || item.goalId === selectedGoalId))
-    .sort((a, b) => a.title.localeCompare(b.title, currentLanguage() === "en" ? "en" : "ja"));
-  els.dayDialogTitle.textContent = t("dayDialog.title", { date: formatDateWithWeekday(date) });
+    .filter(
+      (item) =>
+        item.date === date &&
+        (!selectedGoalId || item.goalId === selectedGoalId),
+    )
+    .sort((a, b) =>
+      a.title.localeCompare(b.title, currentLanguage() === "en" ? "en" : "ja"),
+    );
+  els.dayDialogTitle.textContent = t("dayDialog.title", {
+    date: formatDateWithWeekday(date),
+  });
   els.dayDialogList.innerHTML = items.length
     ? items
         .map((item) => {
@@ -1736,7 +2050,9 @@ function openDayDialog(date) {
     : `<div class="empty-state">${escapeHtml(t("dayDialog.empty"))}</div>`;
   els.dayDialogList.querySelectorAll("[data-day-done]").forEach((button) => {
     button.addEventListener("click", () => {
-      const item = state.scheduled.find((candidate) => candidate.id === button.dataset.dayDone);
+      const item = state.scheduled.find(
+        (candidate) => candidate.id === button.dataset.dayDone,
+      );
       if (!item) return;
       toggleScheduledDone(item);
       openDayDialog(date);
@@ -1765,12 +2081,17 @@ function scheduleTask(taskId, date) {
     render();
   }, 720);
   vibrate(date === toISO(today) ? 18 : 10);
-  showToast(date === toISO(today) ? t("schedule.addedToday") : t("schedule.added"));
+  showToast(
+    date === toISO(today) ? t("schedule.addedToday") : t("schedule.added"),
+  );
   render();
+  requestAnimationFrame(() => playScheduleLandingMotion(date));
 }
 
 function moveScheduledTask(scheduledId, date) {
-  const item = state.scheduled.find((candidate) => candidate.id === scheduledId);
+  const item = state.scheduled.find(
+    (candidate) => candidate.id === scheduledId,
+  );
   if (!item) return;
   item.date = date;
   highlightedScheduleDate = date;
@@ -1783,10 +2104,267 @@ function moveScheduledTask(scheduledId, date) {
   vibrate(12);
   showToast(t("schedule.moved"));
   render();
+  requestAnimationFrame(() => playScheduleLandingMotion(date));
 }
 
 function vibrate(duration = 8) {
   if (window.navigator?.vibrate) window.navigator.vibrate(duration);
+}
+
+function canUseMotion() {
+  return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function getGsap() {
+  return window.gsap && canUseMotion() ? window.gsap : null;
+}
+
+function pulseElement(node, scale = 1.015) {
+  const gsap = getGsap();
+  if (!gsap || !node) return;
+  gsap.fromTo(
+    node,
+    { scale },
+    { scale: 1, duration: 0.34, ease: "power3.out", overwrite: "auto" },
+  );
+}
+
+function playRenderMotion() {
+  const gsap = getGsap();
+  document.body.setAttribute(
+    "data-motion-ready",
+    [
+      window.gsap ? "gsap" : "",
+      window.lottie ? "lottie" : "",
+      window.Howl ? "howler" : "",
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+  initFlowOrbit();
+  if (!gsap) return;
+  if (!hasPlayedInitialMotion) {
+    hasPlayedInitialMotion = true;
+    gsap.from(".topbar, .screen-tabs, [data-view-panel='home']:not([hidden])", {
+      autoAlpha: 0,
+      y: 12,
+      duration: 0.54,
+      ease: "power3.out",
+      stagger: 0.045,
+    });
+    return;
+  }
+  const visiblePanels = [
+    ...document.querySelectorAll("[data-view-panel]"),
+  ].filter((node) => !node.hidden && node.offsetParent !== null);
+  gsap.fromTo(
+    visiblePanels,
+    { autoAlpha: 0.94, y: 5 },
+    {
+      autoAlpha: 1,
+      y: 0,
+      duration: 0.24,
+      ease: "power2.out",
+      stagger: 0.018,
+      overwrite: "auto",
+    },
+  );
+}
+
+function playScheduleLandingMotion(date) {
+  const gsap = getGsap();
+  const column = document.querySelector(
+    `.day-column[data-date="${CSS.escape(date)}"]`,
+  );
+  if (!gsap || !column) return;
+  gsap.fromTo(
+    column,
+    { scale: 0.992, boxShadow: "0 0 0 rgba(79, 214, 154, 0)" },
+    {
+      scale: 1,
+      boxShadow: "0 18px 42px rgba(79, 214, 154, 0.22)",
+      duration: 0.42,
+      ease: "power3.out",
+    },
+  );
+  gsap.to(column, {
+    boxShadow: "",
+    delay: 0.46,
+    duration: 0.28,
+    ease: "power2.out",
+  });
+}
+
+function playCompletionMotion(itemId) {
+  const gsap = getGsap();
+  if (!gsap) return;
+  const item = document.querySelector(
+    `[data-scheduled-id="${CSS.escape(itemId)}"], .today-task.just-completed`,
+  );
+  if (item) {
+    gsap.fromTo(
+      item,
+      { y: 4, scale: 0.985 },
+      {
+        y: 0,
+        scale: 1,
+        duration: 0.48,
+        ease: "back.out(1.8)",
+        overwrite: "auto",
+      },
+    );
+  }
+  gsap.fromTo(
+    ".today-summary",
+    { scale: 1.01 },
+    { scale: 1, duration: 0.42, ease: "power3.out", overwrite: "auto" },
+  );
+}
+
+function playCompletionSound() {
+  if (!window.Howl) return;
+  try {
+    if (!completionSound) {
+      completionSound = new window.Howl({
+        src: [createCompletionTone()],
+        volume: 0.18,
+        preload: true,
+      });
+    }
+    completionSound.play();
+  } catch {
+    // Sound is a nice extra, never a reason to block task completion.
+  }
+}
+
+function createCompletionTone() {
+  const sampleRate = 22050;
+  const duration = 0.18;
+  const samples = Math.floor(sampleRate * duration);
+  const dataSize = samples * 2;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+  const writeString = (offset, value) => {
+    [...value].forEach((char, index) =>
+      view.setUint8(offset + index, char.charCodeAt(0)),
+    );
+  };
+  writeString(0, "RIFF");
+  view.setUint32(4, 36 + dataSize, true);
+  writeString(8, "WAVE");
+  writeString(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, "data");
+  view.setUint32(40, dataSize, true);
+  for (let index = 0; index < samples; index += 1) {
+    const t = index / sampleRate;
+    const envelope = Math.sin(Math.PI * Math.min(1, t / duration));
+    const sweep = 660 + 220 * Math.sin(t * 18);
+    const value = Math.sin(Math.PI * 2 * sweep * t) * envelope * 0.28;
+    view.setInt16(
+      44 + index * 2,
+      Math.max(-1, Math.min(1, value)) * 32767,
+      true,
+    );
+  }
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return `data:audio/wav;base64,${btoa(binary)}`;
+}
+
+function initFlowOrbit() {
+  if (flowOrbitAnimation || !els.flowOrbit || !window.lottie || !canUseMotion())
+    return;
+  try {
+    flowOrbitAnimation = window.lottie.loadAnimation({
+      container: els.flowOrbit,
+      renderer: "svg",
+      loop: true,
+      autoplay: true,
+      animationData: createFlowOrbitAnimation(),
+    });
+  } catch {
+    els.flowOrbit.classList.add("flow-orbit-fallback");
+  }
+}
+
+function createFlowOrbitAnimation() {
+  const dotLayer = (name, color, y, delay) => ({
+    ddd: 0,
+    ind: delay + 1,
+    ty: 4,
+    nm: name,
+    sr: 1,
+    ks: {
+      o: {
+        a: 1,
+        k: [
+          { t: 0, s: [35] },
+          { t: 20 + delay, s: [100] },
+          { t: 70 + delay, s: [40] },
+          { t: 90, s: [35] },
+        ],
+      },
+      r: { a: 0, k: 0 },
+      p: {
+        a: 1,
+        k: [
+          { t: 0, s: [24, y, 0] },
+          { t: 45, s: [96, y, 0] },
+          { t: 90, s: [24, y, 0] },
+        ],
+      },
+      a: { a: 0, k: [0, 0, 0] },
+      s: {
+        a: 1,
+        k: [
+          { t: 0, s: [82, 82, 100] },
+          { t: 45, s: [112, 112, 100] },
+          { t: 90, s: [82, 82, 100] },
+        ],
+      },
+    },
+    ao: 0,
+    shapes: [
+      { ty: "el", p: { a: 0, k: [0, 0] }, s: { a: 0, k: [12, 12] }, nm: "dot" },
+      {
+        ty: "fl",
+        c: { a: 0, k: color },
+        o: { a: 0, k: 100 },
+        r: 1,
+        nm: "fill",
+      },
+    ],
+    ip: 0,
+    op: 90,
+    st: 0,
+    bm: 0,
+  });
+  return {
+    v: "5.7.4",
+    fr: 30,
+    ip: 0,
+    op: 90,
+    w: 120,
+    h: 56,
+    nm: "GoalFlow motion",
+    ddd: 0,
+    assets: [],
+    layers: [
+      dotLayer("goal", [0.08, 0.42, 0.39, 1], 16, 0),
+      dotLayer("today", [0.18, 0.41, 0.78, 1], 28, 8),
+      dotLayer("done", [0.95, 0.72, 0.24, 1], 40, 16),
+    ],
+  };
 }
 
 function makeSchedule(task, date, done) {
@@ -1807,7 +2385,9 @@ function calcStreak() {
   let streak = 0;
   for (let i = 0; i < 60; i += 1) {
     const date = toISO(addDays(today, -i));
-    const hasDone = state.scheduled.some((item) => item.date === date && item.done);
+    const hasDone = state.scheduled.some(
+      (item) => item.date === date && item.done,
+    );
     if (!hasDone) break;
     streak += 1;
   }
@@ -1868,11 +2448,14 @@ function addDays(date, days) {
 }
 
 function toISO(date) {
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 10);
 }
 
 function formatDate(value) {
-  const date = typeof value === "string" ? new Date(`${value}T00:00:00`) : value;
+  const date =
+    typeof value === "string" ? new Date(`${value}T00:00:00`) : value;
   if (currentLanguage() === "en") {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
@@ -1893,10 +2476,19 @@ function formatWeekday(date) {
 }
 
 function daysBetween(start, end) {
-  const startDate = typeof start === "string" ? new Date(`${start}T00:00:00`) : start;
+  const startDate =
+    typeof start === "string" ? new Date(`${start}T00:00:00`) : start;
   const endDate = typeof end === "string" ? new Date(`${end}T00:00:00`) : end;
-  const startMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-  const endMidnight = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  const startMidnight = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate(),
+  );
+  const endMidnight = new Date(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate(),
+  );
   return Math.round((endMidnight - startMidnight) / 86400000);
 }
 
@@ -1944,11 +2536,15 @@ function openGoalDialog(goal = null) {
   editingGoalId = goal?.id ?? "";
   els.goalForm.dataset.editingGoalId = editingGoalId;
   els.deleteGoalFromDialog.hidden = !goal;
-  els.goalForm.querySelector("h2").textContent = goal ? t("goalDialog.editTitle") : t("goalDialog.createTitle");
+  els.goalForm.querySelector("h2").textContent = goal
+    ? t("goalDialog.editTitle")
+    : t("goalDialog.createTitle");
   els.goalForm.elements.namedItem("name").value = goal?.name ?? "";
   els.goalForm.elements.namedItem("category").value = goal?.category ?? "";
-  els.goalForm.elements.namedItem("createdAt").value = goal?.createdAt ?? toISO(today);
-  els.goalForm.elements.namedItem("deadline").value = goal?.deadline ?? addDays(today, 30).toISOString().slice(0, 10);
+  els.goalForm.elements.namedItem("createdAt").value =
+    goal?.createdAt ?? toISO(today);
+  els.goalForm.elements.namedItem("deadline").value =
+    goal?.deadline ?? addDays(today, 30).toISOString().slice(0, 10);
   els.goalForm.elements.namedItem("note").value = goal?.note ?? "";
   renderCategoryOptions();
   els.goalDialog.showModal();
@@ -1957,7 +2553,9 @@ function openGoalDialog(goal = null) {
 els.goalForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const data = new FormData(els.goalForm);
-  const editingGoal = state.goals.find((goal) => goal.id === els.goalForm.dataset.editingGoalId);
+  const editingGoal = state.goals.find(
+    (goal) => goal.id === els.goalForm.dataset.editingGoalId,
+  );
   const goal = editingGoal ?? {
     id: crypto.randomUUID(),
   };
@@ -1978,7 +2576,9 @@ els.goalForm.addEventListener("submit", (event) => {
 });
 
 els.deleteGoalFromDialog.addEventListener("click", () => {
-  const goal = state.goals.find((candidate) => candidate.id === els.goalForm.dataset.editingGoalId);
+  const goal = state.goals.find(
+    (candidate) => candidate.id === els.goalForm.dataset.editingGoalId,
+  );
   if (!goal) return;
   if (deleteGoal(goal)) els.goalDialog.close();
 });
@@ -2012,8 +2612,12 @@ els.taskForm.addEventListener("submit", (event) => {
   render();
 });
 
-els.taskForm.elements.namedItem("durationUnit").addEventListener("change", updateDurationInput);
-els.goalForm.elements.namedItem("category").addEventListener("input", () => renderCategoryOptions());
+els.taskForm.elements
+  .namedItem("durationUnit")
+  .addEventListener("change", updateDurationInput);
+els.goalForm.elements
+  .namedItem("category")
+  .addEventListener("input", () => renderCategoryOptions());
 
 document.querySelector("#prevPeriod").addEventListener("click", () => {
   if (isCompactMonthView()) {
@@ -2056,13 +2660,20 @@ els.monthView.addEventListener("click", () => {
 });
 
 els.calendarZoomOut.addEventListener("click", () => {
-  calendarSize = calendarSizes[Math.max(0, calendarSizes.indexOf(calendarSize) - 1)];
+  calendarSize =
+    calendarSizes[Math.max(0, calendarSizes.indexOf(calendarSize) - 1)];
   state.meta.calendarSize = calendarSize;
   render();
 });
 
 els.calendarZoomIn.addEventListener("click", () => {
-  calendarSize = calendarSizes[Math.min(calendarSizes.length - 1, calendarSizes.indexOf(calendarSize) + 1)];
+  calendarSize =
+    calendarSizes[
+      Math.min(
+        calendarSizes.length - 1,
+        calendarSizes.indexOf(calendarSize) + 1,
+      )
+    ];
   state.meta.calendarSize = calendarSize;
   render();
 });
@@ -2071,7 +2682,8 @@ let calendarDragScroll = null;
 
 els.calendarScroll.addEventListener("pointerdown", (event) => {
   if (event.pointerType !== "mouse" || event.button !== 0) return;
-  if (event.target.closest(".scheduled-task, button, input, textarea, select")) return;
+  if (event.target.closest(".scheduled-task, button, input, textarea, select"))
+    return;
   calendarDragScroll = {
     pointerId: event.pointerId,
     startX: event.clientX,
@@ -2082,7 +2694,8 @@ els.calendarScroll.addEventListener("pointerdown", (event) => {
 });
 
 els.calendarScroll.addEventListener("pointermove", (event) => {
-  if (!calendarDragScroll || calendarDragScroll.pointerId !== event.pointerId) return;
+  if (!calendarDragScroll || calendarDragScroll.pointerId !== event.pointerId)
+    return;
   const deltaX = event.clientX - calendarDragScroll.startX;
   if (Math.abs(deltaX) > 4) calendarDragScroll.moved = true;
   els.calendarScroll.scrollLeft = calendarDragScroll.scrollLeft - deltaX;
@@ -2090,7 +2703,8 @@ els.calendarScroll.addEventListener("pointermove", (event) => {
 });
 
 els.calendarScroll.addEventListener("pointerup", (event) => {
-  if (!calendarDragScroll || calendarDragScroll.pointerId !== event.pointerId) return;
+  if (!calendarDragScroll || calendarDragScroll.pointerId !== event.pointerId)
+    return;
   calendarDragScroll = null;
 });
 
@@ -2123,7 +2737,13 @@ document.addEventListener(
   "touchstart",
   (event) => {
     const target = event.target instanceof Element ? event.target : null;
-    if (event.touches.length !== 1 || target?.closest("dialog, input, textarea, select, button, .bank-task, .scheduled-task")) return;
+    if (
+      event.touches.length !== 1 ||
+      target?.closest(
+        "dialog, input, textarea, select, button, .bank-task, .scheduled-task",
+      )
+    )
+      return;
     tabSwipeStartX = event.touches[0].clientX;
     tabSwipeStartY = event.touches[0].clientY;
     tabSwipeDeltaX = 0;
@@ -2144,7 +2764,10 @@ document.addEventListener(
       document.body.style.removeProperty("--tab-swipe-x");
       return;
     }
-    document.body.style.setProperty("--tab-swipe-x", `${Math.max(-42, Math.min(42, tabSwipeDeltaX / 4))}px`);
+    document.body.style.setProperty(
+      "--tab-swipe-x",
+      `${Math.max(-42, Math.min(42, tabSwipeDeltaX / 4))}px`,
+    );
   },
   { passive: true },
 );
@@ -2153,10 +2776,18 @@ document.addEventListener("touchend", () => {
   if (!tabSwipeActive) return;
   document.body.style.removeProperty("--tab-swipe-x");
   const currentIndex = screenOrder.indexOf(activeScreen);
-  const nextIndex = tabSwipeDeltaX < -60 ? currentIndex + 1 : tabSwipeDeltaX > 60 ? currentIndex - 1 : currentIndex;
+  const nextIndex =
+    tabSwipeDeltaX < -60
+      ? currentIndex + 1
+      : tabSwipeDeltaX > 60
+        ? currentIndex - 1
+        : currentIndex;
   tabSwipeActive = false;
   if (nextIndex !== currentIndex && screenOrder[nextIndex]) {
-    setActiveScreen(screenOrder[nextIndex], Math.sign(nextIndex - currentIndex));
+    setActiveScreen(
+      screenOrder[nextIndex],
+      Math.sign(nextIndex - currentIndex),
+    );
   }
 });
 
@@ -2236,7 +2867,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260520-i18ncopy")
+      .register("./sw.js?v=20260520-motionui2")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
@@ -2247,6 +2878,14 @@ if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
 function showToast(message) {
   els.toast.textContent = message;
   els.toast.classList.add("show");
+  const gsap = getGsap();
+  if (gsap) {
+    gsap.fromTo(
+      els.toast,
+      { y: 10, scale: 0.98 },
+      { y: 0, scale: 1, duration: 0.24, ease: "power3.out", overwrite: "auto" },
+    );
+  }
   window.clearTimeout(showToast.timer);
   showToast.timer = window.setTimeout(() => {
     els.toast.classList.remove("show");
@@ -2264,3 +2903,7 @@ window.setTimeout(() => {
 }, 1900);
 
 render();
+window.addEventListener("load", () => {
+  initFlowOrbit();
+  requestAnimationFrame(playRenderMotion);
+});

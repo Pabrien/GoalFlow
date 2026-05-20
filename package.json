@@ -5,6 +5,15 @@
   "description": "Goal-based task planner prototype",
   "scripts": {
     "dev": "python3 -m http.server 4174 --bind 0.0.0.0",
-    "check": "node --check app.js"
+    "check": "node --check app.js && node --check sw.js",
+    "format": "prettier --write index.html styles.css app.js sw.js package.json"
+  },
+  "dependencies": {
+    "gsap": "^3.15.0",
+    "howler": "^2.2.4",
+    "lottie-web": "^5.13.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3"
   }
 }
