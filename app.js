@@ -11,6 +11,8 @@ let highlightedScheduleDate = "";
 let highlightedScheduleTimer = null;
 let activeScheduleControlId = "";
 let editingTaskId = "";
+let editingGoalId = "";
+let editingScheduledId = "";
 const screenOrder = ["home", "goals", "schedule", "today"];
 
 const els = {
@@ -156,7 +158,7 @@ function render() {
   document.body.dataset.viewMode = viewMode;
   document.body.dataset.activeScreen = activeScreen;
   document.body.dataset.hasGoals = String(state.goals.length > 0);
-  if (!state.goals.some((goal) => goal.id === selectedGoalId)) {
+  if (selectedGoalId && !state.goals.some((goal) => goal.id === selectedGoalId)) {
     selectedGoalId = state.goals[0]?.id ?? "";
   }
   renderGoals();
@@ -214,7 +216,7 @@ function renderGoals() {
     `;
     card.querySelector(".goal-select").addEventListener("click", () => {
       selectedGoalId = goal.id;
-      render();
+      openGoalDialog(goal);
     });
     card.querySelector('[data-action="delete"]').addEventListener("click", () => deleteGoal(goal));
     els.goalList.append(card);
@@ -232,7 +234,7 @@ function renderTaskBank() {
     const goal = findGoal(task.goalId);
     const item = document.createElement("article");
     item.className = `bank-task ${editingTaskId === task.id ? "editing" : ""}`;
-    item.draggable = false;
+    item.draggable = true;
     item.dataset.taskId = task.id;
     let nativeDragging = false;
     item.innerHTML = `
@@ -265,7 +267,7 @@ function renderTaskBank() {
       </div>
     `;
     const dragHandle = item.querySelector("[data-drag-handle]");
-    dragHandle.addEventListener("dragstart", (event) => {
+    const beginBankDrag = (event) => {
       nativeDragging = true;
       event.dataTransfer.setData("text/plain", task.id);
       event.dataTransfer.effectAllowed = "copy";
@@ -276,8 +278,19 @@ function renderTaskBank() {
       document.body.append(preview);
       event.dataTransfer.setDragImage(preview, 18, 18);
       requestAnimationFrame(() => preview.remove());
+    };
+    item.addEventListener("dragstart", (event) => {
+      if (event.target.closest("button, input, textarea, select")) {
+        event.preventDefault();
+        return;
+      }
+      if (isCompactScheduleLayout() && !event.target.closest("[data-drag-handle]")) {
+        event.preventDefault();
+        return;
+      }
+      beginBankDrag(event);
     });
-    dragHandle.addEventListener("dragend", () => {
+    item.addEventListener("dragend", () => {
       document.body.classList.remove("is-scheduling");
       document.querySelectorAll(".day-column.drop-target").forEach((column) => clearDropTargets(column));
       item.classList.remove("dragging");
@@ -326,6 +339,23 @@ function durationUnitOptions(selectedUnit) {
   return `
     <option value="minutes" ${selectedUnit === "minutes" ? "selected" : ""}>分</option>
     <option value="hours" ${selectedUnit === "hours" ? "selected" : ""}>時間</option>
+  `;
+}
+
+function scheduledEditForm(item) {
+  return `
+    <form class="task-edit-form scheduled-edit-form" data-scheduled-edit="${escapeHtml(item.id)}">
+      <label>タスク名<input name="title" required maxlength="28" value="${escapeHtml(item.title)}" /></label>
+      <label>目標<select name="goalId">${taskGoalOptions(item.goalId)}</select></label>
+      <div class="field-row">
+        <label>時間<input name="durationValue" type="number" min="1" max="240" step="1" value="${escapeHtml(item.durationValue ?? item.minutes ?? 30)}" /></label>
+        <label>単位<select name="durationUnit">${durationUnitOptions(item.durationUnit ?? "minutes")}</select></label>
+      </div>
+      <div class="task-edit-actions">
+        <button class="mini-button" type="submit">保存</button>
+        <button class="mini-button" type="button" data-action="close-scheduled-edit">閉じる</button>
+      </div>
+    </form>
   `;
 }
 
@@ -515,23 +545,26 @@ function getCompactMonthDays(date) {
 function scheduledElement(item, isCompact = false) {
   const task = state.tasks.find((candidate) => candidate.id === item.taskId) ?? item;
   const goal = findGoal(item.goalId);
+  const isEditing = editingScheduledId === item.id;
   const node = document.createElement("article");
   node.className = `scheduled-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""} ${
-    item.id === activeScheduleControlId ? "active" : ""
+    item.id === activeScheduleControlId || isEditing ? "active" : ""
   }`;
   node.draggable = true;
   node.tabIndex = 0;
   node.dataset.scheduledId = item.id;
   node.innerHTML = `
-    ${taskMarkup({ ...task, minutes: item.minutes }, goal, isCompact)}
+    ${taskMarkup({ ...task, title: item.title, minutes: item.minutes }, goal, isCompact)}
     <div class="task-actions">
       <button class="mini-button" type="button" data-action="done">${item.done ? "戻す" : "完了"}</button>
       ${trashButton("予定から削除")}
     </div>
+    ${isEditing ? scheduledEditForm(item) : ""}
   `;
   node.addEventListener("click", (event) => {
-    if (event.target.closest("button, input")) return;
-    activeScheduleControlId = activeScheduleControlId === item.id ? "" : item.id;
+    if (event.target.closest("button, input, textarea, select")) return;
+    editingScheduledId = item.id;
+    activeScheduleControlId = item.id;
     render();
   });
   node.addEventListener("dragstart", (event) => {
@@ -560,6 +593,11 @@ function scheduledElement(item, isCompact = false) {
     toggleScheduledDone(item);
   });
   node.querySelector('[data-action="delete"]').addEventListener("click", () => deleteScheduledItem(item));
+  node.querySelector("[data-scheduled-edit]")?.addEventListener("submit", (event) => saveScheduledEdit(event, item));
+  node.querySelector('[data-action="close-scheduled-edit"]')?.addEventListener("click", () => {
+    editingScheduledId = "";
+    render();
+  });
   return node;
 }
 
@@ -579,16 +617,27 @@ function renderToday() {
       const node = document.createElement("article");
       node.className = `today-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""}`;
       node.innerHTML = `
-        ${taskMarkup({ ...task, minutes: item.minutes }, goal)}
+        ${taskMarkup({ ...task, title: item.title, minutes: item.minutes }, goal)}
         <div class="task-actions">
           <button class="mini-button" type="button" data-action="done">${item.done ? "戻す" : "完了"}</button>
           ${trashButton("今日の予定から削除")}
         </div>
+        ${editingScheduledId === item.id ? scheduledEditForm(item) : ""}
       `;
+      node.addEventListener("click", (event) => {
+        if (event.target.closest("button, input, textarea, select")) return;
+        editingScheduledId = item.id;
+        render();
+      });
       node.querySelector('[data-action="done"]').addEventListener("click", () => {
         toggleScheduledDone(item);
       });
       node.querySelector('[data-action="delete"]').addEventListener("click", () => deleteScheduledItem(item));
+      node.querySelector("[data-scheduled-edit]")?.addEventListener("submit", (event) => saveScheduledEdit(event, item));
+      node.querySelector('[data-action="close-scheduled-edit"]')?.addEventListener("click", () => {
+        editingScheduledId = "";
+        render();
+      });
       els.todayList.append(node);
     });
 }
@@ -944,6 +993,7 @@ function deleteSavedTask(task) {
 function deleteScheduledItem(item) {
   state.scheduled = state.scheduled.filter((candidate) => candidate.id !== item.id);
   if (activeScheduleControlId === item.id) activeScheduleControlId = "";
+  if (editingScheduledId === item.id) editingScheduledId = "";
   showToast("予定から削除しました。");
   render();
 }
@@ -971,6 +1021,25 @@ function saveTaskEdit(event, task) {
   selectedGoalId = task.goalId;
   editingTaskId = "";
   showToast("保存タスクを更新しました。");
+  render();
+}
+
+function saveScheduledEdit(event, item) {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  const durationValue = Number(data.get("durationValue"));
+  const durationUnit = data.get("durationUnit");
+  const title = data.get("title").trim();
+  if (!title || !durationValue) return;
+  item.title = title;
+  item.goalId = data.get("goalId");
+  item.durationValue = durationValue;
+  item.durationUnit = durationUnit;
+  item.minutes = durationUnit === "hours" ? durationValue * 60 : durationValue;
+  selectedGoalId = item.goalId;
+  editingScheduledId = "";
+  activeScheduleControlId = item.id;
+  showToast("予定を更新しました。");
   render();
 }
 
@@ -1185,27 +1254,38 @@ els.openTaskDialog.addEventListener("click", () => {
   els.taskDialog.showModal();
 });
 
-function openGoalDialog() {
+function openGoalDialog(goal = null) {
   els.goalForm.reset();
-  els.goalForm.elements.namedItem("createdAt").value = toISO(today);
-  els.goalForm.elements.namedItem("deadline").value = addDays(today, 30).toISOString().slice(0, 10);
+  editingGoalId = goal?.id ?? "";
+  els.goalForm.dataset.editingGoalId = editingGoalId;
+  els.goalForm.querySelector("h2").textContent = goal ? "目標を編集" : "目標を作る";
+  els.goalForm.elements.namedItem("name").value = goal?.name ?? "";
+  els.goalForm.elements.namedItem("category").value = goal?.category ?? "";
+  els.goalForm.elements.namedItem("createdAt").value = goal?.createdAt ?? toISO(today);
+  els.goalForm.elements.namedItem("deadline").value = goal?.deadline ?? addDays(today, 30).toISOString().slice(0, 10);
+  els.goalForm.elements.namedItem("note").value = goal?.note ?? "";
   els.goalDialog.showModal();
 }
 
 els.goalForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const data = new FormData(els.goalForm);
-  const goal = {
+  const editingGoal = state.goals.find((goal) => goal.id === els.goalForm.dataset.editingGoalId);
+  const goal = editingGoal ?? {
     id: crypto.randomUUID(),
+  };
+  Object.assign(goal, {
     name: data.get("name").trim(),
     category: data.get("category").trim() || "未分類",
     createdAt: data.get("createdAt"),
     deadline: data.get("deadline"),
     note: data.get("note").trim(),
-  };
-  state.goals.push(goal);
+  });
+  if (!editingGoal) state.goals.push(goal);
   state.meta.onboardingDismissed = true;
   selectedGoalId = goal.id;
+  editingGoalId = "";
+  delete els.goalForm.dataset.editingGoalId;
   els.goalDialog.close();
   render();
 });
@@ -1388,7 +1468,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260520-homegoals")
+      .register("./sw.js?v=20260520-editflows")
       .then((registration) => registration.update())
       .catch(() => {
         showToast("オフライン準備に失敗しました。");
