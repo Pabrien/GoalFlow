@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v21-20260520-darkcontrast";
+const cacheName = "goalflow-v22-20260520-todaybutton";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260520-darkcontrast",
-  "./app.js?v=20260520-darkcontrast",
+  "./styles.css?v=20260520-todaybutton",
+  "./app.js?v=20260520-todaybutton",
   "./manifest.webmanifest",
   "./icons/goalflow-icon-512.png",
   "./icons/goalflow-icon.svg",
