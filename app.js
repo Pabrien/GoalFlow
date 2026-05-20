@@ -35,16 +35,24 @@ let lastAnimatedScreen = "";
 let completionSound = null;
 let focusSound = null;
 let selectSound = null;
+let scheduleSound = null;
 let flowOrbitAnimation = null;
 let interactionAudioBound = false;
 let lastFocusSoundAt = 0;
 let lastFocusSoundTarget = null;
+let lastTutorialTarget = "";
 const screenOrder = ["home", "goals", "schedule", "today"];
 
 const translations = {
   ja: {
     "app.kicker": "Goal planner",
     "app.tagline": "目標から逆算して、今日やることに落とし込む。",
+    "app.heroCopy":
+      "目標を決めたら、タスクに分けて、今日へ置く。GoalFlowは次にやることだけを静かに見せます。",
+    "app.point1": "目標から逆算",
+    "app.point2": "タスクを予定へ",
+    "app.point3": "今日だけに集中",
+    "app.pointsAria": "GoalFlowの特徴",
     "status.autoSave": "自動保存",
     "status.saved": "保存済み {time}",
     "theme.dark": "ダーク",
@@ -72,7 +80,12 @@ const translations = {
     "summary.overall": "全体の達成率",
     "summary.streak": "連続記録",
     "summary.streakValue": "{count}日",
+    "summary.todayMini.empty": "今日のタスクはまだありません。",
+    "summary.todayMini.progress": "今日は{done}/{total}件完了です。",
+    "summary.todayMini.done": "今日の予定は完了しています。",
+    "summary.aria": "進捗サマリー",
     "focus.kicker": "今日のフォーカス",
+    "focus.aria": "次の一手",
     "focus.pill": "今日やること",
     "focus.defaultTitle": "次の一手",
     "focus.defaultBody":
@@ -81,6 +94,15 @@ const translations = {
     "buddy.kicker": "ひとこと",
     "buddy.defaultTitle": "今日の流れ",
     "buddy.defaultMessage": "小さく始めて、完了を1つ残しましょう。",
+    "flow.aria": "GoalFlowの流れ",
+    "flow.goal.title": "目標",
+    "flow.goal.body": "続けたい理由と期限を決める",
+    "flow.task.title": "タスク",
+    "flow.task.body": "今日できるサイズに分ける",
+    "flow.today.title": "今日の予定",
+    "flow.today.body": "置いたら、あとは完了するだけ",
+    "flow.progress.title": "今日の進み具合",
+    "dashboard.aria": "ホームダッシュボード",
     "empty.kicker": "GoalFlow method",
     "empty.title": "まず最初の目標を作りましょう",
     "empty.body":
@@ -129,7 +151,7 @@ const translations = {
     "tasks.add": "追加",
     "tasks.empty": "保存タスクを作ると、カレンダーへドラッグできます。",
     "tasks.dragAria": "カレンダーへドラッグ",
-    "tasks.addToday": "今日に追加",
+    "tasks.addToday": "今日に入れる",
     "tasks.noGoal": "未設定",
     "schedule.kicker": "ドラッグで予定化",
     "schedule.week": "週",
@@ -234,10 +256,49 @@ const translations = {
     "file.body":
       "この画面は直接ファイルとして開かれています。動かない場合は http://127.0.0.1:4174/index.html を開いてください。",
     "offline.failed": "オフライン準備に失敗しました。",
+    "tutorial.open": "使い方",
+    "tutorial.progress": "{current} / {total}",
+    "tutorial.finishToast": "使い方はいつでも右上から見直せます。",
+    "tutorial.sample": "サンプルで試す",
+    "tutorial.later": "あとで",
+    "tutorial.skip": "閉じる",
+    "tutorial.done": "完了",
+    "tutorial.next": "次へ",
+    "tutorial.step0.title": "GoalFlowの流れを試す",
+    "tutorial.step0.body":
+      "目標を作り、タスクに分け、今日へ置いて完了する。実際に触りながら1周だけ試します。",
+    "tutorial.step0.primary": "始める",
+    "tutorial.step0.secondary": "サンプルで試す",
+    "tutorial.step1.title": "まず目標を1つ作る",
+    "tutorial.step1.body":
+      "右のボタンから、続けたい理由がある目標を1つ作ってください。",
+    "tutorial.step1.primary": "目標を作る",
+    "tutorial.step1.secondary": "あとで",
+    "tutorial.step2.title": "今日できるタスクを保存する",
+    "tutorial.step2.body":
+      "大きな目標を、15〜30分で終わる小さなタスクにします。",
+    "tutorial.step2.primary": "タスクを追加",
+    "tutorial.step2.secondary": "閉じる",
+    "tutorial.step3.title": "タスクを今日に入れる",
+    "tutorial.step3.body":
+      "ドラッグでも、スマホなら「今日に入れる」でもOKです。予定に置くと行動に変わります。",
+    "tutorial.step3.primary": "今日に入れる",
+    "tutorial.step3.secondary": "閉じる",
+    "tutorial.step4.title": "今日のタスクを完了する",
+    "tutorial.step4.body":
+      "最後に今日タブで完了します。進捗とグラフに小さな達成感が残ります。",
+    "tutorial.step4.primary": "今日を見る",
+    "tutorial.step4.secondary": "閉じる",
   },
   en: {
     "app.kicker": "Goal planner",
     "app.tagline": "Plan backward from goals into what you can do today.",
+    "app.heroCopy":
+      "Pick a goal, break it into tasks, and place one on today. GoalFlow quietly shows only the next action.",
+    "app.point1": "Plan backward",
+    "app.point2": "Place tasks",
+    "app.point3": "Focus on today",
+    "app.pointsAria": "GoalFlow features",
     "status.autoSave": "Auto-save",
     "status.saved": "Saved {time}",
     "theme.dark": "Dark",
@@ -268,7 +329,12 @@ const translations = {
     "summary.overall": "Overall",
     "summary.streak": "Streak",
     "summary.streakValue": "{count} days",
+    "summary.todayMini.empty": "No tasks for today yet.",
+    "summary.todayMini.progress": "{done} of {total} tasks done today.",
+    "summary.todayMini.done": "Today’s plan is complete.",
+    "summary.aria": "Progress summary",
     "focus.kicker": "Today’s focus",
+    "focus.aria": "Next action",
     "focus.pill": "Today’s tasks",
     "focus.defaultTitle": "Next step",
     "focus.defaultBody":
@@ -277,6 +343,15 @@ const translations = {
     "buddy.kicker": "Note",
     "buddy.defaultTitle": "Today’s flow",
     "buddy.defaultMessage": "Start small and leave one completed task behind.",
+    "flow.aria": "GoalFlow flow",
+    "flow.goal.title": "Goal",
+    "flow.goal.body": "Choose the reason and deadline",
+    "flow.task.title": "Task",
+    "flow.task.body": "Break it into today-sized actions",
+    "flow.today.title": "Today",
+    "flow.today.body": "Place it, then finish it",
+    "flow.progress.title": "Today’s progress",
+    "dashboard.aria": "Home dashboard",
     "empty.kicker": "GoalFlow method",
     "empty.title": "Create your first goal",
     "empty.body":
@@ -326,7 +401,7 @@ const translations = {
     "tasks.add": "Add",
     "tasks.empty": "Save a task, then drag it onto the calendar.",
     "tasks.dragAria": "Drag to calendar",
-    "tasks.addToday": "Add to today",
+    "tasks.addToday": "Put on today",
     "tasks.noGoal": "No goal",
     "schedule.kicker": "Drag to schedule",
     "schedule.week": "Week",
@@ -431,6 +506,40 @@ const translations = {
     "file.body":
       "This screen was opened as a file. If it does not work, open http://127.0.0.1:4174/index.html.",
     "offline.failed": "Offline setup failed.",
+    "tutorial.open": "Guide",
+    "tutorial.progress": "{current} / {total}",
+    "tutorial.finishToast":
+      "You can replay the guide from the top right anytime.",
+    "tutorial.sample": "Try sample",
+    "tutorial.later": "Later",
+    "tutorial.skip": "Close",
+    "tutorial.done": "Done",
+    "tutorial.next": "Next",
+    "tutorial.step0.title": "Try the GoalFlow loop",
+    "tutorial.step0.body":
+      "Create a goal, save a task, place it on today, and finish it. Learn the flow by doing it once.",
+    "tutorial.step0.primary": "Start",
+    "tutorial.step0.secondary": "Try sample",
+    "tutorial.step1.title": "Create one goal",
+    "tutorial.step1.body":
+      "Use the button on the right to create one goal with a reason to keep going.",
+    "tutorial.step1.primary": "Create goal",
+    "tutorial.step1.secondary": "Later",
+    "tutorial.step2.title": "Save a task you can do today",
+    "tutorial.step2.body":
+      "Turn the big goal into a small task that takes about 15 to 30 minutes.",
+    "tutorial.step2.primary": "Add task",
+    "tutorial.step2.secondary": "Close",
+    "tutorial.step3.title": "Put the task on today",
+    "tutorial.step3.body":
+      "Drag it to the calendar, or tap “Put on today” on mobile. A plan becomes an action.",
+    "tutorial.step3.primary": "Put on today",
+    "tutorial.step3.secondary": "Close",
+    "tutorial.step4.title": "Complete today’s task",
+    "tutorial.step4.body":
+      "Finish it in Today. Your progress and chart keep the small win visible.",
+    "tutorial.step4.primary": "Open Today",
+    "tutorial.step4.secondary": "Close",
   },
 };
 
@@ -470,6 +579,9 @@ const els = {
   todayRateMeter: document.querySelector("#todayRateMeter"),
   weekRateMeter: document.querySelector("#weekRateMeter"),
   overallRateMeter: document.querySelector("#overallRateMeter"),
+  miniTodayRate: document.querySelector("#miniTodayRate"),
+  miniTodayCopy: document.querySelector("#miniTodayCopy"),
+  miniTodayMeter: document.querySelector("#miniTodayMeter"),
   goalCount: document.querySelector("#goalCount"),
   weekView: document.querySelector("#weekView"),
   monthView: document.querySelector("#monthView"),
@@ -487,6 +599,14 @@ const els = {
   themeToggleLabel: document.querySelector("#themeToggleLabel"),
   languageToggle: document.querySelector("#languageToggle"),
   languageToggleLabel: document.querySelector("#languageToggleLabel"),
+  openTutorial: document.querySelector("#openTutorial"),
+  tutorialCoach: document.querySelector("#tutorialCoach"),
+  tutorialProgress: document.querySelector("#tutorialProgress"),
+  tutorialTitle: document.querySelector("#tutorialTitle"),
+  tutorialBody: document.querySelector("#tutorialBody"),
+  tutorialPrimary: document.querySelector("#tutorialPrimary"),
+  tutorialSecondary: document.querySelector("#tutorialSecondary"),
+  tutorialClose: document.querySelector("#tutorialClose"),
   launchScreen: document.querySelector("#launchScreen"),
   nextActionTitle: document.querySelector("#nextActionTitle"),
   nextActionBody: document.querySelector("#nextActionBody"),
@@ -511,6 +631,9 @@ function createEmptyState() {
       theme: "light",
       language: "ja",
       calendarSize: "normal",
+      tutorialActive: true,
+      tutorialCompleted: false,
+      tutorialStep: 0,
     },
   };
 }
@@ -600,6 +723,13 @@ function loadState() {
         theme: parsed.meta?.theme === "dark" ? "dark" : "light",
         language: parsed.meta?.language === "en" ? "en" : "ja",
         calendarSize: normalizeCalendarSize(parsed.meta?.calendarSize),
+        tutorialActive:
+          parsed.meta?.tutorialActive === true ||
+          (parsed.meta?.tutorialCompleted !== true &&
+            parsed.meta?.tutorialActive !== false &&
+            (!Array.isArray(parsed.goals) || parsed.goals.length === 0)),
+        tutorialCompleted: Boolean(parsed.meta?.tutorialCompleted),
+        tutorialStep: Number(parsed.meta?.tutorialStep ?? 0),
       },
     };
   } catch {
@@ -683,6 +813,7 @@ function render() {
   ) {
     selectedGoalId = state.goals[0]?.id ?? "";
   }
+  syncTutorialState();
   renderGoals();
   renderTaskBank();
   renderCalendar();
@@ -697,6 +828,7 @@ function render() {
   renderChart();
   renderCompletionPie();
   renderGoalReport();
+  renderTutorialCoach();
   saveState();
   requestAnimationFrame(playRenderMotion);
 }
@@ -1479,12 +1611,205 @@ function isTodayVisibleInSchedule() {
 }
 
 function renderOnboarding() {
+  const isGuiding = state.meta.tutorialActive;
   const shouldShow =
     activeScreen === "home" &&
+    !isGuiding &&
     !state.meta.onboardingDismissed &&
     state.goals.length === 0;
   els.onboarding.hidden = !shouldShow;
-  els.emptyStart.hidden = state.goals.length > 0;
+  els.emptyStart.hidden = isGuiding || state.goals.length > 0;
+}
+
+function tutorialSteps() {
+  return [
+    {
+      title: t("tutorial.step0.title"),
+      body: t("tutorial.step0.body"),
+      primary: t("tutorial.step0.primary"),
+      secondary: t("tutorial.step0.secondary"),
+      target: "#flowMap",
+      screen: "home",
+      action: () => {
+        state.meta.tutorialStep = 1;
+        activeScreen = "goals";
+        render();
+      },
+      secondaryAction: () => {
+        createTutorialSample();
+        state.meta.tutorialStep = 3;
+        activeScreen = "schedule";
+        render();
+      },
+    },
+    {
+      title: t("tutorial.step1.title"),
+      body: t("tutorial.step1.body"),
+      primary: t("tutorial.step1.primary"),
+      secondary: t("tutorial.step1.secondary"),
+      target: "#openGoalDialog",
+      screen: "goals",
+      completed: () => state.goals.length > 0,
+      action: () => openGoalDialog(),
+    },
+    {
+      title: t("tutorial.step2.title"),
+      body: t("tutorial.step2.body"),
+      primary: t("tutorial.step2.primary"),
+      secondary: t("tutorial.step2.secondary"),
+      target: "#openTaskDialog",
+      screen: "schedule",
+      completed: () => state.tasks.length > 0,
+      action: () => els.openTaskDialog.click(),
+    },
+    {
+      title: t("tutorial.step3.title"),
+      body: t("tutorial.step3.body"),
+      primary: t("tutorial.step3.primary"),
+      secondary: t("tutorial.step3.secondary"),
+      target: ".bank-task",
+      screen: "schedule",
+      completed: () =>
+        state.scheduled.some((item) => item.date === toISO(today)),
+      action: () => {
+        const task = state.tasks.find(
+          (candidate) => !selectedGoalId || candidate.goalId === selectedGoalId,
+        );
+        if (task) {
+          scheduleTask(task.id, toISO(today));
+          activeScreen = "today";
+        }
+        render();
+      },
+    },
+    {
+      title: t("tutorial.step4.title"),
+      body: t("tutorial.step4.body"),
+      primary: t("tutorial.step4.primary"),
+      secondary: t("tutorial.step4.secondary"),
+      target: "#todayList",
+      screen: "today",
+      completed: () =>
+        state.scheduled.some((item) => item.date === toISO(today) && item.done),
+      action: () => {
+        activeScreen = "today";
+        render();
+      },
+    },
+  ];
+}
+
+function syncTutorialState() {
+  if (!state.meta.tutorialActive) {
+    removeTutorialTargets();
+    return;
+  }
+  const steps = tutorialSteps();
+  const rawStep = Number(state.meta.tutorialStep ?? 0);
+  state.meta.tutorialStep = Number.isFinite(rawStep)
+    ? Math.max(0, Math.min(rawStep, steps.length))
+    : 0;
+  while (
+    state.meta.tutorialStep > 0 &&
+    state.meta.tutorialStep < steps.length &&
+    steps[state.meta.tutorialStep].completed?.()
+  ) {
+    state.meta.tutorialStep += 1;
+  }
+  if (state.meta.tutorialStep >= steps.length) {
+    state.meta.tutorialActive = false;
+    state.meta.tutorialCompleted = true;
+    state.meta.tutorialStep = steps.length - 1;
+    removeTutorialTargets();
+    window.setTimeout(() => showToast(t("tutorial.finishToast")), 80);
+    return;
+  }
+  const step = steps[state.meta.tutorialStep];
+  if (step.screen) activeScreen = step.screen;
+}
+
+function renderTutorialCoach() {
+  if (!els.tutorialCoach) return;
+  removeTutorialTargets(false);
+  if (!state.meta.tutorialActive) {
+    els.tutorialCoach.hidden = true;
+    return;
+  }
+  const steps = tutorialSteps();
+  const stepIndex = Math.max(
+    0,
+    Math.min(state.meta.tutorialStep ?? 0, steps.length - 1),
+  );
+  const step = steps[stepIndex];
+  els.tutorialCoach.hidden = false;
+  els.tutorialProgress.textContent = t("tutorial.progress", {
+    current: stepIndex + 1,
+    total: steps.length,
+  });
+  els.tutorialTitle.textContent = step.title;
+  els.tutorialBody.textContent = step.body;
+  els.tutorialPrimary.textContent = step.primary;
+  els.tutorialSecondary.textContent = step.secondary;
+  const target = document.querySelector(step.target);
+  target?.classList.add("coach-target");
+  if (target && lastTutorialTarget !== `${stepIndex}:${step.target}`) {
+    lastTutorialTarget = `${stepIndex}:${step.target}`;
+    target.scrollIntoView?.({
+      behavior: "smooth",
+      block: "center",
+      inline: "center",
+    });
+  }
+}
+
+function removeTutorialTargets(resetScrollTarget = true) {
+  if (resetScrollTarget) lastTutorialTarget = "";
+  document
+    .querySelectorAll(".coach-target")
+    .forEach((node) => node.classList.remove("coach-target"));
+}
+
+function closeTutorial(completed = false) {
+  state.meta.tutorialActive = false;
+  state.meta.tutorialCompleted = completed || state.meta.tutorialCompleted;
+  removeTutorialTargets();
+  render();
+}
+
+function startTutorial() {
+  state.meta.tutorialActive = true;
+  state.meta.tutorialCompleted = false;
+  state.meta.tutorialStep = 0;
+  activeScreen = "home";
+  render();
+}
+
+function createTutorialSample() {
+  if (state.goals.length || state.tasks.length) return;
+  const goal = {
+    id: crypto.randomUUID(),
+    name:
+      currentLanguage() === "en" ? "Read for 10 minutes" : "10分だけ読書する",
+    category: currentLanguage() === "en" ? "Habit" : "習慣",
+    createdAt: toISO(today),
+    deadline: addDays(today, 14).toISOString().slice(0, 10),
+    note:
+      currentLanguage() === "en"
+        ? "A small daily reading habit."
+        : "毎日少しだけ進める読書習慣。",
+  };
+  const task = {
+    id: crypto.randomUUID(),
+    goalId: goal.id,
+    title: currentLanguage() === "en" ? "Read one section" : "1セクション読む",
+    minutes: 10,
+    durationValue: 10,
+    durationUnit: "minutes",
+  };
+  state.goals.push(goal);
+  state.tasks.push(task);
+  selectedGoalId = goal.id;
+  state.meta.onboardingDismissed = true;
 }
 
 function renderNextAction() {
@@ -1599,6 +1924,20 @@ function renderSummary() {
   els.todayRateMeter.style.width = `${todayRate}%`;
   els.weekRateMeter.style.width = `${weekRate}%`;
   els.overallRateMeter.style.width = `${overallRate}%`;
+  if (els.miniTodayRate) els.miniTodayRate.textContent = `${todayRate}%`;
+  if (els.miniTodayMeter) els.miniTodayMeter.style.width = `${todayRate}%`;
+  if (els.miniTodayCopy) {
+    els.miniTodayCopy.textContent = !todayTotal
+      ? t("summary.todayMini.empty")
+      : todayRate === 100
+        ? t("summary.todayMini.done")
+        : t("summary.todayMini.progress", {
+            done: state.scheduled.filter(
+              (item) => item.date === todayIso && item.done,
+            ).length,
+            total: todayTotal,
+          });
+  }
   els.summaryStreak.textContent = t("summary.streakValue", {
     count: calcStreak(),
   });
@@ -2143,6 +2482,7 @@ function scheduleTask(taskId, date) {
     render();
   }, 720);
   vibrate(date === toISO(today) ? 18 : 10);
+  playScheduleSound();
   showToast(
     date === toISO(today) ? t("schedule.addedToday") : t("schedule.added"),
   );
@@ -2164,6 +2504,7 @@ function moveScheduledTask(scheduledId, date) {
     render();
   }, 720);
   vibrate(12);
+  playScheduleSound();
   showToast(t("schedule.moved"));
   render();
   requestAnimationFrame(() => playScheduleLandingMotion(date));
@@ -2223,15 +2564,15 @@ function ensureInteractionSounds() {
     focusSound = new window.Howl({
       src: [
         createToneDataUrl({
-          duration: 0.055,
-          volume: 0.16,
+          duration: 0.07,
+          volume: 0.12,
           tones: [
-            { from: 620, to: 760, gain: 0.7 },
-            { from: 1240, to: 1520, gain: 0.2 },
+            { from: 360, to: 420, gain: 0.48 },
+            { from: 720, to: 840, gain: 0.18 },
           ],
         }),
       ],
-      volume: 0.15,
+      volume: 0.12,
       preload: true,
     });
   }
@@ -2239,19 +2580,45 @@ function ensureInteractionSounds() {
     selectSound = new window.Howl({
       src: [
         createToneDataUrl({
-          duration: 0.075,
-          volume: 0.17,
+          duration: 0.09,
+          volume: 0.13,
           tones: [
-            { from: 440, to: 520, gain: 0.7 },
-            { from: 880, to: 1040, gain: 0.24 },
+            { from: 260, to: 310, gain: 0.56 },
+            { from: 520, to: 620, gain: 0.18 },
           ],
         }),
       ],
-      volume: 0.16,
+      volume: 0.14,
       preload: true,
     });
   }
   return true;
+}
+
+function playScheduleSound() {
+  if (!window.Howl) return;
+  try {
+    if (!scheduleSound) {
+      scheduleSound = new window.Howl({
+        src: [
+          createToneDataUrl({
+            duration: 0.105,
+            volume: 0.16,
+            tones: [
+              { from: 220, to: 220, gain: 0.44 },
+              { from: 440, to: 528, gain: 0.28 },
+              { from: 880, to: 960, gain: 0.1 },
+            ],
+          }),
+        ],
+        volume: 0.18,
+        preload: true,
+      });
+    }
+    scheduleSound.play();
+  } catch {
+    // Sound should support the interaction, never interrupt it.
+  }
 }
 
 function playFocusSound(target) {
@@ -2436,16 +2803,17 @@ function playCompletionSound() {
       completionSound = new window.Howl({
         src: [
           createToneDataUrl({
-            duration: 0.28,
-            volume: 0.18,
+            duration: 0.34,
+            volume: 0.16,
             tones: [
-              { from: 523, to: 659, gain: 0.44 },
-              { from: 784, to: 988, gain: 0.4 },
-              { from: 1046, to: 1318, gain: 0.2 },
+              { from: 196, to: 220, gain: 0.36 },
+              { from: 392, to: 440, gain: 0.42 },
+              { from: 587, to: 660, gain: 0.24 },
+              { from: 784, to: 880, gain: 0.12 },
             ],
           }),
         ],
-        volume: 0.22,
+        volume: 0.2,
         preload: true,
       });
     }
@@ -3047,6 +3415,24 @@ els.languageToggle.addEventListener("click", () => {
   render();
 });
 
+els.openTutorial?.addEventListener("click", startTutorial);
+
+els.tutorialPrimary?.addEventListener("click", () => {
+  const step = tutorialSteps()[state.meta.tutorialStep ?? 0];
+  step?.action?.();
+});
+
+els.tutorialSecondary?.addEventListener("click", () => {
+  const step = tutorialSteps()[state.meta.tutorialStep ?? 0];
+  if (step?.secondaryAction) {
+    step.secondaryAction();
+    return;
+  }
+  closeTutorial(false);
+});
+
+els.tutorialClose?.addEventListener("click", () => closeTutorial(false));
+
 els.startFirstGoal.addEventListener("click", () => {
   activeScreen = "goals";
   render();
@@ -3093,7 +3479,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260521-applefeel")
+      .register("./sw.js?v=20260521-flowcoach")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

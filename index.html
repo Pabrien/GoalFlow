@@ -19,7 +19,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260521-applefeel" />
+    <link rel="stylesheet" href="./styles.css?v=20260521-flowcoach" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -41,8 +41,28 @@
           <p class="product-line" data-i18n="app.tagline">
             目標から逆算して、今日やることに落とし込む。
           </p>
+          <p class="hero-copy" data-i18n="app.heroCopy">
+            目標を決めたら、タスクに分けて、今日へ置く。GoalFlowは次にやることだけを静かに見せます。
+          </p>
+          <div
+            class="hero-points"
+            aria-label="GoalFlowの特徴"
+            data-i18n-aria="app.pointsAria"
+          >
+            <span data-i18n="app.point1">目標から逆算</span>
+            <span data-i18n="app.point2">タスクを予定へ</span>
+            <span data-i18n="app.point3">今日だけに集中</span>
+          </div>
         </div>
         <div class="topbar-actions">
+          <button
+            class="ghost-button help-button"
+            id="openTutorial"
+            type="button"
+            data-i18n="tutorial.open"
+          >
+            使い方
+          </button>
           <button
             class="language-toggle"
             id="languageToggle"
@@ -178,6 +198,7 @@
         class="summary-strip"
         data-view-panel="home"
         aria-label="進捗サマリー"
+        data-i18n-aria="summary.aria"
       >
         <article class="rate-summary today-summary">
           <span id="summaryTodayRate">0%</span>
@@ -200,7 +221,12 @@
         </article>
       </section>
 
-      <section class="flow-focus" data-view-panel="home" aria-label="次の一手">
+      <section
+        class="flow-focus"
+        data-view-panel="home"
+        aria-label="次の一手"
+        data-i18n-aria="focus.aria"
+      >
         <article class="next-step-card">
           <p class="eyebrow" data-i18n="focus.kicker">今日のフォーカス</p>
           <span class="today-focus-pill" data-i18n="focus.pill"
@@ -225,10 +251,49 @@
       </section>
 
       <section
+        class="flow-map"
+        id="flowMap"
+        data-view-panel="home"
+        aria-label="GoalFlowの流れ"
+        data-i18n-aria="flow.aria"
+      >
+        <article>
+          <span>1</span>
+          <div>
+            <h2 data-i18n="flow.goal.title">目標</h2>
+            <p data-i18n="flow.goal.body">続けたい理由と期限を決める</p>
+          </div>
+        </article>
+        <article>
+          <span>2</span>
+          <div>
+            <h2 data-i18n="flow.task.title">タスク</h2>
+            <p data-i18n="flow.task.body">今日できるサイズに分ける</p>
+          </div>
+        </article>
+        <article>
+          <span>3</span>
+          <div>
+            <h2 data-i18n="flow.today.title">今日の予定</h2>
+            <p data-i18n="flow.today.body">置いたら、あとは完了するだけ</p>
+          </div>
+        </article>
+        <article class="flow-map-progress">
+          <span id="miniTodayRate">0%</span>
+          <div>
+            <h2 data-i18n="flow.progress.title">今日の進み具合</h2>
+            <p id="miniTodayCopy">今日のタスクはまだありません。</p>
+            <div class="mini-progress"><span id="miniTodayMeter"></span></div>
+          </div>
+        </article>
+      </section>
+
+      <section
         class="home-dashboard"
         id="progressSection"
         data-view-panel="home"
         aria-label="ホームダッシュボード"
+        data-i18n-aria="dashboard.aria"
       >
         <section class="empty-start" id="emptyStart">
           <div>
@@ -604,9 +669,34 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+    <section class="tutorial-coach" id="tutorialCoach" hidden>
+      <button
+        class="icon-button tutorial-close"
+        id="tutorialClose"
+        type="button"
+        aria-label="閉じる"
+        data-i18n-aria="dialog.close"
+      >
+        ×
+      </button>
+      <div class="tutorial-progress" id="tutorialProgress">1 / 5</div>
+      <h2 id="tutorialTitle">GoalFlowの流れを試す</h2>
+      <p id="tutorialBody">
+        実際に操作しながら、目標を今日の行動に変える流れを覚えます。
+      </p>
+      <div class="tutorial-actions">
+        <button class="primary-button" id="tutorialPrimary" type="button">
+          始める
+        </button>
+        <button class="ghost-button" id="tutorialSecondary" type="button">
+          あとで
+        </button>
+      </div>
+    </section>
+
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260521-applefeel"></script>
+    <script defer src="./app.js?v=20260521-flowcoach"></script>
   </body>
 </html>

@@ -336,11 +336,45 @@ textarea:focus-visible,
   line-height: 1.5;
 }
 
+.hero-copy {
+  max-width: 680px;
+  margin: 12px 0 0;
+  color: var(--ink);
+  font-size: clamp(18px, 2vw, 26px);
+  font-weight: 850;
+  line-height: 1.32;
+}
+
+.hero-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.hero-points span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(20, 108, 99, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 850;
+}
+
 .topbar-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.help-button {
+  min-height: 38px;
+  border-radius: 999px;
 }
 
 .save-status {
@@ -657,12 +691,110 @@ textarea:focus-visible,
 
 .flow-focus {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(240px, 0.8fr) minmax(
-      220px,
-      0.7fr
-    );
+  grid-template-columns: minmax(0, 1.05fr) minmax(260px, 0.72fr);
   gap: 14px;
   margin-bottom: 14px;
+}
+
+.flow-map {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.flow-map article {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 96px;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(16px);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.flow-map article:hover {
+  border-color: rgba(20, 108, 99, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 42px rgba(33, 38, 32, 0.1);
+}
+
+.flow-map article:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: -7px;
+  top: 50%;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  border-top: 2px solid rgba(20, 108, 99, 0.3);
+  border-right: 2px solid rgba(20, 108, 99, 0.3);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.flow-map span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.flow-map h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.flow-map p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.flow-map-progress {
+  border-color: rgba(20, 108, 99, 0.24);
+  background:
+    linear-gradient(135deg, rgba(20, 108, 99, 0.08), transparent 48%),
+    rgba(255, 255, 255, 0.82);
+}
+
+.flow-map-progress > span {
+  width: 46px;
+  height: 46px;
+  background: #16181d;
+  color: #fff;
+}
+
+.mini-progress {
+  height: 6px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.mini-progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #58cc7a);
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .next-step-card,
@@ -1184,6 +1316,12 @@ body[data-active-screen="today"] .insights {
   gap: 6px;
   justify-content: flex-end;
   margin-top: 10px;
+}
+
+.bank-task-actions .mini-button {
+  border-color: rgba(20, 108, 99, 0.18);
+  background: rgba(20, 108, 99, 0.06);
+  color: var(--accent-strong);
 }
 
 body[data-view-mode="month"] .bank-task {
@@ -1958,6 +2096,66 @@ dialog::backdrop {
   transform: translateY(0) scale(1);
 }
 
+.tutorial-coach {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 50;
+  width: min(380px, calc(100% - 36px));
+  padding: 18px;
+  border: 1px solid rgba(229, 231, 235, 0.84);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.2);
+  backdrop-filter: blur(22px);
+}
+
+.tutorial-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.tutorial-progress {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(20, 108, 99, 0.1);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tutorial-coach h2 {
+  margin: 12px 28px 0 0;
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.tutorial-coach p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.tutorial-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.coach-target {
+  position: relative;
+  z-index: 45;
+  outline: 3px solid rgba(79, 214, 154, 0.42);
+  outline-offset: 5px;
+  box-shadow:
+    0 0 0 8px rgba(79, 214, 154, 0.12),
+    0 22px 70px rgba(20, 108, 99, 0.18) !important;
+}
+
 .dialog-card {
   display: grid;
   gap: 14px;
@@ -2146,10 +2344,46 @@ textarea:focus {
 
   .summary-strip,
   .flow-focus,
+  .flow-map,
   .home-dashboard,
   .workspace,
   .insights {
     grid-template-columns: 1fr;
+  }
+
+  .hero-copy {
+    font-size: 19px;
+  }
+
+  .flow-map article {
+    min-height: 76px;
+  }
+
+  .flow-map article:not(:last-child)::after {
+    right: 22px;
+    top: auto;
+    bottom: -8px;
+    transform: rotate(135deg);
+  }
+
+  .tutorial-coach {
+    right: 10px;
+    bottom: 84px;
+    left: 10px;
+    width: auto;
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .tutorial-actions {
+    display: grid;
+  }
+
+  .bank-task-actions .mini-button {
+    width: 100%;
+    min-height: 42px;
+    border-radius: 12px;
+    font-size: 13px;
   }
 
   .calendar-grid {
@@ -3287,6 +3521,7 @@ body[data-theme="dark"][data-active-screen="today"] .workspace::before {
 }
 
 body[data-theme="dark"] .product-line,
+body[data-theme="dark"] .hero-copy,
 body[data-theme="dark"] .screen-tab,
 body[data-theme="dark"] .goal-meta,
 body[data-theme="dark"] .task-meta,
@@ -3295,6 +3530,76 @@ body[data-theme="dark"] .report-start,
 body[data-theme="dark"] .report-support,
 body[data-theme="dark"] .save-status {
   color: var(--muted);
+}
+
+body[data-theme="dark"] .hero-copy {
+  color: var(--ink);
+}
+
+body[data-theme="dark"] .hero-points span,
+body[data-theme="dark"] .flow-map span,
+body[data-theme="dark"] .tutorial-progress,
+body[data-theme="dark"] .bank-task-actions .mini-button {
+  border-color: rgba(79, 214, 154, 0.28);
+  background: rgba(79, 214, 154, 0.1);
+  color: var(--accent-strong);
+}
+
+body[data-theme="dark"] .flow-map article {
+  border-color: rgba(100, 116, 139, 0.32) !important;
+  background: rgba(8, 13, 24, 0.84);
+  box-shadow: var(--shadow-soft);
+}
+
+body[data-theme="dark"] .flow-map article:hover {
+  border-color: rgba(79, 214, 154, 0.34) !important;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(79, 214, 154, 0.06);
+}
+
+body[data-theme="dark"] .flow-map article:not(:last-child)::after {
+  border-color: rgba(79, 214, 154, 0.34);
+}
+
+body[data-theme="dark"] .flow-map p,
+body[data-theme="dark"] .tutorial-coach p {
+  color: var(--muted);
+}
+
+body[data-theme="dark"] .flow-map-progress {
+  border-color: rgba(79, 214, 154, 0.34);
+  background:
+    radial-gradient(
+      circle at 84% 8%,
+      rgba(79, 214, 154, 0.12),
+      transparent 30%
+    ),
+    rgba(8, 13, 24, 0.9);
+}
+
+body[data-theme="dark"] .flow-map-progress > span {
+  background: #dffbea;
+  color: #082018;
+}
+
+body[data-theme="dark"] .mini-progress {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+body[data-theme="dark"] .tutorial-coach {
+  border-color: rgba(100, 116, 139, 0.34);
+  background: rgba(8, 13, 24, 0.9);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.36),
+    inset 0 0 0 1px rgba(79, 214, 154, 0.04);
+}
+
+body[data-theme="dark"] .coach-target {
+  outline-color: rgba(79, 214, 154, 0.5);
+  box-shadow:
+    0 0 0 8px rgba(79, 214, 154, 0.1),
+    0 24px 70px rgba(0, 0, 0, 0.3) !important;
 }
 
 body[data-theme="dark"] .screen-tab:hover,
