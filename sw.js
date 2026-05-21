@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v37-20260521-guidancepolish";
+const cacheName = "goalflow-v38-20260521-louderaudio";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260521-guidancepolish",
-  "./app.js?v=20260521-guidancepolish",
+  "./styles.css?v=20260521-louderaudio",
+  "./app.js?v=20260521-louderaudio",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",

@@ -2767,14 +2767,14 @@ function ensureInteractionSounds() {
       src: [
         createToneDataUrl({
           duration: 0.14,
-          volume: 0.22,
+          volume: 0.52,
           tones: [
-            { from: 174.61, to: 174.61, gain: 0.11, delay: 0, decay: 5.8 },
-            { from: 261.63, to: 261.63, gain: 0.06, delay: 0.028, decay: 7.2 },
+            { from: 174.61, to: 174.61, gain: 0.2, delay: 0, decay: 5.8 },
+            { from: 261.63, to: 261.63, gain: 0.12, delay: 0.028, decay: 7.2 },
           ],
         }),
       ],
-      volume: 0.24,
+      volume: 0.58,
       preload: true,
     });
   }
@@ -2783,15 +2783,15 @@ function ensureInteractionSounds() {
       src: [
         createToneDataUrl({
           duration: 0.22,
-          volume: 0.24,
+          volume: 0.58,
           tones: [
-            { from: 164.81, to: 164.81, gain: 0.1, delay: 0, decay: 4.6 },
-            { from: 246.94, to: 246.94, gain: 0.095, delay: 0.052, decay: 5.6 },
-            { from: 329.63, to: 329.63, gain: 0.032, delay: 0.11, decay: 7.4 },
+            { from: 164.81, to: 164.81, gain: 0.2, delay: 0, decay: 4.6 },
+            { from: 246.94, to: 246.94, gain: 0.19, delay: 0.052, decay: 5.6 },
+            { from: 329.63, to: 329.63, gain: 0.07, delay: 0.11, decay: 7.4 },
           ],
         }),
       ],
-      volume: 0.28,
+      volume: 0.64,
       preload: true,
     });
   }
@@ -2806,15 +2806,15 @@ function playScheduleSound() {
         src: [
           createToneDataUrl({
             duration: 0.24,
-            volume: 0.25,
+            volume: 0.48,
             tones: [
-              { from: 146.83, to: 146.83, gain: 0.09, delay: 0, decay: 4.8 },
-              { from: 220, to: 220, gain: 0.12, delay: 0.05, decay: 5.8 },
-              { from: 440, to: 440, gain: 0.032, delay: 0.11, decay: 7.2 },
+              { from: 146.83, to: 146.83, gain: 0.16, delay: 0, decay: 4.8 },
+              { from: 220, to: 220, gain: 0.2, delay: 0.05, decay: 5.8 },
+              { from: 440, to: 440, gain: 0.06, delay: 0.11, decay: 7.2 },
             ],
           }),
         ],
-        volume: 0.32,
+        volume: 0.56,
         preload: true,
       });
     }
@@ -3055,23 +3055,29 @@ function playCompletionSound() {
         src: [
           createToneDataUrl({
             duration: 0.62,
-            volume: 0.3,
+            volume: 0.46,
             tones: [
-              { from: 110, to: 110, gain: 0.08, delay: 0, decay: 3.6 },
+              { from: 110, to: 110, gain: 0.12, delay: 0, decay: 3.6 },
               {
                 from: 164.81,
                 to: 164.81,
-                gain: 0.12,
+                gain: 0.18,
                 delay: 0.055,
                 decay: 4.4,
               },
-              { from: 246.94, to: 246.94, gain: 0.13, delay: 0.16, decay: 5.1 },
-              { from: 329.63, to: 329.63, gain: 0.088, delay: 0.28, decay: 6 },
-              { from: 659.25, to: 659.25, gain: 0.02, delay: 0.38, decay: 7.6 },
+              { from: 246.94, to: 246.94, gain: 0.18, delay: 0.16, decay: 5.1 },
+              { from: 329.63, to: 329.63, gain: 0.12, delay: 0.28, decay: 6 },
+              {
+                from: 659.25,
+                to: 659.25,
+                gain: 0.035,
+                delay: 0.38,
+                decay: 7.6,
+              },
             ],
           }),
         ],
-        volume: 0.45,
+        volume: 0.68,
         preload: true,
       });
     }
@@ -3450,6 +3456,11 @@ els.goalDialog.addEventListener("pointerdown", (event) => {
   els.goalDialog.close();
 });
 
+els.insightDialog?.addEventListener("pointerdown", (event) => {
+  if (event.target !== els.insightDialog) return;
+  els.insightDialog.close();
+});
+
 els.goalDialog.addEventListener("close", () => {
   editingGoalId = "";
   delete els.goalForm.dataset.editingGoalId;
@@ -3765,7 +3776,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260521-guidancepolish")
+      .register("./sw.js?v=20260521-louderaudio")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
