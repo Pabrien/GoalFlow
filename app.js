@@ -41,6 +41,8 @@ let interactionAudioBound = false;
 let lastFocusSoundAt = 0;
 let lastFocusSoundTarget = null;
 let lastTutorialTarget = "";
+let categoryHoldTimer = null;
+let categoryHoldTarget = null;
 const screenOrder = ["home", "progress", "goals", "schedule", "today"];
 
 const translations = {
@@ -202,7 +204,8 @@ const translations = {
     "goalDialog.namePlaceholder": "例：3か月でベンチプレス +10kg",
     "goalDialog.category": "カテゴリ",
     "goalDialog.categoryPlaceholder": "例：筋トレ、勉強、副業",
-    "goalDialog.deleteCategory": "{category}を候補から削除",
+    "goalDialog.deleteCategory": "長押しで{category}を候補から削除",
+    "goalDialog.categoryDeleted": "{category}を候補から削除しました。",
     "goalDialog.deadline": "期限",
     "goalDialog.startDate": "開始日",
     "goalDialog.note": "目標メモ",
@@ -469,7 +472,9 @@ const translations = {
     "goalDialog.namePlaceholder": "Example: Bench press +10kg in 3 months",
     "goalDialog.category": "Category",
     "goalDialog.categoryPlaceholder": "Example: Training, Study, Side project",
-    "goalDialog.deleteCategory": "Remove {category} from suggestions",
+    "goalDialog.deleteCategory":
+      "Long-press to remove {category} from suggestions",
+    "goalDialog.categoryDeleted": "Removed {category} from suggestions.",
     "goalDialog.deadline": "Deadline",
     "goalDialog.startDate": "Start date",
     "goalDialog.note": "Goal note",
@@ -1603,7 +1608,9 @@ function renderCategoryOptions() {
   ];
   const defaults = new Set(defaultCategories);
   const hidden = new Set(state.meta.hiddenCategories ?? []);
-  const categories = new Set(defaultCategories);
+  const categories = new Set(
+    defaultCategories.filter((category) => !hidden.has(category)),
+  );
   (state.meta.customCategories ?? []).forEach((category) => {
     if (!hidden.has(category)) categories.add(category);
   });
@@ -1631,33 +1638,60 @@ function renderCategoryPicker(categories, defaults = new Set()) {
     .map(
       (category) => `
         <span class="category-chip-wrap">
-          <button class="category-chip ${category === currentCategory ? "active" : ""}" type="button" data-category="${escapeHtml(category)}">
+          <button class="category-chip ${category === currentCategory ? "active" : ""}" type="button" data-category="${escapeHtml(category)}" title="${escapeHtml(t("goalDialog.deleteCategory", { category }))}">
             ${escapeHtml(category)}
           </button>
-          ${
-            defaults.has(category)
-              ? ""
-              : `<button class="category-remove" type="button" data-delete-category="${escapeHtml(category)}" aria-label="${escapeHtml(t("goalDialog.deleteCategory", { category }))}">×</button>`
-          }
         </span>
       `,
     )
     .join("");
   els.categoryPicker.querySelectorAll("[data-category]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("pointerdown", () => {
+      startCategoryHold(button);
+    });
+    button.addEventListener("pointerup", () => {
+      clearCategoryHold(button);
+    });
+    button.addEventListener("pointercancel", () => {
+      clearCategoryHold(button);
+    });
+    button.addEventListener("pointerleave", () => {
+      clearCategoryHold(button);
+    });
+    button.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+    });
+    button.addEventListener("click", (event) => {
+      if (button.dataset.holdDeleted === "true") {
+        event.preventDefault();
+        button.dataset.holdDeleted = "";
+        return;
+      }
       els.goalForm.elements.namedItem("category").value =
         button.dataset.category;
       renderCategoryPicker(categories, defaults);
     });
   });
-  els.categoryPicker
-    .querySelectorAll("[data-delete-category]")
-    .forEach((button) => {
-      button.addEventListener("click", (event) => {
-        event.stopPropagation();
-        deleteCategorySuggestion(button.dataset.deleteCategory);
-      });
-    });
+}
+
+function startCategoryHold(button) {
+  clearCategoryHold();
+  categoryHoldTarget = button;
+  button.classList.add("is-holding");
+  categoryHoldTimer = window.setTimeout(() => {
+    categoryHoldTimer = null;
+    button.dataset.holdDeleted = "true";
+    deleteCategorySuggestion(button.dataset.category);
+  }, 680);
+}
+
+function clearCategoryHold(button = categoryHoldTarget) {
+  if (categoryHoldTimer) {
+    window.clearTimeout(categoryHoldTimer);
+    categoryHoldTimer = null;
+  }
+  button?.classList.remove("is-holding");
+  categoryHoldTarget = null;
 }
 
 function deleteCategorySuggestion(category) {
@@ -1671,6 +1705,7 @@ function deleteCategorySuggestion(category) {
   const categoryInput = els.goalForm?.elements.namedItem("category");
   if (categoryInput?.value === category) categoryInput.value = "";
   renderCategoryOptions();
+  showToast(t("goalDialog.categoryDeleted", { category }));
   saveState();
 }
 
@@ -2661,15 +2696,15 @@ function ensureInteractionSounds() {
     focusSound = new window.Howl({
       src: [
         createToneDataUrl({
-          duration: 0.12,
-          volume: 0.12,
+          duration: 0.14,
+          volume: 0.22,
           tones: [
-            { from: 196, to: 196, gain: 0.1, delay: 0, decay: 6.2 },
-            { from: 392, to: 392, gain: 0.04, delay: 0.026, decay: 7.4 },
+            { from: 174.61, to: 174.61, gain: 0.11, delay: 0, decay: 5.8 },
+            { from: 261.63, to: 261.63, gain: 0.06, delay: 0.028, decay: 7.2 },
           ],
         }),
       ],
-      volume: 0.12,
+      volume: 0.24,
       preload: true,
     });
   }
@@ -2677,16 +2712,16 @@ function ensureInteractionSounds() {
     selectSound = new window.Howl({
       src: [
         createToneDataUrl({
-          duration: 0.18,
-          volume: 0.11,
+          duration: 0.22,
+          volume: 0.24,
           tones: [
-            { from: 261.63, to: 261.63, gain: 0.08, delay: 0, decay: 6.8 },
-            { from: 392, to: 392, gain: 0.07, delay: 0.045, decay: 7.4 },
-            { from: 523.25, to: 523.25, gain: 0.018, delay: 0.095, decay: 8.2 },
+            { from: 164.81, to: 164.81, gain: 0.1, delay: 0, decay: 4.6 },
+            { from: 246.94, to: 246.94, gain: 0.095, delay: 0.052, decay: 5.6 },
+            { from: 329.63, to: 329.63, gain: 0.032, delay: 0.11, decay: 7.4 },
           ],
         }),
       ],
-      volume: 0.11,
+      volume: 0.28,
       preload: true,
     });
   }
@@ -2701,7 +2736,7 @@ function playScheduleSound() {
         src: [
           createToneDataUrl({
             duration: 0.24,
-            volume: 0.15,
+            volume: 0.25,
             tones: [
               { from: 146.83, to: 146.83, gain: 0.09, delay: 0, decay: 4.8 },
               { from: 220, to: 220, gain: 0.12, delay: 0.05, decay: 5.8 },
@@ -2709,7 +2744,7 @@ function playScheduleSound() {
             ],
           }),
         ],
-        volume: 0.17,
+        volume: 0.32,
         preload: true,
       });
     }
@@ -2835,53 +2870,82 @@ function playCompletionMotion(itemId) {
   if (item) {
     const burst = createCompletionBurst();
     item.append(burst);
-    gsap.fromTo(
-      item,
-      { y: 5, scale: 0.982 },
-      {
-        y: 0,
-        scale: 1,
-        duration: 0.52,
-        ease: "back.out(1.55)",
-        overwrite: "auto",
-      },
-    );
-    gsap.fromTo(
-      burst.querySelector(".completion-ring"),
-      { autoAlpha: 0, scale: 0.72 },
-      { autoAlpha: 1, scale: 1, duration: 0.26, ease: "power3.out" },
-    );
-    gsap.fromTo(
-      burst.querySelector(".completion-check"),
-      { autoAlpha: 0, scale: 0.68, rotate: 35 },
-      {
-        autoAlpha: 1,
-        scale: 1,
-        rotate: 45,
-        duration: 0.2,
-        delay: 0.12,
-        ease: "back.out(1.8)",
-      },
-    );
-    gsap.fromTo(
-      burst.querySelector(".completion-scan"),
-      { autoAlpha: 0, x: -16 },
-      {
-        autoAlpha: 0,
-        x: 18,
-        duration: 0.46,
-        delay: 0.08,
-        ease: "power2.out",
-      },
-    );
-    gsap.to(burst, {
-      autoAlpha: 0,
-      y: -4,
-      duration: 0.26,
-      delay: 0.72,
-      ease: "power2.in",
+    const timeline = gsap.timeline({
+      defaults: { overwrite: "auto" },
       onComplete: () => burst.remove(),
     });
+    timeline
+      .fromTo(
+        item,
+        { y: 4, scale: 0.988, filter: "brightness(1.08)" },
+        {
+          y: 0,
+          scale: 1,
+          filter: "brightness(1)",
+          duration: 0.48,
+          ease: "expo.out",
+          clearProps: "filter",
+        },
+        0,
+      )
+      .fromTo(
+        burst.querySelector(".completion-orb"),
+        { autoAlpha: 0, scale: 0.68, y: 3 },
+        { autoAlpha: 1, scale: 1, y: 0, duration: 0.28, ease: "back.out(1.4)" },
+        0.03,
+      )
+      .fromTo(
+        burst.querySelector(".completion-check"),
+        { autoAlpha: 0, scale: 0.55, rotate: 34 },
+        {
+          autoAlpha: 1,
+          scale: 1,
+          rotate: 45,
+          duration: 0.2,
+          ease: "power3.out",
+        },
+        0.18,
+      )
+      .fromTo(
+        burst.querySelector(".completion-shine"),
+        { autoAlpha: 0, x: -18 },
+        { autoAlpha: 0.8, x: 24, duration: 0.42, ease: "power2.out" },
+        0.08,
+      )
+      .fromTo(
+        burst.querySelectorAll(".completion-spark"),
+        { autoAlpha: 0, scaleX: 0.2 },
+        {
+          autoAlpha: 0.85,
+          scaleX: 1,
+          stagger: 0.035,
+          duration: 0.18,
+          ease: "power2.out",
+        },
+        0.18,
+      )
+      .to(
+        burst.querySelectorAll(".completion-spark"),
+        {
+          autoAlpha: 0,
+          scaleX: 0.35,
+          stagger: 0.02,
+          duration: 0.24,
+          ease: "power2.in",
+        },
+        0.42,
+      )
+      .to(
+        burst,
+        {
+          autoAlpha: 0,
+          y: -5,
+          scale: 0.98,
+          duration: 0.28,
+          ease: "power2.inOut",
+        },
+        0.72,
+      );
   }
   gsap.fromTo(
     ".today-summary",
@@ -2900,7 +2964,16 @@ function playCompletionMotion(itemId) {
 function createCompletionBurst() {
   const burst = document.createElement("span");
   burst.className = "completion-burst";
-  burst.innerHTML = `<span class="completion-ring"></span><span class="completion-check"></span><span class="completion-scan"></span>`;
+  burst.innerHTML = `
+    <span class="completion-orb">
+      <span class="completion-core"></span>
+      <span class="completion-shine"></span>
+      <span class="completion-check"></span>
+    </span>
+    <span class="completion-spark completion-spark-1"></span>
+    <span class="completion-spark completion-spark-2"></span>
+    <span class="completion-spark completion-spark-3"></span>
+  `;
   return burst;
 }
 
@@ -2912,17 +2985,23 @@ function playCompletionSound() {
         src: [
           createToneDataUrl({
             duration: 0.62,
-            volume: 0.15,
+            volume: 0.3,
             tones: [
-              { from: 130.81, to: 130.81, gain: 0.06, delay: 0, decay: 3.8 },
-              { from: 196, to: 196, gain: 0.11, delay: 0.055, decay: 4.6 },
-              { from: 293.66, to: 293.66, gain: 0.11, delay: 0.16, decay: 5.4 },
-              { from: 392, to: 392, gain: 0.075, delay: 0.28, decay: 6.2 },
-              { from: 784, to: 784, gain: 0.018, delay: 0.37, decay: 7.8 },
+              { from: 110, to: 110, gain: 0.08, delay: 0, decay: 3.6 },
+              {
+                from: 164.81,
+                to: 164.81,
+                gain: 0.12,
+                delay: 0.055,
+                decay: 4.4,
+              },
+              { from: 246.94, to: 246.94, gain: 0.13, delay: 0.16, decay: 5.1 },
+              { from: 329.63, to: 329.63, gain: 0.088, delay: 0.28, decay: 6 },
+              { from: 659.25, to: 659.25, gain: 0.02, delay: 0.38, decay: 7.6 },
             ],
           }),
         ],
-        volume: 0.2,
+        volume: 0.45,
         preload: true,
       });
     }
@@ -3597,7 +3676,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260521-publicfinish")
+      .register("./sw.js?v=20260521-completionrebuild")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
