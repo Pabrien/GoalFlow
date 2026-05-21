@@ -3612,7 +3612,7 @@ document.addEventListener(
     if (
       event.touches.length !== 1 ||
       target?.closest(
-        "dialog, input, textarea, select, button, .bank-task, .scheduled-task",
+        "dialog, input, textarea, select, button, #calendarScroll, #calendarGrid, .calendar-grid, .day-column, .bank-task, .scheduled-task",
       )
     )
       return;
@@ -3776,7 +3776,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260521-louderaudio")
+      .register("./sw.js?v=20260521-calendarswipe")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
