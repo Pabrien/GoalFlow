@@ -46,9 +46,9 @@ const screenOrder = ["home", "progress", "goals", "schedule", "today"];
 const translations = {
   ja: {
     "app.kicker": "Goal planner",
-    "app.tagline": "目標から逆算して、今日やることに落とし込む。",
+    "app.tagline": "目標を、今日やる一歩へ。",
     "app.heroCopy":
-      "目標を決めたら、タスクに分けて、今日へ置く。GoalFlowは次にやることだけを静かに見せます。",
+      "GoalFlowは、目標を今日の行動に変えるアプリです。目標を作り、タスクに分け、今日へ置くだけで次にやることが見えます。",
     "app.point1": "目標から逆算",
     "app.point2": "タスクを予定へ",
     "app.point3": "今日だけに集中",
@@ -202,6 +202,7 @@ const translations = {
     "goalDialog.namePlaceholder": "例：3か月でベンチプレス +10kg",
     "goalDialog.category": "カテゴリ",
     "goalDialog.categoryPlaceholder": "例：筋トレ、勉強、副業",
+    "goalDialog.deleteCategory": "{category}を候補から削除",
     "goalDialog.deadline": "期限",
     "goalDialog.startDate": "開始日",
     "goalDialog.note": "目標メモ",
@@ -270,9 +271,6 @@ const translations = {
     "next.done.buddyTitle": "いい継続です",
     "next.done.buddyMessage":
       "完了が記録に変わりました。この小さい積み上げがGoalFlowの中心です。",
-    "file.title": "ローカルサーバーで開いてください",
-    "file.body":
-      "この画面は直接ファイルとして開かれています。動かない場合は http://127.0.0.1:4174/index.html を開いてください。",
     "offline.failed": "オフライン準備に失敗しました。",
     "tutorial.open": "使い方",
     "tutorial.progress": "{current} / {total}",
@@ -310,9 +308,9 @@ const translations = {
   },
   en: {
     "app.kicker": "Goal planner",
-    "app.tagline": "Plan backward from goals into what you can do today.",
+    "app.tagline": "Turn goals into today’s next action.",
     "app.heroCopy":
-      "Pick a goal, break it into tasks, and place one on today. GoalFlow quietly shows only the next action.",
+      "GoalFlow turns goals into today’s actions. Create a goal, break it into tasks, place one on today, and the next step stays clear.",
     "app.point1": "Plan backward",
     "app.point2": "Place tasks",
     "app.point3": "Focus on today",
@@ -471,6 +469,7 @@ const translations = {
     "goalDialog.namePlaceholder": "Example: Bench press +10kg in 3 months",
     "goalDialog.category": "Category",
     "goalDialog.categoryPlaceholder": "Example: Training, Study, Side project",
+    "goalDialog.deleteCategory": "Remove {category} from suggestions",
     "goalDialog.deadline": "Deadline",
     "goalDialog.startDate": "Start date",
     "goalDialog.note": "Goal note",
@@ -540,9 +539,6 @@ const translations = {
     "next.done.buddyTitle": "Good streak",
     "next.done.buddyMessage":
       "Completion turned into a record. That small accumulation is the heart of GoalFlow.",
-    "file.title": "Open with a local server",
-    "file.body":
-      "This screen was opened as a file. If it does not work, open http://127.0.0.1:4174/index.html.",
     "offline.failed": "Offline setup failed.",
     "tutorial.open": "Guide",
     "tutorial.progress": "{current} / {total}",
@@ -654,7 +650,6 @@ const els = {
   buddyTitle: document.querySelector("#buddyTitle"),
   buddyMessage: document.querySelector("#buddyMessage"),
   toast: document.querySelector("#toast"),
-  fileWarning: document.querySelector("#fileWarning"),
 };
 
 function createEmptyState() {
@@ -669,6 +664,8 @@ function createEmptyState() {
       theme: "light",
       language: "ja",
       calendarSize: "normal",
+      customCategories: [],
+      hiddenCategories: [],
       tutorialActive: true,
       tutorialCompleted: false,
       tutorialStep: 0,
@@ -761,6 +758,12 @@ function loadState() {
         theme: parsed.meta?.theme === "dark" ? "dark" : "light",
         language: parsed.meta?.language === "en" ? "en" : "ja",
         calendarSize: normalizeCalendarSize(parsed.meta?.calendarSize),
+        customCategories: Array.isArray(parsed.meta?.customCategories)
+          ? parsed.meta.customCategories.filter(Boolean)
+          : [],
+        hiddenCategories: Array.isArray(parsed.meta?.hiddenCategories)
+          ? parsed.meta.hiddenCategories.filter(Boolean)
+          : [],
         tutorialActive:
           parsed.meta?.tutorialActive === true ||
           (parsed.meta?.tutorialCompleted !== true &&
@@ -885,10 +888,7 @@ function renderTheme() {
 }
 
 function renderFileWarning() {
-  if (!els.fileWarning) return;
-  els.fileWarning.hidden = window.location.protocol !== "file:";
-  els.fileWarning.querySelector("strong").textContent = t("file.title");
-  els.fileWarning.querySelector("p").textContent = t("file.body");
+  // Public builds should not show local-development warnings.
 }
 
 function renderGoals() {
@@ -1594,35 +1594,52 @@ function renderSelectors() {
 
 function renderCategoryOptions() {
   if (!els.categoryOptions && !els.categoryPicker) return;
-  const categories = new Set([
+  const defaultCategories = [
     t("categories.training"),
     t("categories.study"),
     t("categories.work"),
     t("categories.health"),
     t("categories.habit"),
-  ]);
-  state.goals.forEach((goal) => {
-    if (goal.category) categories.add(goal.category);
+  ];
+  const defaults = new Set(defaultCategories);
+  const hidden = new Set(state.meta.hiddenCategories ?? []);
+  const categories = new Set(defaultCategories);
+  (state.meta.customCategories ?? []).forEach((category) => {
+    if (!hidden.has(category)) categories.add(category);
   });
+  state.goals.forEach((goal) => {
+    if (goal.category && !hidden.has(goal.category))
+      categories.add(goal.category);
+  });
+  const currentCategory =
+    els.goalForm?.elements.namedItem("category")?.value?.trim() ?? "";
+  if (currentCategory) categories.add(currentCategory);
   const categoryList = [...categories];
   if (els.categoryOptions) {
     els.categoryOptions.innerHTML = categoryList
       .map((category) => `<option value="${escapeHtml(category)}"></option>`)
       .join("");
   }
-  renderCategoryPicker(categoryList);
+  renderCategoryPicker(categoryList, defaults);
 }
 
-function renderCategoryPicker(categories) {
+function renderCategoryPicker(categories, defaults = new Set()) {
   if (!els.categoryPicker) return;
   const currentCategory =
     els.goalForm?.elements.namedItem("category")?.value ?? "";
   els.categoryPicker.innerHTML = categories
     .map(
       (category) => `
-        <button class="category-chip ${category === currentCategory ? "active" : ""}" type="button" data-category="${escapeHtml(category)}">
-          ${escapeHtml(category)}
-        </button>
+        <span class="category-chip-wrap">
+          <button class="category-chip ${category === currentCategory ? "active" : ""}" type="button" data-category="${escapeHtml(category)}">
+            ${escapeHtml(category)}
+          </button>
+          ${
+            defaults.has(category)
+              ? ""
+              : `<button class="category-remove" type="button" data-delete-category="${escapeHtml(category)}" aria-label="${escapeHtml(t("goalDialog.deleteCategory", { category }))}">×</button>`
+          }
+        </span>
       `,
     )
     .join("");
@@ -1630,9 +1647,51 @@ function renderCategoryPicker(categories) {
     button.addEventListener("click", () => {
       els.goalForm.elements.namedItem("category").value =
         button.dataset.category;
-      renderCategoryPicker(categories);
+      renderCategoryPicker(categories, defaults);
     });
   });
+  els.categoryPicker
+    .querySelectorAll("[data-delete-category]")
+    .forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        deleteCategorySuggestion(button.dataset.deleteCategory);
+      });
+    });
+}
+
+function deleteCategorySuggestion(category) {
+  if (!category) return;
+  state.meta.customCategories = (state.meta.customCategories ?? []).filter(
+    (candidate) => candidate !== category,
+  );
+  state.meta.hiddenCategories = [
+    ...new Set([...(state.meta.hiddenCategories ?? []), category]),
+  ];
+  const categoryInput = els.goalForm?.elements.namedItem("category");
+  if (categoryInput?.value === category) categoryInput.value = "";
+  renderCategoryOptions();
+  saveState();
+}
+
+function rememberCategory(category) {
+  if (!category) return;
+  const defaults = new Set([
+    t("categories.training"),
+    t("categories.study"),
+    t("categories.work"),
+    t("categories.health"),
+    t("categories.habit"),
+    t("goals.unspecified"),
+  ]);
+  if (!defaults.has(category)) {
+    state.meta.customCategories = [
+      ...new Set([...(state.meta.customCategories ?? []), category]),
+    ];
+  }
+  state.meta.hiddenCategories = (state.meta.hiddenCategories ?? []).filter(
+    (candidate) => candidate !== category,
+  );
 }
 
 function isTodayVisibleInSchedule() {
@@ -2618,16 +2677,16 @@ function ensureInteractionSounds() {
     selectSound = new window.Howl({
       src: [
         createToneDataUrl({
-          duration: 0.24,
-          volume: 0.14,
+          duration: 0.18,
+          volume: 0.11,
           tones: [
-            { from: 220, to: 220, gain: 0.11, delay: 0, decay: 5.4 },
-            { from: 329.63, to: 329.63, gain: 0.1, delay: 0.06, decay: 6 },
-            { from: 659.25, to: 659.25, gain: 0.028, delay: 0.12, decay: 7.2 },
+            { from: 261.63, to: 261.63, gain: 0.08, delay: 0, decay: 6.8 },
+            { from: 392, to: 392, gain: 0.07, delay: 0.045, decay: 7.4 },
+            { from: 523.25, to: 523.25, gain: 0.018, delay: 0.095, decay: 8.2 },
           ],
         }),
       ],
-      volume: 0.14,
+      volume: 0.11,
       preload: true,
     });
   }
@@ -3204,15 +3263,17 @@ function openGoalDialog(goal = null) {
 els.goalForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const data = new FormData(els.goalForm);
+  const category = data.get("category").trim() || t("goals.unspecified");
   const editingGoal = state.goals.find(
     (goal) => goal.id === els.goalForm.dataset.editingGoalId,
   );
   const goal = editingGoal ?? {
     id: crypto.randomUUID(),
   };
+  rememberCategory(category);
   Object.assign(goal, {
     name: data.get("name").trim(),
-    category: data.get("category").trim() || t("goals.unspecified"),
+    category,
     createdAt: data.get("createdAt"),
     deadline: data.get("deadline"),
     note: data.get("note").trim(),
@@ -3536,7 +3597,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260521-focusedpages")
+      .register("./sw.js?v=20260521-publicfinish")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

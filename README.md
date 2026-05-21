@@ -1,19 +1,21 @@
 # GoalFlow
 
-GoalFlow is a simple goal-based task planner for workouts, study, and habit building.
+GoalFlow is a goal-based planner that turns long-term goals into today’s next action.
 
 ## Features
 
 - Create goals with category, deadline, and notes
+- Add and remove custom category suggestions
 - Save reusable tasks
 - Drag saved tasks into weekly or monthly calendar views
-- Set reminder timing on each task
+- Tap a saved task to put it on today when drag is awkward on mobile
 - Track today's, weekly, and overall completion rates
 - View progress with bar charts, a completion pie chart, and a goal report table
 - Data is saved in the browser with `localStorage`
 - First-run onboarding guides users through goal -> task -> today
-- Mobile-focused navigation with touch-friendly controls
-- PWA manifest, app icon, service worker, and notification permission test
+- Focused pages for Home, Progress, Goals, Schedule, and Today
+- Quiet motion and completion feedback with GSAP
+- PWA manifest, app icon, and service worker
 
 ## Run Locally
 
@@ -56,12 +58,13 @@ todo-ui/
 
 ## Development Notes
 
-This is currently a dependency-free static prototype. Data is persisted locally in the browser, so clearing browser storage will reset the app.
+This is currently a static prototype. Data is persisted locally in the browser, so clearing browser storage will reset the app.
 
-PWA support is included. On iPhone, notifications require adding GoalFlow to the Home Screen and opening it from that icon. The current notification button verifies permission and sends a test notification; real scheduled reminders will need a push backend.
+The public app should be opened through a web server or GitHub Pages URL. The UI no longer shows local-server warnings on the page.
 
 If the app grows, good next steps are:
 
 - Move to a component-based structure such as Vite + React or Vue
 - Add push notification scheduling on a backend
 - Add cloud sync and login
+- Add cross-device sync for goals, tasks, and progress
