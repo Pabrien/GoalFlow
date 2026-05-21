@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v32-20260521-glasscomplete";
+const cacheName = "goalflow-v33-20260521-futurechime";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260521-glasscomplete",
-  "./app.js?v=20260521-glasscomplete",
+  "./styles.css?v=20260521-futurechime",
+  "./app.js?v=20260521-futurechime",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",

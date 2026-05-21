@@ -2564,17 +2564,15 @@ function ensureInteractionSounds() {
     focusSound = new window.Howl({
       src: [
         createToneDataUrl({
-          duration: 0.11,
+          duration: 0.09,
           volume: 0.1,
-          air: 0.012,
           tones: [
-            { from: 740, to: 910, gain: 0.16, delay: 0.002, decay: 2.8 },
-            { from: 1480, to: 1820, gain: 0.08, delay: 0.012, decay: 4.2 },
-            { from: 2220, to: 2060, gain: 0.035, delay: 0.024, decay: 5.2 },
+            { from: 880, to: 880, gain: 0.09, delay: 0, decay: 7.2 },
+            { from: 1760, to: 1760, gain: 0.035, delay: 0.018, decay: 8.4 },
           ],
         }),
       ],
-      volume: 0.11,
+      volume: 0.1,
       preload: true,
     });
   }
@@ -2582,17 +2580,22 @@ function ensureInteractionSounds() {
     selectSound = new window.Howl({
       src: [
         createToneDataUrl({
-          duration: 0.14,
+          duration: 0.18,
           volume: 0.12,
-          air: 0.01,
           tones: [
-            { from: 330, to: 300, gain: 0.12, delay: 0, decay: 2.6 },
-            { from: 990, to: 1180, gain: 0.16, delay: 0.006, decay: 3.5 },
-            { from: 1980, to: 2360, gain: 0.045, delay: 0.02, decay: 4.6 },
+            { from: 523.25, to: 523.25, gain: 0.11, delay: 0, decay: 5.8 },
+            { from: 783.99, to: 783.99, gain: 0.1, delay: 0.044, decay: 6.2 },
+            {
+              from: 1567.98,
+              to: 1567.98,
+              gain: 0.028,
+              delay: 0.084,
+              decay: 7.4,
+            },
           ],
         }),
       ],
-      volume: 0.13,
+      volume: 0.12,
       preload: true,
     });
   }
@@ -2606,13 +2609,24 @@ function playScheduleSound() {
       scheduleSound = new window.Howl({
         src: [
           createToneDataUrl({
-            duration: 0.16,
+            duration: 0.19,
             volume: 0.13,
-            air: 0.009,
             tones: [
-              { from: 180, to: 174, gain: 0.12, delay: 0, decay: 2.2 },
-              { from: 720, to: 860, gain: 0.16, delay: 0.014, decay: 3.8 },
-              { from: 1440, to: 1720, gain: 0.055, delay: 0.03, decay: 5.1 },
+              { from: 246.94, to: 246.94, gain: 0.08, delay: 0, decay: 4.4 },
+              {
+                from: 739.99,
+                to: 739.99,
+                gain: 0.13,
+                delay: 0.032,
+                decay: 5.8,
+              },
+              {
+                from: 1479.98,
+                to: 1479.98,
+                gain: 0.035,
+                delay: 0.072,
+                decay: 7.2,
+              },
             ],
           }),
         ],
@@ -2755,23 +2769,40 @@ function playCompletionMotion(itemId) {
     );
     gsap.fromTo(
       burst.querySelector(".completion-ring"),
-      { autoAlpha: 0.8, scale: 0.36 },
-      { autoAlpha: 0, scale: 1.65, duration: 0.72, ease: "power2.out" },
+      { autoAlpha: 0, scale: 0.72 },
+      { autoAlpha: 1, scale: 1, duration: 0.26, ease: "power3.out" },
     );
     gsap.fromTo(
-      burst.querySelectorAll("i"),
-      { autoAlpha: 1, x: 0, y: 0, scale: 0.6 },
+      burst.querySelector(".completion-check"),
+      { autoAlpha: 0, scale: 0.68, rotate: 35 },
       {
-        autoAlpha: 0,
-        x: (_, dot) => dot.dataset.x,
-        y: (_, dot) => dot.dataset.y,
+        autoAlpha: 1,
         scale: 1,
-        duration: 0.7,
-        ease: "power3.out",
-        stagger: 0.015,
-        onComplete: () => burst.remove(),
+        rotate: 45,
+        duration: 0.2,
+        delay: 0.12,
+        ease: "back.out(1.8)",
       },
     );
+    gsap.fromTo(
+      burst.querySelector(".completion-scan"),
+      { autoAlpha: 0, x: -16 },
+      {
+        autoAlpha: 0,
+        x: 18,
+        duration: 0.46,
+        delay: 0.08,
+        ease: "power2.out",
+      },
+    );
+    gsap.to(burst, {
+      autoAlpha: 0,
+      y: -4,
+      duration: 0.26,
+      delay: 0.72,
+      ease: "power2.in",
+      onComplete: () => burst.remove(),
+    });
   }
   gsap.fromTo(
     ".today-summary",
@@ -2790,14 +2821,7 @@ function playCompletionMotion(itemId) {
 function createCompletionBurst() {
   const burst = document.createElement("span");
   burst.className = "completion-burst";
-  burst.innerHTML = `<span class="completion-ring"></span>${Array.from(
-    { length: 8 },
-    (_, index) => {
-      const angle = (Math.PI * 2 * index) / 8 - Math.PI / 2;
-      const distance = index % 2 ? 36 : 28;
-      return `<i style="--i:${index}" data-x="${Math.cos(angle) * distance}" data-y="${Math.sin(angle) * distance}"></i>`;
-    },
-  ).join("")}`;
+  burst.innerHTML = `<span class="completion-ring"></span><span class="completion-check"></span><span class="completion-scan"></span>`;
   return burst;
 }
 
@@ -2808,18 +2832,36 @@ function playCompletionSound() {
       completionSound = new window.Howl({
         src: [
           createToneDataUrl({
-            duration: 0.46,
+            duration: 0.54,
             volume: 0.13,
-            air: 0.014,
             tones: [
-              { from: 220, to: 206, gain: 0.11, delay: 0, decay: 2.1 },
-              { from: 660, to: 740, gain: 0.16, delay: 0.025, decay: 2.9 },
-              { from: 990, to: 1320, gain: 0.12, delay: 0.07, decay: 3.6 },
-              { from: 1980, to: 1760, gain: 0.045, delay: 0.14, decay: 5.4 },
+              { from: 329.63, to: 329.63, gain: 0.055, delay: 0, decay: 4.2 },
+              {
+                from: 659.25,
+                to: 659.25,
+                gain: 0.14,
+                delay: 0.018,
+                decay: 4.8,
+              },
+              { from: 987.77, to: 987.77, gain: 0.12, delay: 0.11, decay: 5.6 },
+              {
+                from: 1318.51,
+                to: 1318.51,
+                gain: 0.09,
+                delay: 0.2,
+                decay: 6.4,
+              },
+              {
+                from: 2637.02,
+                to: 2637.02,
+                gain: 0.022,
+                delay: 0.29,
+                decay: 8,
+              },
             ],
           }),
         ],
-        volume: 0.18,
+        volume: 0.17,
         preload: true,
       });
     }
@@ -2829,7 +2871,7 @@ function playCompletionSound() {
   }
 }
 
-function createToneDataUrl({ duration, tones, volume = 0.18, air = 0 }) {
+function createToneDataUrl({ duration, tones, volume = 0.18 }) {
   const sampleRate = 22050;
   const samples = Math.floor(sampleRate * duration);
   const dataSize = samples * 2;
@@ -2857,24 +2899,21 @@ function createToneDataUrl({ duration, tones, volume = 0.18, air = 0 }) {
     const t = index / sampleRate;
     const globalRelease = Math.max(0, 1 - t / duration);
     const value =
-      tones.reduce(
-        (sum, tone) => {
-          const delay = tone.delay ?? 0;
-          const localTime = t - delay;
-          if (localTime < 0) return sum;
-          const localDuration = Math.max(0.001, duration - delay);
-          const ratio = Math.min(1, localTime / localDuration);
-          const frequency = tone.from + (tone.to - tone.from) * ratio;
-          const attack = Math.min(1, localTime / (tone.attack ?? 0.006));
-          const decay = Math.exp(-ratio * (tone.decay ?? 3.2));
-          const shimmer =
-            Math.sin(Math.PI * 2 * frequency * localTime) +
-            Math.sin(Math.PI * 2 * frequency * 2.01 * localTime) * 0.28 +
-            Math.sin(Math.PI * 2 * frequency * 3.02 * localTime) * 0.08;
-          return sum + shimmer * tone.gain * attack * decay;
-        },
-        (Math.random() * 2 - 1) * air * globalRelease,
-      ) *
+      tones.reduce((sum, tone) => {
+        const delay = tone.delay ?? 0;
+        const localTime = t - delay;
+        if (localTime < 0) return sum;
+        const localDuration = Math.max(0.001, duration - delay);
+        const ratio = Math.min(1, localTime / localDuration);
+        const frequency = tone.from + (tone.to - tone.from) * ratio;
+        const attack = Math.min(1, localTime / (tone.attack ?? 0.004));
+        const decay = Math.exp(-ratio * (tone.decay ?? 5));
+        const toneValue =
+          Math.sin(Math.PI * 2 * frequency * localTime) * 0.82 +
+          Math.sin(Math.PI * 2 * frequency * 2 * localTime) * 0.12 +
+          Math.sin(Math.PI * 2 * frequency * 3 * localTime) * 0.04;
+        return sum + toneValue * tone.gain * attack * decay;
+      }, 0) *
       globalRelease *
       volume;
     view.setInt16(
@@ -3495,7 +3534,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260521-glasscomplete")
+      .register("./sw.js?v=20260521-futurechime")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
