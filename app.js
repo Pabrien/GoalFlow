@@ -41,7 +41,7 @@ let interactionAudioBound = false;
 let lastFocusSoundAt = 0;
 let lastFocusSoundTarget = null;
 let lastTutorialTarget = "";
-const screenOrder = ["home", "goals", "schedule", "today"];
+const screenOrder = ["home", "progress", "goals", "schedule", "today"];
 
 const translations = {
   ja: {
@@ -72,6 +72,7 @@ const translations = {
     "onboarding.secondary": "あとで見る",
     "tabs.aria": "画面切替",
     "tabs.home": "ホーム",
+    "tabs.progress": "進捗",
     "tabs.goals": "目標",
     "tabs.schedule": "スケジュール",
     "tabs.today": "今日",
@@ -84,6 +85,23 @@ const translations = {
     "summary.todayMini.progress": "今日は{done}/{total}件完了です。",
     "summary.todayMini.done": "今日の予定は完了しています。",
     "summary.aria": "進捗サマリー",
+    "intro.home.kicker": "Focus",
+    "intro.home.title": "今日の次の一手だけを見る",
+    "intro.home.body": "目標から今日の行動までの流れを確認し、迷わず始めます。",
+    "intro.progress.kicker": "Progress",
+    "intro.progress.title": "積み上げを確認する",
+    "intro.progress.body":
+      "達成率、7日間の記録、目標別レポートをここだけで見ます。",
+    "intro.goals.kicker": "Goals",
+    "intro.goals.title": "目標を整理する",
+    "intro.goals.body": "続けたい理由、カテゴリ、期限を決める場所です。",
+    "intro.schedule.kicker": "Schedule",
+    "intro.schedule.title": "タスクを予定に置く",
+    "intro.schedule.body":
+      "保存タスクをドラッグ、または今日に入れて行動へ変えます。",
+    "intro.today.kicker": "Today",
+    "intro.today.title": "今日やることを完了する",
+    "intro.today.body": "今日の予定だけを見て、終わったものを記録します。",
     "focus.kicker": "今日のフォーカス",
     "focus.aria": "次の一手",
     "focus.pill": "今日やること",
@@ -321,6 +339,7 @@ const translations = {
     "onboarding.secondary": "Later",
     "tabs.aria": "Screens",
     "tabs.home": "Home",
+    "tabs.progress": "Progress",
     "tabs.goals": "Goals",
     "tabs.schedule": "Schedule",
     "tabs.today": "Today",
@@ -333,6 +352,25 @@ const translations = {
     "summary.todayMini.progress": "{done} of {total} tasks done today.",
     "summary.todayMini.done": "Today’s plan is complete.",
     "summary.aria": "Progress summary",
+    "intro.home.kicker": "Focus",
+    "intro.home.title": "See only the next action",
+    "intro.home.body":
+      "Review the path from goals to today, then start without overthinking.",
+    "intro.progress.kicker": "Progress",
+    "intro.progress.title": "Review your progress",
+    "intro.progress.body":
+      "Completion rates, the last 7 days, and goal reports live here.",
+    "intro.goals.kicker": "Goals",
+    "intro.goals.title": "Organize your goals",
+    "intro.goals.body":
+      "Set the reason, category, and deadline for what you want to keep doing.",
+    "intro.schedule.kicker": "Schedule",
+    "intro.schedule.title": "Place tasks onto the calendar",
+    "intro.schedule.body":
+      "Drag saved tasks or put one on today to turn it into action.",
+    "intro.today.kicker": "Today",
+    "intro.today.title": "Complete today’s tasks",
+    "intro.today.body": "See only today’s plan and record what you finished.",
     "focus.kicker": "Today’s focus",
     "focus.aria": "Next action",
     "focus.pill": "Today’s tasks",
@@ -2564,15 +2602,15 @@ function ensureInteractionSounds() {
     focusSound = new window.Howl({
       src: [
         createToneDataUrl({
-          duration: 0.09,
-          volume: 0.1,
+          duration: 0.12,
+          volume: 0.12,
           tones: [
-            { from: 880, to: 880, gain: 0.09, delay: 0, decay: 7.2 },
-            { from: 1760, to: 1760, gain: 0.035, delay: 0.018, decay: 8.4 },
+            { from: 196, to: 196, gain: 0.1, delay: 0, decay: 6.2 },
+            { from: 392, to: 392, gain: 0.04, delay: 0.026, decay: 7.4 },
           ],
         }),
       ],
-      volume: 0.1,
+      volume: 0.12,
       preload: true,
     });
   }
@@ -2580,22 +2618,16 @@ function ensureInteractionSounds() {
     selectSound = new window.Howl({
       src: [
         createToneDataUrl({
-          duration: 0.18,
-          volume: 0.12,
+          duration: 0.24,
+          volume: 0.14,
           tones: [
-            { from: 523.25, to: 523.25, gain: 0.11, delay: 0, decay: 5.8 },
-            { from: 783.99, to: 783.99, gain: 0.1, delay: 0.044, decay: 6.2 },
-            {
-              from: 1567.98,
-              to: 1567.98,
-              gain: 0.028,
-              delay: 0.084,
-              decay: 7.4,
-            },
+            { from: 220, to: 220, gain: 0.11, delay: 0, decay: 5.4 },
+            { from: 329.63, to: 329.63, gain: 0.1, delay: 0.06, decay: 6 },
+            { from: 659.25, to: 659.25, gain: 0.028, delay: 0.12, decay: 7.2 },
           ],
         }),
       ],
-      volume: 0.12,
+      volume: 0.14,
       preload: true,
     });
   }
@@ -2609,28 +2641,16 @@ function playScheduleSound() {
       scheduleSound = new window.Howl({
         src: [
           createToneDataUrl({
-            duration: 0.19,
-            volume: 0.13,
+            duration: 0.24,
+            volume: 0.15,
             tones: [
-              { from: 246.94, to: 246.94, gain: 0.08, delay: 0, decay: 4.4 },
-              {
-                from: 739.99,
-                to: 739.99,
-                gain: 0.13,
-                delay: 0.032,
-                decay: 5.8,
-              },
-              {
-                from: 1479.98,
-                to: 1479.98,
-                gain: 0.035,
-                delay: 0.072,
-                decay: 7.2,
-              },
+              { from: 146.83, to: 146.83, gain: 0.09, delay: 0, decay: 4.8 },
+              { from: 220, to: 220, gain: 0.12, delay: 0.05, decay: 5.8 },
+              { from: 440, to: 440, gain: 0.032, delay: 0.11, decay: 7.2 },
             ],
           }),
         ],
-        volume: 0.16,
+        volume: 0.17,
         preload: true,
       });
     }
@@ -2832,36 +2852,18 @@ function playCompletionSound() {
       completionSound = new window.Howl({
         src: [
           createToneDataUrl({
-            duration: 0.54,
-            volume: 0.13,
+            duration: 0.62,
+            volume: 0.15,
             tones: [
-              { from: 329.63, to: 329.63, gain: 0.055, delay: 0, decay: 4.2 },
-              {
-                from: 659.25,
-                to: 659.25,
-                gain: 0.14,
-                delay: 0.018,
-                decay: 4.8,
-              },
-              { from: 987.77, to: 987.77, gain: 0.12, delay: 0.11, decay: 5.6 },
-              {
-                from: 1318.51,
-                to: 1318.51,
-                gain: 0.09,
-                delay: 0.2,
-                decay: 6.4,
-              },
-              {
-                from: 2637.02,
-                to: 2637.02,
-                gain: 0.022,
-                delay: 0.29,
-                decay: 8,
-              },
+              { from: 130.81, to: 130.81, gain: 0.06, delay: 0, decay: 3.8 },
+              { from: 196, to: 196, gain: 0.11, delay: 0.055, decay: 4.6 },
+              { from: 293.66, to: 293.66, gain: 0.11, delay: 0.16, decay: 5.4 },
+              { from: 392, to: 392, gain: 0.075, delay: 0.28, decay: 6.2 },
+              { from: 784, to: 784, gain: 0.018, delay: 0.37, decay: 7.8 },
             ],
           }),
         ],
-        volume: 0.17,
+        volume: 0.2,
         preload: true,
       });
     }
@@ -3534,7 +3536,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260521-futurechime")
+      .register("./sw.js?v=20260521-focusedpages")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

@@ -1046,13 +1046,48 @@ textarea:focus-visible,
   align-items: start;
 }
 
-body:not([data-active-screen="home"]) .summary-strip,
+body:not([data-active-screen="progress"]) .summary-strip,
+body:not([data-active-screen="progress"]) .home-dashboard,
 body:not([data-active-screen="home"]) .flow-focus,
-body:not([data-active-screen="home"]) .home-dashboard {
+body:not([data-active-screen="home"]) .flow-map {
   display: none;
 }
 
-body[data-active-screen="home"] .workspace {
+.screen-intro {
+  display: none;
+  max-width: 940px;
+  margin: 0 auto 14px;
+  padding: 18px 20px;
+  border: 1px solid rgba(229, 231, 235, 0.86);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(14px);
+}
+
+.screen-intro h2 {
+  margin: 3px 0 0;
+  font-size: clamp(24px, 3vw, 38px);
+  line-height: 1.12;
+}
+
+.screen-intro p:last-child {
+  max-width: 680px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+body[data-active-screen="home"] .screen-intro[data-screen-intro="home"],
+body[data-active-screen="progress"] .screen-intro[data-screen-intro="progress"],
+body[data-active-screen="goals"] .screen-intro[data-screen-intro="goals"],
+body[data-active-screen="schedule"] .screen-intro[data-screen-intro="schedule"],
+body[data-active-screen="today"] .screen-intro[data-screen-intro="today"] {
+  display: block;
+}
+
+body[data-active-screen="home"] .workspace,
+body[data-active-screen="progress"] .workspace {
   display: none;
 }
 
@@ -2651,15 +2686,19 @@ body {
 }
 
 body[data-tab-direction="1"] .workspace,
+body[data-tab-direction="1"] .screen-intro,
 body[data-tab-direction="1"] .summary-strip,
 body[data-tab-direction="1"] .flow-focus,
+body[data-tab-direction="1"] .flow-map,
 body[data-tab-direction="1"] .home-dashboard {
   animation: tab-slide-next 0.22s ease both;
 }
 
 body[data-tab-direction="-1"] .workspace,
+body[data-tab-direction="-1"] .screen-intro,
 body[data-tab-direction="-1"] .summary-strip,
 body[data-tab-direction="-1"] .flow-focus,
+body[data-tab-direction="-1"] .flow-map,
 body[data-tab-direction="-1"] .home-dashboard {
   animation: tab-slide-prev 0.22s ease both;
 }
@@ -3506,6 +3545,7 @@ body[data-theme="dark"] {
 
 body[data-theme="dark"] .topbar,
 body[data-theme="dark"] .screen-tabs,
+body[data-theme="dark"] .screen-intro,
 body[data-theme="dark"] .summary-strip article,
 body[data-theme="dark"] .panel,
 body[data-theme="dark"] .planner,

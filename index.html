@@ -19,7 +19,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260521-futurechime" />
+    <link rel="stylesheet" href="./styles.css?v=20260521-focusedpages" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -168,6 +168,15 @@
         <button
           class="screen-tab"
           type="button"
+          data-screen-target="progress"
+          aria-pressed="false"
+          data-i18n="tabs.progress"
+        >
+          進捗
+        </button>
+        <button
+          class="screen-tab"
+          type="button"
           data-screen-target="goals"
           aria-pressed="false"
           data-i18n="tabs.goals"
@@ -194,9 +203,45 @@
         </button>
       </nav>
 
+      <section class="screen-intro" data-screen-intro="home">
+        <p class="eyebrow" data-i18n="intro.home.kicker">Focus</p>
+        <h2 data-i18n="intro.home.title">今日の次の一手だけを見る</h2>
+        <p data-i18n="intro.home.body">
+          目標から今日の行動までの流れを確認し、迷わず始めます。
+        </p>
+      </section>
+      <section class="screen-intro" data-screen-intro="progress">
+        <p class="eyebrow" data-i18n="intro.progress.kicker">Progress</p>
+        <h2 data-i18n="intro.progress.title">積み上げを確認する</h2>
+        <p data-i18n="intro.progress.body">
+          達成率、7日間の記録、目標別レポートをここだけで見ます。
+        </p>
+      </section>
+      <section class="screen-intro" data-screen-intro="goals">
+        <p class="eyebrow" data-i18n="intro.goals.kicker">Goals</p>
+        <h2 data-i18n="intro.goals.title">目標を整理する</h2>
+        <p data-i18n="intro.goals.body">
+          続けたい理由、カテゴリ、期限を決める場所です。
+        </p>
+      </section>
+      <section class="screen-intro" data-screen-intro="schedule">
+        <p class="eyebrow" data-i18n="intro.schedule.kicker">Schedule</p>
+        <h2 data-i18n="intro.schedule.title">タスクを予定に置く</h2>
+        <p data-i18n="intro.schedule.body">
+          保存タスクをドラッグ、または今日に入れて行動へ変えます。
+        </p>
+      </section>
+      <section class="screen-intro" data-screen-intro="today">
+        <p class="eyebrow" data-i18n="intro.today.kicker">Today</p>
+        <h2 data-i18n="intro.today.title">今日やることを完了する</h2>
+        <p data-i18n="intro.today.body">
+          今日の予定だけを見て、終わったものを記録します。
+        </p>
+      </section>
+
       <section
         class="summary-strip"
-        data-view-panel="home"
+        data-view-panel="progress"
         aria-label="進捗サマリー"
         data-i18n-aria="summary.aria"
       >
@@ -291,7 +336,7 @@
       <section
         class="home-dashboard"
         id="progressSection"
-        data-view-panel="home"
+        data-view-panel="progress"
         aria-label="ホームダッシュボード"
         data-i18n-aria="dashboard.aria"
       >
@@ -697,6 +742,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260521-futurechime"></script>
+    <script defer src="./app.js?v=20260521-focusedpages"></script>
   </body>
 </html>
