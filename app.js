@@ -2564,15 +2564,17 @@ function ensureInteractionSounds() {
     focusSound = new window.Howl({
       src: [
         createToneDataUrl({
-          duration: 0.07,
-          volume: 0.12,
+          duration: 0.11,
+          volume: 0.1,
+          air: 0.012,
           tones: [
-            { from: 360, to: 420, gain: 0.48 },
-            { from: 720, to: 840, gain: 0.18 },
+            { from: 740, to: 910, gain: 0.16, delay: 0.002, decay: 2.8 },
+            { from: 1480, to: 1820, gain: 0.08, delay: 0.012, decay: 4.2 },
+            { from: 2220, to: 2060, gain: 0.035, delay: 0.024, decay: 5.2 },
           ],
         }),
       ],
-      volume: 0.12,
+      volume: 0.11,
       preload: true,
     });
   }
@@ -2580,15 +2582,17 @@ function ensureInteractionSounds() {
     selectSound = new window.Howl({
       src: [
         createToneDataUrl({
-          duration: 0.09,
-          volume: 0.13,
+          duration: 0.14,
+          volume: 0.12,
+          air: 0.01,
           tones: [
-            { from: 260, to: 310, gain: 0.56 },
-            { from: 520, to: 620, gain: 0.18 },
+            { from: 330, to: 300, gain: 0.12, delay: 0, decay: 2.6 },
+            { from: 990, to: 1180, gain: 0.16, delay: 0.006, decay: 3.5 },
+            { from: 1980, to: 2360, gain: 0.045, delay: 0.02, decay: 4.6 },
           ],
         }),
       ],
-      volume: 0.14,
+      volume: 0.13,
       preload: true,
     });
   }
@@ -2602,16 +2606,17 @@ function playScheduleSound() {
       scheduleSound = new window.Howl({
         src: [
           createToneDataUrl({
-            duration: 0.105,
-            volume: 0.16,
+            duration: 0.16,
+            volume: 0.13,
+            air: 0.009,
             tones: [
-              { from: 220, to: 220, gain: 0.44 },
-              { from: 440, to: 528, gain: 0.28 },
-              { from: 880, to: 960, gain: 0.1 },
+              { from: 180, to: 174, gain: 0.12, delay: 0, decay: 2.2 },
+              { from: 720, to: 860, gain: 0.16, delay: 0.014, decay: 3.8 },
+              { from: 1440, to: 1720, gain: 0.055, delay: 0.03, decay: 5.1 },
             ],
           }),
         ],
-        volume: 0.18,
+        volume: 0.16,
         preload: true,
       });
     }
@@ -2803,17 +2808,18 @@ function playCompletionSound() {
       completionSound = new window.Howl({
         src: [
           createToneDataUrl({
-            duration: 0.34,
-            volume: 0.16,
+            duration: 0.46,
+            volume: 0.13,
+            air: 0.014,
             tones: [
-              { from: 196, to: 220, gain: 0.36 },
-              { from: 392, to: 440, gain: 0.42 },
-              { from: 587, to: 660, gain: 0.24 },
-              { from: 784, to: 880, gain: 0.12 },
+              { from: 220, to: 206, gain: 0.11, delay: 0, decay: 2.1 },
+              { from: 660, to: 740, gain: 0.16, delay: 0.025, decay: 2.9 },
+              { from: 990, to: 1320, gain: 0.12, delay: 0.07, decay: 3.6 },
+              { from: 1980, to: 1760, gain: 0.045, delay: 0.14, decay: 5.4 },
             ],
           }),
         ],
-        volume: 0.2,
+        volume: 0.18,
         preload: true,
       });
     }
@@ -2823,7 +2829,7 @@ function playCompletionSound() {
   }
 }
 
-function createToneDataUrl({ duration, tones, volume = 0.18 }) {
+function createToneDataUrl({ duration, tones, volume = 0.18, air = 0 }) {
   const sampleRate = 22050;
   const samples = Math.floor(sampleRate * duration);
   const dataSize = samples * 2;
@@ -2849,17 +2855,27 @@ function createToneDataUrl({ duration, tones, volume = 0.18 }) {
   view.setUint32(40, dataSize, true);
   for (let index = 0; index < samples; index += 1) {
     const t = index / sampleRate;
-    const attack = Math.min(1, t / 0.012);
-    const release = Math.max(0, 1 - t / duration);
-    const envelope =
-      Math.sin(Math.PI * Math.min(1, t / duration)) * attack * release;
+    const globalRelease = Math.max(0, 1 - t / duration);
     const value =
-      tones.reduce((sum, tone) => {
-        const ratio = t / duration;
-        const frequency = tone.from + (tone.to - tone.from) * ratio;
-        return sum + Math.sin(Math.PI * 2 * frequency * t) * tone.gain;
-      }, 0) *
-      envelope *
+      tones.reduce(
+        (sum, tone) => {
+          const delay = tone.delay ?? 0;
+          const localTime = t - delay;
+          if (localTime < 0) return sum;
+          const localDuration = Math.max(0.001, duration - delay);
+          const ratio = Math.min(1, localTime / localDuration);
+          const frequency = tone.from + (tone.to - tone.from) * ratio;
+          const attack = Math.min(1, localTime / (tone.attack ?? 0.006));
+          const decay = Math.exp(-ratio * (tone.decay ?? 3.2));
+          const shimmer =
+            Math.sin(Math.PI * 2 * frequency * localTime) +
+            Math.sin(Math.PI * 2 * frequency * 2.01 * localTime) * 0.28 +
+            Math.sin(Math.PI * 2 * frequency * 3.02 * localTime) * 0.08;
+          return sum + shimmer * tone.gain * attack * decay;
+        },
+        (Math.random() * 2 - 1) * air * globalRelease,
+      ) *
+      globalRelease *
       volume;
     view.setInt16(
       44 + index * 2,
@@ -3479,7 +3495,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260521-flowcoach")
+      .register("./sw.js?v=20260521-glasscomplete")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
