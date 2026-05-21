@@ -114,6 +114,20 @@ const translations = {
     "buddy.kicker": "ひとこと",
     "buddy.defaultTitle": "今日の流れ",
     "buddy.defaultMessage": "小さく始めて、完了を1つ残しましょう。",
+    "insight.readMore": "理由を読む",
+    "insight.kicker": "GoalFlowの考え方",
+    "insight.buddy.title": "小さく続けるための考え方",
+    "insight.buddy.body":
+      "GoalFlowでは、やる気を大きくするより、迷う時間を小さくすることを大事にします。今日やることが1つ見えていれば、調子が悪い日でも行動に入りやすくなります。完璧な計画より、今日残せる小さな記録が次の日の自分を助けます。",
+    "insight.goal.title": "① 目標は、続けたい理由を置く場所",
+    "insight.goal.body":
+      "目標はタスクの置き場ではなく、なぜ続けたいのかを忘れないための軸です。筋トレなら体を変えたい理由、勉強なら何に近づきたいのか。理由と期限があると、今日やる小さな行動にも意味が戻ってきます。",
+    "insight.task.title": "② タスクは、今日できる大きさまで小さくする",
+    "insight.task.body":
+      "続かない計画の多くは、タスクが大きすぎます。GoalFlowでは、目標をそのまま頑張るのではなく、英単語30個、腕立て10回、資料を1ページ読む、のように今日動けるサイズへ変えます。小さいほど始めやすく、記録も残しやすくなります。",
+    "insight.today.title": "③ 今日の予定は、考えずに動き出すための場所",
+    "insight.today.body":
+      "今日の予定に入れる意味は、カレンダーを埋めることではありません。今やる候補を減らし、目の前の一手だけにすることです。迷いが減ると、完了までの心理的な距離も短くなります。",
     "flow.aria": "GoalFlowの流れ",
     "flow.goal.title": "目標",
     "flow.goal.body": "続けたい理由と期限を決める",
@@ -122,6 +136,7 @@ const translations = {
     "flow.today.title": "今日の予定",
     "flow.today.body": "置いたら、あとは完了するだけ",
     "flow.progress.title": "今日の進み具合",
+    "flow.progress.cta": "進捗を見る",
     "dashboard.aria": "ホームダッシュボード",
     "empty.kicker": "GoalFlow method",
     "empty.title": "まず最初の目標を作りましょう",
@@ -283,6 +298,7 @@ const translations = {
     "tutorial.skip": "閉じる",
     "tutorial.done": "完了",
     "tutorial.next": "次へ",
+    "tutorial.targetLabel": "次に操作する場所",
     "tutorial.step0.title": "GoalFlowの流れを試す",
     "tutorial.step0.body":
       "目標を作り、タスクに分け、今日へ置いて完了する。実際に触りながら1周だけ試します。",
@@ -382,6 +398,20 @@ const translations = {
     "buddy.kicker": "Note",
     "buddy.defaultTitle": "Today’s flow",
     "buddy.defaultMessage": "Start small and leave one completed task behind.",
+    "insight.readMore": "Read why",
+    "insight.kicker": "GoalFlow thinking",
+    "insight.buddy.title": "How to keep going quietly",
+    "insight.buddy.body":
+      "GoalFlow cares less about forcing motivation and more about reducing the time spent wondering what to do. When one next action is visible, even a low-energy day can still move. A small record today is more useful than a perfect plan you never touch.",
+    "insight.goal.title": "1. A goal keeps the reason visible",
+    "insight.goal.body":
+      "A goal is not just a bucket for tasks. It keeps the reason close: why you train, study, recover, or build the habit. When the reason and deadline are visible, even a small action today feels connected to something larger.",
+    "insight.task.title": "2. A task makes the goal small enough for today",
+    "insight.task.body":
+      "Plans usually break when the next step is too large. GoalFlow turns the goal into actions like 30 words, 10 pushups, or one page. Smaller tasks are easier to start, easier to place on today, and easier to record.",
+    "insight.today.title": "3. Today is where thinking turns into motion",
+    "insight.today.body":
+      "Putting a task on today is not about filling a calendar. It removes extra options and leaves one clear action. Less choice means less friction, and less friction makes completion feel closer.",
     "flow.aria": "GoalFlow flow",
     "flow.goal.title": "Goal",
     "flow.goal.body": "Choose the reason and deadline",
@@ -390,6 +420,7 @@ const translations = {
     "flow.today.title": "Today",
     "flow.today.body": "Place it, then finish it",
     "flow.progress.title": "Today’s progress",
+    "flow.progress.cta": "View progress",
     "dashboard.aria": "Home dashboard",
     "empty.kicker": "GoalFlow method",
     "empty.title": "Create your first goal",
@@ -554,6 +585,7 @@ const translations = {
     "tutorial.skip": "Close",
     "tutorial.done": "Done",
     "tutorial.next": "Next",
+    "tutorial.targetLabel": "Next action",
     "tutorial.step0.title": "Try the GoalFlow loop",
     "tutorial.step0.body":
       "Create a goal, save a task, place it on today, and finish it. Learn the flow by doing it once.",
@@ -593,6 +625,10 @@ const els = {
   dayDialog: document.querySelector("#dayDialog"),
   dayDialogTitle: document.querySelector("#dayDialogTitle"),
   dayDialogList: document.querySelector("#dayDialogList"),
+  insightDialog: document.querySelector("#insightDialog"),
+  insightDialogKicker: document.querySelector("#insightDialogKicker"),
+  insightDialogTitle: document.querySelector("#insightDialogTitle"),
+  insightDialogBody: document.querySelector("#insightDialogBody"),
   goalForm: document.querySelector("#goalForm"),
   deleteGoalFromDialog: document.querySelector("#deleteGoalFromDialog"),
   taskForm: document.querySelector("#taskForm"),
@@ -651,6 +687,8 @@ const els = {
   nextActionBody: document.querySelector("#nextActionBody"),
   nextActionButton: document.querySelector("#nextActionButton"),
   progressSection: document.querySelector("#progressSection"),
+  miniProgressCard: document.querySelector("#miniProgressCard"),
+  buddyCard: document.querySelector("#buddyCard"),
   flowOrbit: document.querySelector("#flowOrbit"),
   buddyTitle: document.querySelector("#buddyTitle"),
   buddyMessage: document.querySelector("#buddyMessage"),
@@ -1883,7 +1921,10 @@ function renderTutorialCoach() {
   els.tutorialPrimary.textContent = step.primary;
   els.tutorialSecondary.textContent = step.secondary;
   const target = document.querySelector(step.target);
-  target?.classList.add("coach-target");
+  if (target) {
+    target.classList.add("coach-target");
+    target.dataset.coachLabel = t("tutorial.targetLabel");
+  }
   if (target && lastTutorialTarget !== `${stepIndex}:${step.target}`) {
     lastTutorialTarget = `${stepIndex}:${step.target}`;
     target.scrollIntoView?.({
@@ -1896,9 +1937,10 @@ function renderTutorialCoach() {
 
 function removeTutorialTargets(resetScrollTarget = true) {
   if (resetScrollTarget) lastTutorialTarget = "";
-  document
-    .querySelectorAll(".coach-target")
-    .forEach((node) => node.classList.remove("coach-target"));
+  document.querySelectorAll(".coach-target").forEach((node) => {
+    node.classList.remove("coach-target");
+    delete node.dataset.coachLabel;
+  });
 }
 
 function closeTutorial(completed = false) {
@@ -2592,6 +2634,34 @@ function openDayDialog(date) {
     });
   });
   if (!els.dayDialog.open) els.dayDialog.showModal();
+}
+
+function openInsightDialog(key) {
+  if (!els.insightDialog) return;
+  const normalizedKey = ["buddy", "goal", "task", "today"].includes(key)
+    ? key
+    : "buddy";
+  els.insightDialogKicker.textContent = t("insight.kicker");
+  els.insightDialogTitle.textContent = t(`insight.${normalizedKey}.title`);
+  els.insightDialogBody.textContent = t(`insight.${normalizedKey}.body`);
+  if (!els.insightDialog.open) els.insightDialog.showModal();
+  const gsap = getGsap();
+  const card = els.insightDialog.querySelector(".dialog-card");
+  if (gsap && card) {
+    gsap.fromTo(
+      card,
+      { y: 10, scale: 0.985, autoAlpha: 0, filter: "blur(8px)" },
+      {
+        y: 0,
+        scale: 1,
+        autoAlpha: 1,
+        filter: "blur(0px)",
+        duration: 0.32,
+        ease: "expo.out",
+        clearProps: "filter",
+      },
+    );
+  }
 }
 
 function formatDateWithWeekday(dateString) {
@@ -3668,6 +3738,25 @@ els.nextActionButton.addEventListener("click", () => {
   }
 });
 
+document.querySelectorAll("[data-insight]").forEach((node) => {
+  node.addEventListener("click", () => openInsightDialog(node.dataset.insight));
+  node.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openInsightDialog(node.dataset.insight);
+  });
+});
+
+els.miniProgressCard?.addEventListener("click", () => {
+  setActiveScreen("progress");
+});
+
+els.miniProgressCard?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  setActiveScreen("progress");
+});
+
 els.dismissOnboarding.addEventListener("click", () => {
   state.meta.onboardingDismissed = true;
   render();
@@ -3676,7 +3765,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260521-completionrebuild")
+      .register("./sw.js?v=20260521-guidancepolish")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

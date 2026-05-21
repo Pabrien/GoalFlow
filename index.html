@@ -19,7 +19,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260521-completionrebuild" />
+    <link rel="stylesheet" href="./styles.css?v=20260521-guidancepolish" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -41,9 +41,9 @@
             aria-label="GoalFlowの特徴"
             data-i18n-aria="app.pointsAria"
           >
-            <span data-i18n="app.point1">目標から逆算</span>
-            <span data-i18n="app.point2">タスクを予定へ</span>
-            <span data-i18n="app.point3">今日だけに集中</span>
+            <span><b>01</b><em data-i18n="app.point1">目標から逆算</em></span>
+            <span><b>02</b><em data-i18n="app.point2">タスクを予定へ</em></span>
+            <span><b>03</b><em data-i18n="app.point3">今日だけに集中</em></span>
           </div>
         </div>
         <div class="topbar-actions">
@@ -279,11 +279,20 @@
             </button>
           </div>
         </article>
-        <article class="buddy-card">
+        <article
+          class="buddy-card insight-card"
+          id="buddyCard"
+          role="button"
+          tabindex="0"
+          data-insight="buddy"
+        >
           <p class="eyebrow" data-i18n="buddy.kicker">ひとこと</p>
           <div class="flow-orbit" id="flowOrbit" aria-hidden="true"></div>
           <h2 id="buddyTitle">今日の流れ</h2>
           <p id="buddyMessage">小さく始めて、完了を1つ残しましょう。</p>
+          <span class="insight-link" data-i18n="insight.readMore"
+            >理由を読む</span
+          >
         </article>
       </section>
 
@@ -294,33 +303,57 @@
         aria-label="GoalFlowの流れ"
         data-i18n-aria="flow.aria"
       >
-        <article>
+        <article
+          class="flow-card"
+          role="button"
+          tabindex="0"
+          data-insight="goal"
+        >
           <span>1</span>
           <div>
             <h2 data-i18n="flow.goal.title">目標</h2>
             <p data-i18n="flow.goal.body">続けたい理由と期限を決める</p>
+            <small data-i18n="insight.readMore">理由を読む</small>
           </div>
         </article>
-        <article>
+        <article
+          class="flow-card"
+          role="button"
+          tabindex="0"
+          data-insight="task"
+        >
           <span>2</span>
           <div>
             <h2 data-i18n="flow.task.title">タスク</h2>
             <p data-i18n="flow.task.body">今日できるサイズに分ける</p>
+            <small data-i18n="insight.readMore">理由を読む</small>
           </div>
         </article>
-        <article>
+        <article
+          class="flow-card"
+          role="button"
+          tabindex="0"
+          data-insight="today"
+        >
           <span>3</span>
           <div>
             <h2 data-i18n="flow.today.title">今日の予定</h2>
             <p data-i18n="flow.today.body">置いたら、あとは完了するだけ</p>
+            <small data-i18n="insight.readMore">理由を読む</small>
           </div>
         </article>
-        <article class="flow-map-progress">
+        <article
+          class="flow-map-progress"
+          id="miniProgressCard"
+          role="button"
+          tabindex="0"
+        >
           <span id="miniTodayRate">0%</span>
           <div>
             <h2 data-i18n="flow.progress.title">今日の進み具合</h2>
             <p id="miniTodayCopy">今日のタスクはまだありません。</p>
             <div class="mini-progress"><span id="miniTodayMeter"></span></div>
+            <small data-i18n="flow.progress.cta">進捗を見る</small>
           </div>
         </article>
       </section>
@@ -704,6 +737,30 @@
       </section>
     </dialog>
 
+    <dialog id="insightDialog">
+      <section
+        class="dialog-card insight-dialog-card"
+        aria-labelledby="insightDialogTitle"
+      >
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow" id="insightDialogKicker">GoalFlow</p>
+            <h2 id="insightDialogTitle">理由</h2>
+          </div>
+          <button
+            class="icon-button"
+            data-close-dialog
+            type="button"
+            aria-label="閉じる"
+            data-i18n-aria="dialog.close"
+          >
+            ×
+          </button>
+        </div>
+        <p id="insightDialogBody"></p>
+      </section>
+    </dialog>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <section class="tutorial-coach" id="tutorialCoach" hidden>
@@ -734,6 +791,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260521-completionrebuild"></script>
+    <script defer src="./app.js?v=20260521-guidancepolish"></script>
   </body>
 </html>
