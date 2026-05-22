@@ -1313,12 +1313,32 @@ body[data-active-screen="today"] .insights {
   padding: 11px;
   touch-action: pan-y;
   cursor: grab;
+  --task-color: var(--accent);
+  --task-soft: rgba(20, 108, 99, 0.1);
   transition:
     opacity 0.16s ease,
     transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.18s ease,
     border-color 0.18s ease;
   will-change: transform;
+}
+
+.task-scope {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  max-width: 100%;
+  min-height: 26px;
+  padding: 0 9px;
+  overflow: hidden;
+  border: 1px solid rgba(20, 108, 99, 0.14);
+  border-radius: 999px;
+  background: rgba(20, 108, 99, 0.06);
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bank-task-main {
@@ -1330,6 +1350,17 @@ body[data-active-screen="today"] .insights {
 
 .bank-task-copy {
   min-width: 0;
+}
+
+.task-color-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 999px;
+  background: var(--task-color);
+  box-shadow: 0 0 0 3px var(--task-soft);
+  vertical-align: 1px;
 }
 
 .task-drag-handle {
@@ -1826,6 +1857,49 @@ body[data-calendar-size="size-7"] .planner {
   padding-bottom: 6px;
 }
 
+.day-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 19px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(20, 108, 99, 0.1);
+  color: var(--accent-strong);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.day-column.goal-window {
+  background:
+    linear-gradient(180deg, rgba(20, 108, 99, 0.035), transparent 42%), #fafbf8;
+}
+
+.day-goal-markers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: -2px 0 6px;
+}
+
+.goal-date-marker {
+  max-width: 100%;
+  min-height: 18px;
+  overflow: hidden;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+  font-size: 10px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-date-marker.end {
+  background: rgba(180, 83, 9, 0.12);
+  color: #92400e;
+}
+
 .day-name {
   display: block;
   color: var(--muted);
@@ -1860,11 +1934,14 @@ body[data-calendar-size="size-7"] .planner {
   padding: 10px;
   min-width: 0;
   overflow: hidden;
+  --task-color: var(--accent);
+  --task-soft: rgba(20, 108, 99, 0.1);
 }
 
 .today-task {
-  border-left: 5px solid var(--accent);
-  background: #ffffff;
+  border-left: 5px solid var(--task-color);
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 42%), #ffffff;
   box-shadow: 0 10px 26px rgba(42, 47, 39, 0.08);
 }
 
@@ -1905,7 +1982,9 @@ body[data-calendar-size="size-7"] .planner {
 
 .month-mode .scheduled-task {
   padding: 7px;
-  border-left: 4px solid var(--accent);
+  border-left: 4px solid var(--task-color);
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 54%), #ffffff;
 }
 
 .month-mode .scheduled-task .task-title {
@@ -2418,7 +2497,8 @@ dialog::backdrop {
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #fff;
+  background: linear-gradient(135deg, var(--task-soft), transparent 48%), #fff;
+  border-left: 4px solid var(--task-color);
 }
 
 .day-dialog-item strong,
@@ -2443,8 +2523,30 @@ dialog::backdrop {
 }
 
 .day-dialog-item.done {
-  background: #edfff3;
-  border-color: rgba(88, 204, 122, 0.46);
+  background:
+    linear-gradient(135deg, rgba(96, 165, 250, 0.11), transparent 48%), #f8fafc;
+  border-color: rgba(96, 165, 250, 0.28);
+  border-left-color: var(--task-color);
+}
+
+.day-move-form {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  padding-top: 8px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.day-move-form label {
+  margin: 0;
+}
+
+.color-field input[type="color"] {
+  height: 40px;
+  padding: 4px;
+  cursor: pointer;
 }
 
 label {
@@ -3085,6 +3187,19 @@ body[data-tab-direction="-1"] .home-dashboard {
   background: #eff6ff;
 }
 
+.bank-task,
+.scheduled-task,
+.today-task {
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 52%), #ffffff;
+}
+
+.month-mode .scheduled-task {
+  border-left-color: var(--task-color);
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 54%), #ffffff;
+}
+
 .tag {
   min-height: 25px;
   background: #f1f5f9;
@@ -3129,7 +3244,7 @@ body[data-tab-direction="-1"] .home-dashboard {
   width: 4px;
   height: calc(100% - 24px);
   border-radius: 0 999px 999px 0;
-  background: var(--blue);
+  background: var(--task-color);
 }
 
 .scheduled-task.done,
@@ -3154,7 +3269,7 @@ body[data-tab-direction="-1"] .home-dashboard {
   width: 4px;
   height: calc(100% - 24px);
   border-radius: 0 999px 999px 0;
-  background: linear-gradient(180deg, #94a3b8, #60a5fa);
+  background: linear-gradient(180deg, #94a3b8, var(--task-color));
 }
 
 .scheduled-task.just-completed,
@@ -3556,7 +3671,7 @@ dialog {
     padding: 0;
     border: 0;
     border-radius: 999px;
-    background: var(--accent);
+    background: var(--task-color);
     box-shadow: none;
   }
 
@@ -3982,9 +4097,51 @@ body[data-theme="dark"] .day-column {
   background: rgba(7, 11, 20, 0.78);
 }
 
+body[data-theme="dark"] .day-column.goal-window {
+  background:
+    linear-gradient(180deg, rgba(79, 214, 154, 0.055), transparent 42%),
+    rgba(7, 11, 20, 0.78);
+}
+
+body[data-theme="dark"] .day-count {
+  border-color: rgba(79, 214, 154, 0.22);
+  background: rgba(79, 214, 154, 0.12);
+  color: var(--accent-strong);
+}
+
+body[data-theme="dark"] .goal-date-marker {
+  background: rgba(114, 167, 255, 0.14);
+  color: #bfdbfe;
+}
+
+body[data-theme="dark"] .goal-date-marker.end {
+  background: rgba(237, 200, 95, 0.13);
+  color: #fde68a;
+}
+
 body[data-theme="dark"] .day-column.today {
   border-color: rgba(248, 211, 107, 0.62);
   background: rgba(248, 211, 107, 0.12);
+}
+
+body[data-theme="dark"] .bank-task,
+body[data-theme="dark"] .scheduled-task,
+body[data-theme="dark"] .today-task,
+body[data-theme="dark"] .day-dialog-item {
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 56%),
+    rgba(8, 13, 24, 0.96);
+  color: var(--ink);
+}
+
+body[data-theme="dark"] .task-scope {
+  border-color: rgba(79, 214, 154, 0.22);
+  background: rgba(79, 214, 154, 0.1);
+  color: var(--accent-strong);
+}
+
+body[data-theme="dark"] .day-move-form {
+  border-top-color: rgba(100, 116, 139, 0.28);
 }
 
 body[data-theme="dark"] .scheduled-task.done,

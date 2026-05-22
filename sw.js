@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v39-20260521-calendarswipe";
+const cacheName = "goalflow-v40-20260522-calendarpolish";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260521-calendarswipe",
-  "./app.js?v=20260521-calendarswipe",
+  "./styles.css?v=20260522-calendarpolish",
+  "./app.js?v=20260522-calendarpolish",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",

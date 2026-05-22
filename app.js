@@ -9,6 +9,16 @@ const calendarSizes = [
   "size-6",
   "size-7",
 ];
+const taskColors = [
+  "#2563eb",
+  "#0f766e",
+  "#7c3aed",
+  "#c2410c",
+  "#be123c",
+  "#047857",
+  "#4f46e5",
+  "#b45309",
+];
 let state = loadState();
 let selectedGoalId = state.goals[0]?.id ?? "";
 let weekStart = getWeekStart(today);
@@ -184,6 +194,8 @@ const translations = {
     "goals.progress": "進み具合 {percent}%",
     "tasks.title": "保存タスク",
     "tasks.add": "追加",
+    "tasks.scopeAll": "すべての目標の保存タスク",
+    "tasks.scopeGoal": "「{goal}」の保存タスク",
     "tasks.empty": "保存タスクを作ると、カレンダーへドラッグできます。",
     "tasks.dragAria": "カレンダーへドラッグ",
     "tasks.addToday": "今日に入れる",
@@ -234,10 +246,12 @@ const translations = {
     "taskDialog.goal": "紐づける目標",
     "taskDialog.duration": "所要時間",
     "taskDialog.unit": "単位",
+    "taskDialog.color": "色",
     "taskEdit.name": "タスク名",
     "taskEdit.goal": "目標",
     "taskEdit.duration": "時間",
     "taskEdit.unit": "単位",
+    "taskEdit.color": "色",
     "taskEdit.updated": "保存タスクを更新しました。",
     "taskEdit.confirmDelete": "「{title}」を削除しますか？",
     "taskEdit.confirmDeleteWithRelated":
@@ -256,6 +270,11 @@ const translations = {
     "dayDialog.title": "{date}の予定",
     "dayDialog.empty": "この日の予定はまだありません。",
     "dayDialog.noGoal": "目標なし",
+    "dayDialog.count": "{count}件",
+    "dayDialog.moveDate": "移動先",
+    "dayDialog.move": "移動",
+    "calendar.goalStart": "開始",
+    "calendar.goalEnd": "期限",
     "next.noGoal.title": "最初の目標を作成",
     "next.noGoal.body": "まずは続けたい理由がある目標を1つだけ作りましょう。",
     "next.noGoal.button": "目標を作る",
@@ -469,6 +488,8 @@ const translations = {
     "goals.progress": "Progress {percent}%",
     "tasks.title": "Saved tasks",
     "tasks.add": "Add",
+    "tasks.scopeAll": "Saved tasks for all goals",
+    "tasks.scopeGoal": "Saved tasks for “{goal}”",
     "tasks.empty": "Save a task, then drag it onto the calendar.",
     "tasks.dragAria": "Drag to calendar",
     "tasks.addToday": "Put on today",
@@ -519,10 +540,12 @@ const translations = {
     "taskDialog.goal": "Linked goal",
     "taskDialog.duration": "Duration",
     "taskDialog.unit": "Unit",
+    "taskDialog.color": "Color",
     "taskEdit.name": "Task name",
     "taskEdit.goal": "Goal",
     "taskEdit.duration": "Time",
     "taskEdit.unit": "Unit",
+    "taskEdit.color": "Color",
     "taskEdit.updated": "Saved task updated.",
     "taskEdit.confirmDelete": "Delete “{title}”?",
     "taskEdit.confirmDeleteWithRelated":
@@ -541,6 +564,11 @@ const translations = {
     "dayDialog.title": "{date} plan",
     "dayDialog.empty": "No tasks scheduled for this day.",
     "dayDialog.noGoal": "No goal",
+    "dayDialog.count": "{count}",
+    "dayDialog.moveDate": "Move to",
+    "dayDialog.move": "Move",
+    "calendar.goalStart": "Start",
+    "calendar.goalEnd": "Due",
     "next.noGoal.title": "Create your first goal",
     "next.noGoal.body":
       "Start with one goal that has a reason you want to keep going.",
@@ -792,8 +820,10 @@ function loadState() {
     const parsed = JSON.parse(saved);
     return {
       goals: Array.isArray(parsed.goals) ? parsed.goals.map(normalizeGoal) : [],
-      tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
-      scheduled: Array.isArray(parsed.scheduled) ? parsed.scheduled : [],
+      tasks: Array.isArray(parsed.tasks) ? parsed.tasks.map(normalizeTask) : [],
+      scheduled: Array.isArray(parsed.scheduled)
+        ? parsed.scheduled.map(normalizeScheduledItem)
+        : [],
       meta: {
         onboardingDismissed: Boolean(parsed.meta?.onboardingDismissed),
         lastVisitDate: parsed.meta?.lastVisitDate ?? "",
@@ -829,6 +859,39 @@ function normalizeGoal(goal) {
   };
 }
 
+function normalizeTask(task, index = 0) {
+  const durationUnit = task.durationUnit ?? "minutes";
+  const durationValue = Number(task.durationValue ?? task.minutes ?? 30);
+  return {
+    ...task,
+    minutes:
+      durationUnit === "hours"
+        ? durationValue * 60
+        : Number(task.minutes ?? durationValue),
+    durationValue,
+    durationUnit,
+    color: normalizeTaskColor(task.color, task.id ?? task.title ?? index),
+  };
+}
+
+function normalizeScheduledItem(item, index = 0) {
+  const durationUnit = item.durationUnit ?? "minutes";
+  const durationValue = Number(item.durationValue ?? item.minutes ?? 30);
+  return {
+    ...item,
+    minutes:
+      durationUnit === "hours"
+        ? durationValue * 60
+        : Number(item.minutes ?? durationValue),
+    durationValue,
+    durationUnit,
+    color: normalizeTaskColor(
+      item.color,
+      item.taskId ?? item.goalId ?? item.title ?? index,
+    ),
+  };
+}
+
 function normalizeCalendarSize(size) {
   if (calendarSizes.includes(size)) return size;
   if (size === "compact") return "size-2";
@@ -838,6 +901,42 @@ function normalizeCalendarSize(size) {
 
 function currentLanguage() {
   return state.meta.language === "en" ? "en" : "ja";
+}
+
+function hashString(value) {
+  return [...String(value)].reduce(
+    (hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0,
+    0,
+  );
+}
+
+function normalizeTaskColor(color, seed = "") {
+  if (/^#[0-9a-f]{6}$/i.test(color ?? "")) return color;
+  return taskColors[hashString(seed) % taskColors.length];
+}
+
+function taskDisplayColor(item) {
+  const task = item?.taskId
+    ? state.tasks.find((candidate) => candidate.id === item.taskId)
+    : item;
+  return normalizeTaskColor(
+    item?.color ?? task?.color,
+    item?.taskId ?? item?.id ?? item?.goalId ?? item?.title,
+  );
+}
+
+function hexToRgba(color, alpha) {
+  const safeColor = normalizeTaskColor(color);
+  const value = safeColor.slice(1);
+  const red = parseInt(value.slice(0, 2), 16);
+  const green = parseInt(value.slice(2, 4), 16);
+  const blue = parseInt(value.slice(4, 6), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+function taskColorStyle(item, alpha = 0.14) {
+  const color = taskDisplayColor(item);
+  return `--task-color: ${color}; --task-soft: ${hexToRgba(color, alpha)};`;
 }
 
 function t(key, values = {}) {
@@ -998,6 +1097,13 @@ function renderGoals() {
 function renderTaskBank() {
   els.taskBank.innerHTML = "";
   bindTaskBankReturnDrop();
+  const selectedGoal = findGoal(selectedGoalId);
+  const scope = document.createElement("div");
+  scope.className = "task-scope";
+  scope.textContent = selectedGoal
+    ? t("tasks.scopeGoal", { goal: selectedGoal.name })
+    : t("tasks.scopeAll");
+  els.taskBank.append(scope);
   const tasks = state.tasks.filter(
     (task) => !selectedGoalId || task.goalId === selectedGoalId,
   );
@@ -1011,6 +1117,7 @@ function renderTaskBank() {
     item.className = `bank-task ${editingTaskId === task.id ? "editing" : ""}`;
     item.draggable = true;
     item.dataset.taskId = task.id;
+    item.setAttribute("style", taskColorStyle(task));
     let nativeDragging = false;
     item.innerHTML = `
       <div class="bank-task-main">
@@ -1026,6 +1133,7 @@ function renderTaskBank() {
               <div class="field-row">
                 <label>${escapeHtml(t("taskEdit.duration"))}<input name="durationValue" type="number" min="1" max="240" step="1" value="${escapeHtml(task.durationValue ?? task.minutes ?? 30)}" /></label>
                 <label>${escapeHtml(t("taskEdit.unit"))}<select name="durationUnit">${durationUnitOptions(task.durationUnit ?? "minutes")}</select></label>
+                <label class="color-field">${escapeHtml(t("taskEdit.color"))}<input name="color" type="color" value="${escapeHtml(taskDisplayColor(task))}" /></label>
               </div>
               <div class="task-edit-actions">
                 <button class="mini-button danger-button" type="button" data-action="delete-task">${escapeHtml(t("actions.delete"))}</button>
@@ -1222,6 +1330,7 @@ function scheduledEditForm(item) {
       <div class="field-row">
         <label>${escapeHtml(t("taskEdit.duration"))}<input name="durationValue" type="number" min="1" max="240" step="1" value="${escapeHtml(item.durationValue ?? item.minutes ?? 30)}" /></label>
         <label>${escapeHtml(t("taskEdit.unit"))}<select name="durationUnit">${durationUnitOptions(item.durationUnit ?? "minutes")}</select></label>
+        <label class="color-field">${escapeHtml(t("taskEdit.color"))}<input name="color" type="color" value="${escapeHtml(taskDisplayColor(item))}" /></label>
       </div>
       <div class="task-edit-actions">
         <button class="mini-button danger-button" type="button" data-action="delete-scheduled-edit">${escapeHtml(t("actions.delete"))}</button>
@@ -1359,18 +1468,26 @@ function renderCalendar() {
   els.calendarGrid.innerHTML = "";
   days.forEach((date) => {
     const iso = toISO(date);
+    const scheduled = state.scheduled.filter(
+      (item) =>
+        item.date === iso &&
+        (!selectedGoalId || item.goalId === selectedGoalId),
+    );
+    const goalMarkers = calendarGoalMarkers(iso);
     const column = document.createElement("section");
     const isOutsideMonth =
       viewMode === "month" && date.getMonth() !== monthCursor.getMonth();
     column.className = `day-column ${iso === toISO(today) ? "today" : ""} ${isOutsideMonth ? "outside-month" : ""} ${
       iso === highlightedScheduleDate ? "schedule-confirm" : ""
-    }`;
+    } ${goalMarkers.inRange ? "goal-window" : ""}`;
     column.dataset.date = iso;
     column.innerHTML = `
       <div class="day-head">
         <span class="day-name">${escapeHtml(formatWeekday(date))}</span>
         <span class="day-number">${date.getDate()}</span>
+        ${viewMode === "month" && scheduled.length ? `<span class="day-count">${escapeHtml(t("dayDialog.count", { count: scheduled.length }))}</span>` : ""}
       </div>
+      ${goalMarkers.html}
       <div class="day-tasks"></div>
     `;
     column.addEventListener("dragover", (event) => {
@@ -1403,11 +1520,6 @@ function renderCalendar() {
       openDayDialog(iso);
     });
     const list = column.querySelector(".day-tasks");
-    const scheduled = state.scheduled.filter(
-      (item) =>
-        item.date === iso &&
-        (!selectedGoalId || item.goalId === selectedGoalId),
-    );
     if (scheduled.length) {
       scheduled.forEach((item) =>
         list.append(scheduledElement(item, viewMode === "month")),
@@ -1415,6 +1527,46 @@ function renderCalendar() {
     }
     els.calendarGrid.append(column);
   });
+}
+
+function calendarGoalMarkers(iso) {
+  const relevantGoals = state.goals.filter((goal) => {
+    if (selectedGoalId && goal.id !== selectedGoalId) return false;
+    return goal.createdAt && goal.deadline;
+  });
+  const inRange = relevantGoals.some(
+    (goal) => goal.createdAt <= iso && goal.deadline >= iso,
+  );
+  const markers = relevantGoals.flatMap((goal) => {
+    const result = [];
+    if (goal.createdAt === iso) {
+      result.push({
+        type: "start",
+        label: t("calendar.goalStart"),
+        goal,
+      });
+    }
+    if (goal.deadline === iso) {
+      result.push({
+        type: "end",
+        label: t("calendar.goalEnd"),
+        goal,
+      });
+    }
+    return result;
+  });
+  return {
+    inRange,
+    html: markers.length
+      ? `<div class="day-goal-markers">${markers
+          .slice(0, 2)
+          .map(
+            (marker) =>
+              `<span class="goal-date-marker ${marker.type}">${escapeHtml(marker.label)} ${escapeHtml(marker.goal.name)}</span>`,
+          )
+          .join("")}</div>`
+      : "",
+  };
 }
 
 function setColumnDropTarget(column, clientY) {
@@ -1459,6 +1611,7 @@ function scheduledElement(item, isCompact = false) {
   node.draggable = true;
   node.tabIndex = 0;
   node.dataset.scheduledId = item.id;
+  node.setAttribute("style", taskColorStyle(item));
   node.innerHTML = `
     ${taskMarkup({ ...task, title: item.title, minutes: item.minutes }, goal, isCompact)}
     <div class="task-actions">
@@ -1547,6 +1700,7 @@ function renderToday() {
       const goal = findGoal(item.goalId);
       const node = document.createElement("article");
       node.className = `today-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""}`;
+      node.setAttribute("style", taskColorStyle(item));
       node.innerHTML = `
         ${taskMarkup({ ...task, title: item.title, minutes: item.minutes }, goal)}
         <div class="task-actions">
@@ -1979,6 +2133,7 @@ function createTutorialSample() {
     minutes: 10,
     durationValue: 10,
     durationUnit: "minutes",
+    color: normalizeTaskColor("", goal.id),
   };
   state.goals.push(goal);
   state.tasks.push(task);
@@ -2505,7 +2660,7 @@ function taskMarkup(task, goal, isCompact = false) {
   const goalName = goal?.name ?? t("tasks.noGoal");
   const meta = isCompact ? `${goalName}` : `${goalName}・${duration}`;
   return `
-    <div class="task-title"><span>${escapeHtml(task.title)}</span></div>
+    <div class="task-title"><span><i class="task-color-dot" aria-hidden="true"></i>${escapeHtml(task.title)}</span></div>
     <p class="task-meta">${escapeHtml(meta)}</p>
   `;
 }
@@ -2561,6 +2716,7 @@ function saveTaskEdit(event, task) {
   task.durationValue = durationValue;
   task.durationUnit = durationUnit;
   task.minutes = durationUnit === "hours" ? durationValue * 60 : durationValue;
+  task.color = normalizeTaskColor(data.get("color"), task.id);
   state.scheduled.forEach((item) => {
     if (item.taskId !== task.id) return;
     item.title = task.title;
@@ -2568,6 +2724,7 @@ function saveTaskEdit(event, task) {
     item.minutes = task.minutes;
     item.durationValue = task.durationValue;
     item.durationUnit = task.durationUnit;
+    item.color = task.color;
   });
   selectedGoalId = task.goalId;
   editingTaskId = "";
@@ -2587,6 +2744,7 @@ function saveScheduledEdit(event, item) {
   item.durationValue = durationValue;
   item.durationUnit = durationUnit;
   item.minutes = durationUnit === "hours" ? durationValue * 60 : durationValue;
+  item.color = normalizeTaskColor(data.get("color"), item.id);
   selectedGoalId = item.goalId;
   editingScheduledId = "";
   activeScheduleControlId = item.id;
@@ -2611,13 +2769,18 @@ function openDayDialog(date) {
     ? items
         .map((item) => {
           const goal = findGoal(item.goalId);
+          const colorStyle = taskColorStyle(item);
           return `
-            <article class="day-dialog-item ${item.done ? "done" : ""}">
+            <article class="day-dialog-item ${item.done ? "done" : ""}" style="${escapeHtml(colorStyle)}">
               <div>
                 <strong>${escapeHtml(item.title)}</strong>
                 <span>${escapeHtml(goal?.name ?? t("dayDialog.noGoal"))}・${escapeHtml(formatDuration(item))}</span>
               </div>
               <button class="mini-button" type="button" data-day-done="${escapeHtml(item.id)}">${escapeHtml(item.done ? t("actions.undo") : t("actions.done"))}</button>
+              <form class="day-move-form" data-day-move="${escapeHtml(item.id)}">
+                <label>${escapeHtml(t("dayDialog.moveDate"))}<input name="date" type="date" value="${escapeHtml(item.date)}" /></label>
+                <button class="mini-button" type="submit">${escapeHtml(t("dayDialog.move"))}</button>
+              </form>
             </article>
           `;
         })
@@ -2630,6 +2793,18 @@ function openDayDialog(date) {
       );
       if (!item) return;
       toggleScheduledDone(item);
+      openDayDialog(date);
+    });
+  });
+  els.dayDialogList.querySelectorAll("[data-day-move]").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const item = state.scheduled.find(
+        (candidate) => candidate.id === form.dataset.dayMove,
+      );
+      const nextDate = new FormData(form).get("date");
+      if (!item || !nextDate) return;
+      moveScheduledTask(item.id, nextDate);
       openDayDialog(date);
     });
   });
@@ -3241,6 +3416,7 @@ function makeSchedule(task, date, done) {
     minutes: task.minutes,
     durationValue: task.durationValue ?? task.minutes,
     durationUnit: task.durationUnit ?? "minutes",
+    color: taskDisplayColor(task),
     date,
     done,
   };
@@ -3391,6 +3567,10 @@ els.openTaskDialog.addEventListener("click", () => {
     return;
   }
   els.taskForm.reset();
+  els.taskForm.elements.namedItem("color").value = normalizeTaskColor(
+    "",
+    `${Date.now()}-${state.tasks.length}`,
+  );
   updateDurationInput();
   renderSelectors();
   els.taskDialog.showModal();
@@ -3478,6 +3658,7 @@ els.taskForm.addEventListener("submit", (event) => {
     minutes: durationUnit === "hours" ? durationValue * 60 : durationValue,
     durationValue,
     durationUnit,
+    color: normalizeTaskColor(data.get("color"), data.get("title").trim()),
   });
   selectedGoalId = data.get("goalId");
   els.taskDialog.close();
@@ -3776,7 +3957,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260521-calendarswipe")
+      .register("./sw.js?v=20260522-calendarpolish")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
