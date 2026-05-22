@@ -34,6 +34,7 @@ let editingGoalId = "";
 let editingScheduledId = "";
 let goalSelectTimer = null;
 let scheduleControlTimer = null;
+let pendingScheduleTaskId = "";
 let chartMetric = "count";
 let pieMetric = "count";
 let chartAnimationFrame = null;
@@ -129,6 +130,21 @@ const translations = {
     "insight.buddy.title": "小さく続けるための考え方",
     "insight.buddy.body":
       "GoalFlowでは、やる気を大きくするより、迷う時間を小さくすることを大事にします。今日やることが1つ見えていれば、調子が悪い日でも行動に入りやすくなります。完璧な計画より、今日残せる小さな記録が次の日の自分を助けます。",
+    "insight.noGoal.title": "目標がない時は、理由を1つだけ残す",
+    "insight.noGoal.body":
+      "最初から完璧な計画を作る必要はありません。GoalFlowでは、まず「なぜ続けたいのか」を目標に残します。理由が見えると、タスクが増えても判断の軸がぶれにくくなります。",
+    "insight.noTask.title": "目標は、今日できる粒度に変える",
+    "insight.noTask.body":
+      "大きな目標はそのままだと重く感じます。15分から30分で終わるタスクに分けると、始める時の負担が下がります。小さくしたタスクは、予定にも置きやすく、記録にも残しやすくなります。",
+    "insight.noToday.title": "今日に置くと、選択肢が減る",
+    "insight.noToday.body":
+      "保存したタスクを今日に入れる意味は、予定を埋めることではありません。今やる候補を減らして、次に動く一手を見える場所に置くことです。迷いが減るほど、行動は軽くなります。",
+    "insight.inProgress.title": "完了は、やる気ではなく流れを作る",
+    "insight.inProgress.body":
+      "途中の状態では、全部終わらせようと考えるより、まず1つ完了する方が効果的です。1つの完了が今日の流れを作り、次のタスクに入る心理的な距離を短くします。",
+    "insight.done.title": "完了した日は、次の日を少し楽にする",
+    "insight.done.body":
+      "今日のタスクが終わったら、無理に増やすより、記録を見て小さく満足することも大切です。余力があれば、明日の自分が迷わないように1つだけ予定を置いておくと継続が楽になります。",
     "insight.goal.title": "① 目標は、続けたい理由を置く場所",
     "insight.goal.body":
       "目標はタスクの置き場ではなく、なぜ続けたいのかを忘れないための軸です。筋トレなら体を変えたい理由、勉強なら何に近づきたいのか。理由と期限があると、今日やる小さな行動にも意味が戻ってきます。",
@@ -198,6 +214,8 @@ const translations = {
     "tasks.scopeGoal": "「{goal}」の保存タスク",
     "tasks.empty": "保存タスクを作ると、カレンダーへドラッグできます。",
     "tasks.dragAria": "カレンダーへドラッグ",
+    "tasks.pickDate": "日付を選ぶ",
+    "tasks.pickingDate": "追加する日付を選択中",
     "tasks.addToday": "今日に入れる",
     "tasks.noGoal": "未設定",
     "schedule.kicker": "ドラッグで予定化",
@@ -215,6 +233,8 @@ const translations = {
     "schedule.addedToday": "今日に追加しました。あとは1つ完了するだけです。",
     "schedule.added": "予定を追加しました。",
     "schedule.moved": "予定を移動しました。",
+    "schedule.pickDateHint": "カレンダーの日付をタップすると予定に入ります。",
+    "schedule.pickDateCancelled": "日付選択を解除しました。",
     "today.title": "今日やること",
     "today.empty": "今日やることはまだありません。",
     "today.completedToast":
@@ -274,7 +294,12 @@ const translations = {
     "dayDialog.moveDate": "移動先",
     "dayDialog.move": "移動",
     "calendar.goalStart": "開始",
-    "calendar.goalEnd": "期限",
+    "calendar.goalEnd": "終了",
+    "calendar.goalRange": "期間中",
+    "calendar.rangeLabel": "開始日と終了日",
+    "calendar.rangeEmpty": "目標を選ぶと、開始日と終了日がここに表示されます。",
+    "calendar.rangeChip": "{goal}：{start} - {deadline}",
+    "calendar.rangeOverflow": "+{count}件",
     "next.noGoal.title": "最初の目標を作成",
     "next.noGoal.body": "まずは続けたい理由がある目標を1つだけ作りましょう。",
     "next.noGoal.button": "目標を作る",
@@ -422,6 +447,21 @@ const translations = {
     "insight.buddy.title": "How to keep going quietly",
     "insight.buddy.body":
       "GoalFlow cares less about forcing motivation and more about reducing the time spent wondering what to do. When one next action is visible, even a low-energy day can still move. A small record today is more useful than a perfect plan you never touch.",
+    "insight.noGoal.title": "When there is no goal, keep one reason",
+    "insight.noGoal.body":
+      "You do not need a perfect plan at the beginning. GoalFlow starts by keeping the reason you want to continue. When the reason is visible, it becomes easier to choose the next action later.",
+    "insight.noTask.title": "Turn the goal into today-sized work",
+    "insight.noTask.body":
+      "A large goal feels heavy when it stays large. Split it into a task that can be finished in 15 to 30 minutes. Smaller tasks are easier to place, start, and record.",
+    "insight.noToday.title": "Putting it on today reduces choices",
+    "insight.noToday.body":
+      "Putting a saved task on today is not about filling a calendar. It narrows the options and leaves one visible next action. Less choosing means less friction.",
+    "insight.inProgress.title": "Completion creates flow",
+    "insight.inProgress.body":
+      "When today is in progress, finishing one task matters more than thinking about everything. One completion creates momentum and makes the next action feel closer.",
+    "insight.done.title": "A finished day makes tomorrow easier",
+    "insight.done.body":
+      "When today’s tasks are done, it is okay to enjoy the record instead of adding more. If you have energy, place one task for tomorrow so your next start is lighter.",
     "insight.goal.title": "1. A goal keeps the reason visible",
     "insight.goal.body":
       "A goal is not just a bucket for tasks. It keeps the reason close: why you train, study, recover, or build the habit. When the reason and deadline are visible, even a small action today feels connected to something larger.",
@@ -492,6 +532,8 @@ const translations = {
     "tasks.scopeGoal": "Saved tasks for “{goal}”",
     "tasks.empty": "Save a task, then drag it onto the calendar.",
     "tasks.dragAria": "Drag to calendar",
+    "tasks.pickDate": "Pick date",
+    "tasks.pickingDate": "Picking a date",
     "tasks.addToday": "Put on today",
     "tasks.noGoal": "No goal",
     "schedule.kicker": "Drag to schedule",
@@ -509,6 +551,8 @@ const translations = {
     "schedule.addedToday": "Added to today. Now finish one task.",
     "schedule.added": "Added to schedule.",
     "schedule.moved": "Moved schedule item.",
+    "schedule.pickDateHint": "Tap a calendar date to schedule it.",
+    "schedule.pickDateCancelled": "Date picking cancelled.",
     "today.title": "Today’s tasks",
     "today.empty": "No tasks for today yet.",
     "today.completedToast": "Completed. Today’s flow moved forward a little.",
@@ -568,7 +612,12 @@ const translations = {
     "dayDialog.moveDate": "Move to",
     "dayDialog.move": "Move",
     "calendar.goalStart": "Start",
-    "calendar.goalEnd": "Due",
+    "calendar.goalEnd": "End",
+    "calendar.goalRange": "Range",
+    "calendar.rangeLabel": "Start and end date",
+    "calendar.rangeEmpty": "Select a goal to show its start and due date here.",
+    "calendar.rangeChip": "{goal}: {start} - {deadline}",
+    "calendar.rangeOverflow": "+{count} more",
     "next.noGoal.title": "Create your first goal",
     "next.noGoal.body":
       "Start with one goal that has a reason you want to keep going.",
@@ -674,6 +723,7 @@ const els = {
   completionPie: document.querySelector("#completionPie"),
   goalReport: document.querySelector("#goalReport"),
   weekTitle: document.querySelector("#weekTitle"),
+  calendarRange: document.querySelector("#calendarRange"),
   todayDate: document.querySelector("#todayDate"),
   summaryTodayRate: document.querySelector("#summaryTodayRate"),
   summaryWeekRate: document.querySelector("#summaryWeekRate"),
@@ -991,6 +1041,16 @@ function render() {
   document.body.dataset.activeScreen = activeScreen;
   document.body.dataset.hasGoals = String(state.goals.length > 0);
   if (
+    pendingScheduleTaskId &&
+    !state.tasks.some((task) => task.id === pendingScheduleTaskId)
+  ) {
+    pendingScheduleTaskId = "";
+  }
+  document.body.classList.toggle(
+    "is-picking-schedule-date",
+    Boolean(pendingScheduleTaskId),
+  );
+  if (
     selectedGoalId &&
     !state.goals.some((goal) => goal.id === selectedGoalId)
   ) {
@@ -1114,7 +1174,9 @@ function renderTaskBank() {
   tasks.forEach((task) => {
     const goal = findGoal(task.goalId);
     const item = document.createElement("article");
-    item.className = `bank-task ${editingTaskId === task.id ? "editing" : ""}`;
+    item.className = `bank-task ${editingTaskId === task.id ? "editing" : ""} ${
+      pendingScheduleTaskId === task.id ? "picking" : ""
+    }`;
     item.draggable = true;
     item.dataset.taskId = task.id;
     item.setAttribute("style", taskColorStyle(task));
@@ -1145,6 +1207,7 @@ function renderTaskBank() {
           : ""
       }
       <div class="bank-task-actions">
+        <button class="mini-button pick-date-button" type="button" data-action="pick-date">${escapeHtml(pendingScheduleTaskId === task.id ? t("tasks.pickingDate") : t("tasks.pickDate"))}</button>
         <button class="mini-button" type="button" data-action="today">${escapeHtml(t("tasks.addToday"))}</button>
       </div>
     `;
@@ -1189,9 +1252,12 @@ function renderTaskBank() {
     dragHandle.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
-      scheduleTask(task.id, toISO(today));
-      activeScreen = "today";
-      render();
+      setPendingScheduleTask(task.id);
+    });
+    dragHandle.addEventListener("click", (event) => {
+      if (nativeDragging) return;
+      event.preventDefault();
+      setPendingScheduleTask(task.id);
     });
     item.addEventListener("pointerdown", (event) =>
       startTouchScheduleDrag(event, task, goal, item),
@@ -1201,8 +1267,12 @@ function renderTaskBank() {
       if (isCompactScheduleLayout()) event.preventDefault();
     });
     item
+      .querySelector('[data-action="pick-date"]')
+      .addEventListener("click", () => setPendingScheduleTask(task.id));
+    item
       .querySelector('[data-action="today"]')
       .addEventListener("click", () => {
+        pendingScheduleTaskId = "";
         scheduleTask(task.id, toISO(today));
         activeScreen = "today";
         render();
@@ -1464,6 +1534,7 @@ function renderCalendar() {
     viewMode === "month"
       ? formatMonthTitle(monthCursor)
       : `${formatDate(days[0])} - ${formatDate(days[6])}`;
+  renderCalendarRange();
   els.calendarGrid.className = `calendar-grid ${viewMode === "month" ? "month-mode" : "week-mode"} ${compactMonth ? "compact-month-mode" : ""}`;
   els.calendarGrid.innerHTML = "";
   days.forEach((date) => {
@@ -1479,7 +1550,11 @@ function renderCalendar() {
       viewMode === "month" && date.getMonth() !== monthCursor.getMonth();
     column.className = `day-column ${iso === toISO(today) ? "today" : ""} ${isOutsideMonth ? "outside-month" : ""} ${
       iso === highlightedScheduleDate ? "schedule-confirm" : ""
-    } ${goalMarkers.inRange ? "goal-window" : ""}`;
+    } ${goalMarkers.inRange ? "goal-window" : ""} ${
+      goalMarkers.starts.length ? "goal-start" : ""
+    } ${goalMarkers.ends.length ? "goal-end" : ""} ${
+      pendingScheduleTaskId ? "pick-target" : ""
+    }`;
     column.dataset.date = iso;
     column.innerHTML = `
       <div class="day-head">
@@ -1487,6 +1562,7 @@ function renderCalendar() {
         <span class="day-number">${date.getDate()}</span>
         ${viewMode === "month" && scheduled.length ? `<span class="day-count">${escapeHtml(t("dayDialog.count", { count: scheduled.length }))}</span>` : ""}
       </div>
+      ${viewMode === "month" && scheduled.length ? dayColorDots(scheduled) : ""}
       ${goalMarkers.html}
       <div class="day-tasks"></div>
     `;
@@ -1512,6 +1588,13 @@ function renderCalendar() {
     });
     column.addEventListener("click", (event) => {
       if (
+        pendingScheduleTaskId &&
+        !event.target.closest("button, input, textarea, select")
+      ) {
+        scheduleTask(pendingScheduleTaskId, iso);
+        return;
+      }
+      if (
         (viewMode !== "month" && !isCompactScheduleLayout()) ||
         document.body.classList.contains("is-scheduling") ||
         event.target.closest(".scheduled-task")
@@ -1527,6 +1610,41 @@ function renderCalendar() {
     }
     els.calendarGrid.append(column);
   });
+}
+
+function renderCalendarRange() {
+  if (!els.calendarRange) return;
+  const goals = state.goals.filter((goal) => {
+    if (selectedGoalId && goal.id !== selectedGoalId) return false;
+    return goal.createdAt && goal.deadline;
+  });
+  if (!goals.length) {
+    els.calendarRange.innerHTML = `<span class="calendar-range-empty">${escapeHtml(t("calendar.rangeEmpty"))}</span>`;
+    return;
+  }
+  const chips = goals
+    .slice(0, 3)
+    .map(
+      (goal) =>
+        `<span class="calendar-range-chip">${escapeHtml(
+          t("calendar.rangeChip", {
+            goal: goal.name,
+            start: formatDate(goal.createdAt),
+            deadline: formatDate(goal.deadline),
+          }),
+        )}</span>`,
+    )
+    .join("");
+  const overflow =
+    goals.length > 3
+      ? `<span class="calendar-range-more">${escapeHtml(
+          t("calendar.rangeOverflow", { count: goals.length - 3 }),
+        )}</span>`
+      : "";
+  els.calendarRange.innerHTML = `
+    <span class="calendar-range-label">${escapeHtml(t("calendar.rangeLabel"))}</span>
+    <div class="calendar-range-chips">${chips}${overflow}</div>
+  `;
 }
 
 function calendarGoalMarkers(iso) {
@@ -1555,8 +1673,12 @@ function calendarGoalMarkers(iso) {
     }
     return result;
   });
+  const starts = markers.filter((marker) => marker.type === "start");
+  const ends = markers.filter((marker) => marker.type === "end");
   return {
     inRange,
+    starts,
+    ends,
     html: markers.length
       ? `<div class="day-goal-markers">${markers
           .slice(0, 2)
@@ -1567,6 +1689,34 @@ function calendarGoalMarkers(iso) {
           .join("")}</div>`
       : "",
   };
+}
+
+function dayColorDots(items) {
+  const dots = items
+    .slice(0, 5)
+    .map(
+      (item) =>
+        `<span style="--task-color: ${escapeHtml(taskDisplayColor(item))}"></span>`,
+    )
+    .join("");
+  const overflow =
+    items.length > 5
+      ? `<strong>${escapeHtml(t("calendar.rangeOverflow", { count: items.length - 5 }))}</strong>`
+      : "";
+  return `<div class="day-color-dots" aria-hidden="true">${dots}${overflow}</div>`;
+}
+
+function setPendingScheduleTask(taskId) {
+  if (pendingScheduleTaskId === taskId) {
+    pendingScheduleTaskId = "";
+    showToast(t("schedule.pickDateCancelled"));
+  } else {
+    pendingScheduleTaskId = taskId;
+    activeScreen = "schedule";
+    showToast(t("schedule.pickDateHint"));
+    vibrate(8);
+  }
+  render();
 }
 
 function setColumnDropTarget(column, clientY) {
@@ -2153,6 +2303,7 @@ function renderNextAction() {
   els.nextActionButton.dataset.action = next.action;
   els.buddyTitle.textContent = next.buddyTitle;
   els.buddyMessage.textContent = next.buddyMessage;
+  els.buddyCard.dataset.insight = next.insightKey;
 }
 
 function getNextAction(todaysItems, todaysDone) {
@@ -2162,6 +2313,7 @@ function getNextAction(todaysItems, todaysDone) {
       body: t("next.noGoal.body"),
       button: t("next.noGoal.button"),
       action: "createGoal",
+      insightKey: "noGoal",
       buddyTitle: t("next.noGoal.buddyTitle"),
       buddyMessage: t("next.noGoal.buddyMessage"),
     };
@@ -2173,6 +2325,7 @@ function getNextAction(todaysItems, todaysDone) {
       body: t("next.noTask.body"),
       button: t("next.noTask.button"),
       action: "createTask",
+      insightKey: "noTask",
       buddyTitle: t("next.noTask.buddyTitle"),
       buddyMessage: t("next.noTask.buddyMessage"),
     };
@@ -2184,6 +2337,7 @@ function getNextAction(todaysItems, todaysDone) {
       body: t("next.noToday.body"),
       button: t("next.noToday.button"),
       action: "openTasks",
+      insightKey: "noToday",
       buddyTitle: t("next.noToday.buddyTitle"),
       buddyMessage: t("next.noToday.buddyMessage"),
     };
@@ -2198,6 +2352,7 @@ function getNextAction(todaysItems, todaysDone) {
       }),
       button: t("next.inProgress.button"),
       action: "openToday",
+      insightKey: "inProgress",
       buddyTitle: t("next.inProgress.buddyTitle"),
       buddyMessage: t("next.inProgress.buddyMessage"),
     };
@@ -2208,6 +2363,7 @@ function getNextAction(todaysItems, todaysDone) {
     body: t("next.done.body"),
     button: t("next.done.button"),
     action: "openSchedule",
+    insightKey: "done",
     buddyTitle: t("next.done.buddyTitle"),
     buddyMessage: t("next.done.buddyMessage"),
   };
@@ -2813,9 +2969,18 @@ function openDayDialog(date) {
 
 function openInsightDialog(key) {
   if (!els.insightDialog) return;
-  const normalizedKey = ["buddy", "goal", "task", "today"].includes(key)
-    ? key
-    : "buddy";
+  const insightKeys = [
+    "buddy",
+    "goal",
+    "task",
+    "today",
+    "noGoal",
+    "noTask",
+    "noToday",
+    "inProgress",
+    "done",
+  ];
+  const normalizedKey = insightKeys.includes(key) ? key : "buddy";
   els.insightDialogKicker.textContent = t("insight.kicker");
   els.insightDialogTitle.textContent = t(`insight.${normalizedKey}.title`);
   els.insightDialogBody.textContent = t(`insight.${normalizedKey}.body`);
@@ -2851,6 +3016,7 @@ function scheduleTask(taskId, date) {
   const task = state.tasks.find((candidate) => candidate.id === taskId);
   if (!task) return;
   state.scheduled.push(makeSchedule(task, date, false));
+  pendingScheduleTaskId = "";
   highlightedScheduleDate = date;
   activeScheduleControlId = "";
   window.clearTimeout(highlightedScheduleTimer);
@@ -2942,14 +3108,14 @@ function ensureInteractionSounds() {
       src: [
         createToneDataUrl({
           duration: 0.14,
-          volume: 0.52,
+          volume: 0.64,
           tones: [
             { from: 174.61, to: 174.61, gain: 0.2, delay: 0, decay: 5.8 },
             { from: 261.63, to: 261.63, gain: 0.12, delay: 0.028, decay: 7.2 },
           ],
         }),
       ],
-      volume: 0.58,
+      volume: 0.72,
       preload: true,
     });
   }
@@ -2958,7 +3124,7 @@ function ensureInteractionSounds() {
       src: [
         createToneDataUrl({
           duration: 0.22,
-          volume: 0.58,
+          volume: 0.72,
           tones: [
             { from: 164.81, to: 164.81, gain: 0.2, delay: 0, decay: 4.6 },
             { from: 246.94, to: 246.94, gain: 0.19, delay: 0.052, decay: 5.6 },
@@ -2966,7 +3132,7 @@ function ensureInteractionSounds() {
           ],
         }),
       ],
-      volume: 0.64,
+      volume: 0.78,
       preload: true,
     });
   }
@@ -2981,7 +3147,7 @@ function playScheduleSound() {
         src: [
           createToneDataUrl({
             duration: 0.24,
-            volume: 0.48,
+            volume: 0.62,
             tones: [
               { from: 146.83, to: 146.83, gain: 0.16, delay: 0, decay: 4.8 },
               { from: 220, to: 220, gain: 0.2, delay: 0.05, decay: 5.8 },
@@ -2989,7 +3155,7 @@ function playScheduleSound() {
             ],
           }),
         ],
-        volume: 0.56,
+        volume: 0.72,
         preload: true,
       });
     }
@@ -3230,7 +3396,7 @@ function playCompletionSound() {
         src: [
           createToneDataUrl({
             duration: 0.62,
-            volume: 0.46,
+            volume: 0.58,
             tones: [
               { from: 110, to: 110, gain: 0.12, delay: 0, decay: 3.6 },
               {
@@ -3252,7 +3418,7 @@ function playCompletionSound() {
             ],
           }),
         ],
-        volume: 0.68,
+        volume: 0.82,
         preload: true,
       });
     }
@@ -3957,7 +4123,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260522-calendarpolish")
+      .register("./sw.js?v=20260523-mobileflow")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

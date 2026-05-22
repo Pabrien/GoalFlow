@@ -1486,6 +1486,21 @@ body.is-scheduling .day-column {
     0 10px 24px rgba(29, 127, 95, 0.12);
 }
 
+.bank-task.picking {
+  border-color: rgba(37, 99, 235, 0.46);
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.1), transparent 54%), #fbfcfa;
+  box-shadow:
+    inset 0 0 0 1px rgba(37, 99, 235, 0.16),
+    0 12px 28px rgba(37, 99, 235, 0.12);
+}
+
+.bank-task.picking .pick-date-button {
+  border-color: rgba(37, 99, 235, 0.34);
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
 body.is-returning-scheduled .task-bank {
   border: 1px dashed rgba(29, 127, 95, 0.38);
   border-radius: 14px;
@@ -1776,6 +1791,58 @@ body[data-calendar-size="size-7"] .planner {
   gap: 6px;
 }
 
+.calendar-range {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(20, 108, 99, 0.12);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(20, 108, 99, 0.055), transparent 58%),
+    rgba(250, 251, 248, 0.78);
+}
+
+.calendar-range-label {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.calendar-range-chips {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.calendar-range-chip,
+.calendar-range-more,
+.calendar-range-empty {
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(20, 108, 99, 0.08);
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-range-more,
+.calendar-range-empty {
+  color: var(--muted);
+  background: rgba(120, 129, 110, 0.1);
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(var(--day-width), 1fr));
@@ -1869,9 +1936,79 @@ body[data-calendar-size="size-7"] .planner {
   font-weight: 900;
 }
 
+.day-color-dots {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin: -1px 0 6px;
+}
+
+.day-color-dots span {
+  flex: 1 1 0;
+  min-width: 8px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--task-color);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.day-color-dots strong {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .day-column.goal-window {
   background:
     linear-gradient(180deg, rgba(20, 108, 99, 0.035), transparent 42%), #fafbf8;
+}
+
+.day-column.goal-window::before {
+  content: "";
+  display: block;
+  height: 3px;
+  margin: -10px -10px 8px;
+  border-radius: 8px 8px 0 0;
+  background: rgba(20, 108, 99, 0.22);
+}
+
+.month-mode .day-column.goal-window::before {
+  margin: -8px -8px 6px;
+}
+
+.day-column.goal-start {
+  border-left-color: rgba(37, 99, 235, 0.58);
+  box-shadow: inset 3px 0 0 rgba(37, 99, 235, 0.2);
+}
+
+.day-column.goal-end {
+  border-right-color: rgba(180, 83, 9, 0.58);
+  box-shadow: inset -3px 0 0 rgba(180, 83, 9, 0.18);
+}
+
+.day-column.goal-start.goal-end {
+  box-shadow:
+    inset 3px 0 0 rgba(37, 99, 235, 0.2),
+    inset -3px 0 0 rgba(180, 83, 9, 0.18);
+}
+
+.day-column.pick-target {
+  cursor: copy;
+}
+
+body.is-picking-schedule-date .day-column.pick-target {
+  border-color: rgba(37, 99, 235, 0.26);
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.06), transparent 58%), #fafbf8;
+}
+
+body.is-picking-schedule-date .day-column.pick-target:hover {
+  border-color: rgba(37, 99, 235, 0.52);
+  box-shadow:
+    inset 0 0 0 2px rgba(37, 99, 235, 0.1),
+    0 16px 34px rgba(37, 99, 235, 0.14);
+  transform: translateY(-1px);
 }
 
 .day-goal-markers {
@@ -3512,6 +3649,21 @@ dialog {
     font-size: 16px;
   }
 
+  body[data-active-screen="schedule"] .calendar-range {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 8px;
+    padding: 7px 8px;
+  }
+
+  body[data-active-screen="schedule"] .calendar-range-label,
+  body[data-active-screen="schedule"] .calendar-range-chip,
+  body[data-active-screen="schedule"] .calendar-range-more,
+  body[data-active-screen="schedule"] .calendar-range-empty {
+    font-size: 10px;
+  }
+
   body[data-active-screen="schedule"] .week-controls {
     width: 100%;
     display: grid;
@@ -3563,6 +3715,18 @@ dialog {
     padding: 0;
     aspect-ratio: 1;
     border-radius: 6px;
+  }
+
+  body[data-active-screen="schedule"]
+    .calendar-grid.month-mode
+    .day-column.goal-window::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 3px;
+    margin: 0;
+    border-radius: 6px 6px 0 0;
   }
 
   body[data-active-screen="schedule"]
@@ -3651,9 +3815,35 @@ dialog {
     right: 6px;
     bottom: 4px;
     left: 6px;
-    display: block;
+    display: none;
     height: 2px;
     overflow: hidden;
+  }
+
+  body[data-active-screen="schedule"]
+    .calendar-grid.month-mode
+    .day-color-dots {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    left: 5px;
+    margin: 0;
+    gap: 2px;
+  }
+
+  body[data-active-screen="schedule"]
+    .calendar-grid.month-mode
+    .day-color-dots
+    span {
+    min-width: 0;
+    height: 3px;
+  }
+
+  body[data-active-screen="schedule"]
+    .calendar-grid.month-mode
+    .day-color-dots
+    strong {
+    display: none;
   }
 
   body[data-active-screen="schedule"] .scheduled-task,
@@ -4048,6 +4238,22 @@ body[data-theme="dark"] .day-column.drop-target {
   background: rgba(94, 224, 168, 0.12);
 }
 
+body[data-theme="dark"] .bank-task.picking {
+  border-color: rgba(114, 167, 255, 0.52);
+  background:
+    linear-gradient(135deg, rgba(114, 167, 255, 0.14), transparent 58%),
+    rgba(8, 13, 24, 0.96);
+  box-shadow:
+    inset 0 0 0 1px rgba(114, 167, 255, 0.14),
+    0 14px 32px rgba(0, 0, 0, 0.26);
+}
+
+body[data-theme="dark"] .bank-task.picking .pick-date-button {
+  border-color: rgba(114, 167, 255, 0.46);
+  background: rgba(114, 167, 255, 0.16);
+  color: #bfdbfe;
+}
+
 body[data-theme="dark"] .tag,
 body[data-theme="dark"] .goal-stats span,
 body[data-theme="dark"] .category-chip,
@@ -4097,9 +4303,54 @@ body[data-theme="dark"] .day-column {
   background: rgba(7, 11, 20, 0.78);
 }
 
+body[data-theme="dark"] .calendar-range {
+  border-color: rgba(100, 116, 139, 0.28);
+  background:
+    linear-gradient(135deg, rgba(79, 214, 154, 0.08), transparent 58%),
+    rgba(7, 11, 20, 0.72);
+}
+
+body[data-theme="dark"] .calendar-range-chip {
+  background: rgba(79, 214, 154, 0.12);
+  color: var(--accent-strong);
+}
+
+body[data-theme="dark"] .calendar-range-more,
+body[data-theme="dark"] .calendar-range-empty {
+  background: rgba(31, 41, 55, 0.72);
+  color: var(--muted);
+}
+
 body[data-theme="dark"] .day-column.goal-window {
   background:
     linear-gradient(180deg, rgba(79, 214, 154, 0.055), transparent 42%),
+    rgba(7, 11, 20, 0.78);
+}
+
+body[data-theme="dark"] .day-column.goal-window::before {
+  background: rgba(79, 214, 154, 0.32);
+}
+
+body[data-theme="dark"] .day-column.goal-start {
+  border-left-color: rgba(114, 167, 255, 0.62);
+  box-shadow: inset 3px 0 0 rgba(114, 167, 255, 0.22);
+}
+
+body[data-theme="dark"] .day-column.goal-end {
+  border-right-color: rgba(237, 200, 95, 0.62);
+  box-shadow: inset -3px 0 0 rgba(237, 200, 95, 0.22);
+}
+
+body[data-theme="dark"] .day-column.goal-start.goal-end {
+  box-shadow:
+    inset 3px 0 0 rgba(114, 167, 255, 0.22),
+    inset -3px 0 0 rgba(237, 200, 95, 0.22);
+}
+
+body[data-theme="dark"].is-picking-schedule-date .day-column.pick-target {
+  border-color: rgba(114, 167, 255, 0.34);
+  background:
+    linear-gradient(135deg, rgba(114, 167, 255, 0.1), transparent 58%),
     rgba(7, 11, 20, 0.78);
 }
 
@@ -4313,4 +4564,37 @@ body[data-theme="dark"] .task-bank.return-target {
 
 body[data-theme="dark"] .today-task.done {
   background: #0a1714;
+}
+
+@media (max-width: 640px) {
+  body[data-theme="dark"][data-active-screen="schedule"]
+    .calendar-grid.week-mode
+    .scheduled-task,
+  body[data-theme="dark"][data-active-screen="schedule"]
+    .calendar-grid.month-mode
+    .scheduled-task {
+    background:
+      linear-gradient(135deg, var(--task-soft), transparent 56%),
+      rgba(8, 13, 24, 0.96);
+    color: var(--ink);
+  }
+
+  body[data-theme="dark"][data-active-screen="schedule"]
+    .calendar-grid.month-mode
+    .scheduled-task {
+    background: var(--task-color);
+  }
+
+  body[data-theme="dark"][data-active-screen="schedule"]
+    .calendar-grid.month-mode
+    .day-column {
+    background: rgba(7, 11, 20, 0.82);
+  }
+
+  body[data-theme="dark"][data-active-screen="schedule"]
+    .calendar-grid.month-mode
+    .day-color-dots
+    span {
+    box-shadow: 0 0 0 1px rgba(7, 11, 20, 0.7);
+  }
 }
