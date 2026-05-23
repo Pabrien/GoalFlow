@@ -19,7 +19,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260523-mobilecontrols" />
+    <link rel="stylesheet" href="./styles.css?v=20260523-taskpicker" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -465,7 +465,12 @@
 
           <section class="panel" data-view-panel="tasks">
             <div class="panel-heading">
-              <h2 data-i18n="tasks.title">保存タスク</h2>
+              <div>
+                <p class="task-picker-label" data-i18n="tasks.pickerLabel">
+                  予定に入れるタスク
+                </p>
+                <h2 data-i18n="tasks.title">保存タスク</h2>
+              </div>
               <button
                 class="ghost-button"
                 id="openTaskDialog"
@@ -475,6 +480,9 @@
                 追加
               </button>
             </div>
+            <p class="task-picker-guide" data-i18n="tasks.pickerGuide">
+              保存タスクを選択して、カレンダーの日付を押すと予定に入ります。
+            </p>
             <div class="task-bank" id="taskBank"></div>
           </section>
         </aside>
@@ -798,6 +806,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260523-mobilecontrols"></script>
+    <script defer src="./app.js?v=20260523-taskpicker"></script>
   </body>
 </html>

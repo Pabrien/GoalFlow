@@ -209,6 +209,9 @@ const translations = {
     "goals.doneTotal": "{done}/{total} 完了",
     "goals.progress": "進み具合 {percent}%",
     "tasks.title": "保存タスク",
+    "tasks.pickerLabel": "予定に入れるタスク",
+    "tasks.pickerGuide":
+      "保存タスクを選択して、カレンダーの日付を押すと予定に入ります。",
     "tasks.add": "追加",
     "tasks.scopeAll": "すべての目標の保存タスク",
     "tasks.scopeGoal": "「{goal}」の保存タスク",
@@ -527,6 +530,9 @@ const translations = {
     "goals.doneTotal": "{done}/{total} done",
     "goals.progress": "Progress {percent}%",
     "tasks.title": "Saved tasks",
+    "tasks.pickerLabel": "Tasks to schedule",
+    "tasks.pickerGuide":
+      "Select a saved task, then tap a calendar date to schedule it.",
     "tasks.add": "Add",
     "tasks.scopeAll": "Saved tasks for all goals",
     "tasks.scopeGoal": "Saved tasks for “{goal}”",
@@ -1271,7 +1277,7 @@ function renderTaskBank() {
     );
     item.addEventListener("click", (event) => {
       if (
-        !isCompactScheduleLayout() ||
+        activeScreen !== "schedule" ||
         event.target.closest("button, input, textarea, select, form") ||
         event.target.closest("[data-drag-handle]") ||
         nativeDragging
@@ -1281,7 +1287,7 @@ function renderTaskBank() {
     });
     item.addEventListener("keydown", (event) => {
       if (
-        !isCompactScheduleLayout() ||
+        activeScreen !== "schedule" ||
         (event.key !== "Enter" && event.key !== " ") ||
         event.target.closest("button, input, textarea, select")
       )
@@ -4152,7 +4158,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260523-mobilecontrols")
+      .register("./sw.js?v=20260523-taskpicker")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v42-20260523-mobilecontrols";
+const cacheName = "goalflow-v43-20260523-taskpicker";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260523-mobilecontrols",
-  "./app.js?v=20260523-mobilecontrols",
+  "./styles.css?v=20260523-taskpicker",
+  "./app.js?v=20260523-taskpicker",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",
