@@ -735,9 +735,7 @@ textarea:focus-visible,
     transform 0.2s ease;
 }
 
-.flow-card,
-.flow-map-progress,
-.insight-card {
+.flow-map-progress {
   cursor: pointer;
 }
 
@@ -750,6 +748,10 @@ textarea:focus-visible,
   color: var(--accent-strong);
   font-size: 11px;
   font-weight: 900;
+  cursor: pointer;
+  transition:
+    color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .flow-map small::after,
@@ -763,13 +765,12 @@ textarea:focus-visible,
   transform: rotate(45deg);
 }
 
-.flow-map article:hover,
-.flow-map article:focus-visible,
-.insight-card:hover,
-.insight-card:focus-visible {
-  border-color: rgba(20, 108, 99, 0.18);
-  transform: translateY(-2px);
-  box-shadow: 0 18px 42px rgba(33, 38, 32, 0.1);
+.flow-map small:hover,
+.flow-map small:focus-visible,
+.insight-link:hover,
+.insight-link:focus-visible {
+  color: var(--accent);
+  transform: translateX(2px);
   outline: 0;
 }
 
@@ -897,9 +898,11 @@ textarea:focus-visible,
   overflow: hidden;
 }
 
-.buddy-card:focus-visible {
+.insight-link:focus-visible,
+.flow-map small:focus-visible {
   outline: 3px solid rgba(20, 108, 99, 0.26);
   outline-offset: 3px;
+  border-radius: 999px;
 }
 
 .flow-orbit {
@@ -3545,10 +3548,15 @@ dialog {
     min-width: 0;
     padding: 7px;
     touch-action: pan-y;
+    cursor: pointer;
     -webkit-touch-callout: none;
     -webkit-user-drag: none;
     -webkit-user-select: none;
     user-select: none;
+  }
+
+  body[data-active-screen="schedule"] .bank-task.picking {
+    transform: translateY(-1px);
   }
 
   body[data-active-screen="schedule"] .bank-task-main {
@@ -3667,13 +3675,25 @@ dialog {
   body[data-active-screen="schedule"] .week-controls {
     width: 100%;
     display: grid;
-    grid-template-columns: 1fr 40px auto 40px auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
   }
 
   body[data-active-screen="schedule"] .view-switch {
     display: grid;
+    grid-column: span 2;
     grid-template-columns: 1fr 1fr;
+  }
+
+  body[data-active-screen="schedule"] #todayPeriod {
+    grid-column: span 2;
+  }
+
+  body[data-active-screen="schedule"] .calendar-zoom {
+    display: grid;
+    grid-column: span 2;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
   }
 
   body[data-active-screen="schedule"] .switch-button,
@@ -3688,8 +3708,70 @@ dialog {
     margin-top: 8px;
   }
 
+  body[data-active-screen="schedule"] .calendar-grid.week-mode {
+    grid-template-columns: repeat(7, minmax(var(--mobile-week-day-width), 1fr));
+    min-width: var(--mobile-week-width);
+    gap: var(--mobile-week-gap);
+  }
+
+  body[data-active-screen="schedule"][data-calendar-size="size-1"] .planner {
+    --mobile-week-width: 100%;
+    --mobile-week-day-width: 0;
+    --mobile-week-gap: 3px;
+    --mobile-week-day-height: 96px;
+    --mobile-month-width: 252px;
+  }
+
+  body[data-active-screen="schedule"][data-calendar-size="size-2"] .planner {
+    --mobile-week-width: 520px;
+    --mobile-week-day-width: 68px;
+    --mobile-week-gap: 5px;
+    --mobile-week-day-height: 122px;
+    --mobile-month-width: 292px;
+  }
+
+  body[data-active-screen="schedule"][data-calendar-size="size-3"] .planner {
+    --mobile-week-width: 620px;
+    --mobile-week-day-width: 82px;
+    --mobile-week-gap: 6px;
+    --mobile-week-day-height: 150px;
+    --mobile-month-width: 320px;
+  }
+
+  body[data-active-screen="schedule"][data-calendar-size="size-4"] .planner {
+    --mobile-week-width: 720px;
+    --mobile-week-day-width: 96px;
+    --mobile-week-gap: 7px;
+    --mobile-week-day-height: 176px;
+    --mobile-month-width: 348px;
+  }
+
+  body[data-active-screen="schedule"][data-calendar-size="size-5"] .planner {
+    --mobile-week-width: 820px;
+    --mobile-week-day-width: 110px;
+    --mobile-week-gap: 8px;
+    --mobile-week-day-height: 210px;
+    --mobile-month-width: 376px;
+  }
+
+  body[data-active-screen="schedule"][data-calendar-size="size-6"] .planner {
+    --mobile-week-width: 940px;
+    --mobile-week-day-width: 126px;
+    --mobile-week-gap: 8px;
+    --mobile-week-day-height: 244px;
+    --mobile-month-width: 404px;
+  }
+
+  body[data-active-screen="schedule"][data-calendar-size="size-7"] .planner {
+    --mobile-week-width: 1060px;
+    --mobile-week-day-width: 142px;
+    --mobile-week-gap: 9px;
+    --mobile-week-day-height: 280px;
+    --mobile-month-width: 432px;
+  }
+
   body[data-active-screen="schedule"] .calendar-grid.month-mode {
-    width: 100%;
+    width: var(--mobile-month-width, 292px);
     gap: 2px;
     margin: 6px auto 0;
   }
@@ -3697,7 +3779,7 @@ dialog {
   body[data-active-screen="schedule"]
     .calendar-grid.month-mode.compact-month-mode {
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    width: min(100%, 292px);
+    width: min(100%, var(--mobile-month-width, 292px));
     gap: 3px;
   }
 
@@ -3736,7 +3818,7 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .calendar-grid.week-mode .day-column {
-    min-height: clamp(150px, 28vh, 220px);
+    min-height: var(--mobile-week-day-height, clamp(150px, 28vh, 220px));
   }
 
   body[data-active-screen="schedule"] .calendar-grid.week-mode .scheduled-task {

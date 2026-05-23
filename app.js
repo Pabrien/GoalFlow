@@ -770,6 +770,7 @@ const els = {
   flowOrbit: document.querySelector("#flowOrbit"),
   buddyTitle: document.querySelector("#buddyTitle"),
   buddyMessage: document.querySelector("#buddyMessage"),
+  buddyInsightLink: document.querySelector("#buddyCard .insight-link"),
   toast: document.querySelector("#toast"),
 };
 
@@ -1178,6 +1179,11 @@ function renderTaskBank() {
       pendingScheduleTaskId === task.id ? "picking" : ""
     }`;
     item.draggable = true;
+    item.tabIndex = 0;
+    item.setAttribute(
+      "aria-pressed",
+      String(pendingScheduleTaskId === task.id),
+    );
     item.dataset.taskId = task.id;
     item.setAttribute("style", taskColorStyle(task));
     let nativeDragging = false;
@@ -1257,11 +1263,32 @@ function renderTaskBank() {
     dragHandle.addEventListener("click", (event) => {
       if (nativeDragging) return;
       event.preventDefault();
+      event.stopPropagation();
       setPendingScheduleTask(task.id);
     });
     item.addEventListener("pointerdown", (event) =>
       startTouchScheduleDrag(event, task, goal, item),
     );
+    item.addEventListener("click", (event) => {
+      if (
+        !isCompactScheduleLayout() ||
+        event.target.closest("button, input, textarea, select, form") ||
+        event.target.closest("[data-drag-handle]") ||
+        nativeDragging
+      )
+        return;
+      setPendingScheduleTask(task.id);
+    });
+    item.addEventListener("keydown", (event) => {
+      if (
+        !isCompactScheduleLayout() ||
+        (event.key !== "Enter" && event.key !== " ") ||
+        event.target.closest("button, input, textarea, select")
+      )
+        return;
+      event.preventDefault();
+      setPendingScheduleTask(task.id);
+    });
     item.addEventListener("selectstart", (event) => event.preventDefault());
     item.addEventListener("contextmenu", (event) => {
       if (isCompactScheduleLayout()) event.preventDefault();
@@ -2303,7 +2330,9 @@ function renderNextAction() {
   els.nextActionButton.dataset.action = next.action;
   els.buddyTitle.textContent = next.buddyTitle;
   els.buddyMessage.textContent = next.buddyMessage;
-  els.buddyCard.dataset.insight = next.insightKey;
+  delete els.buddyCard.dataset.insight;
+  if (els.buddyInsightLink)
+    els.buddyInsightLink.dataset.insight = next.insightKey;
 }
 
 function getNextAction(todaysItems, todaysDone) {
@@ -3097,7 +3126,7 @@ function getInteractiveSoundTarget(target) {
     return null;
   }
   return target.closest(
-    "button, select, .goal-select, .bank-task, .scheduled-task, .today-task, .day-column, .category-chip",
+    "button, select, .goal-select, .insight-link, .flow-map small, .bank-task, .scheduled-task, .today-task, .day-column, .category-chip",
   );
 }
 
@@ -4123,7 +4152,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260523-mobileflow")
+      .register("./sw.js?v=20260523-mobilecontrols")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

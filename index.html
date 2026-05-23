@@ -19,7 +19,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260523-mobileflow" />
+    <link rel="stylesheet" href="./styles.css?v=20260523-mobilecontrols" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -279,18 +279,17 @@
             </button>
           </div>
         </article>
-        <article
-          class="buddy-card insight-card"
-          id="buddyCard"
-          role="button"
-          tabindex="0"
-          data-insight="buddy"
-        >
+        <article class="buddy-card insight-card" id="buddyCard">
           <p class="eyebrow" data-i18n="buddy.kicker">ひとこと</p>
           <div class="flow-orbit" id="flowOrbit" aria-hidden="true"></div>
           <h2 id="buddyTitle">今日の流れ</h2>
           <p id="buddyMessage">小さく始めて、完了を1つ残しましょう。</p>
-          <span class="insight-link" data-i18n="insight.readMore"
+          <span
+            class="insight-link"
+            role="button"
+            tabindex="0"
+            data-insight="buddy"
+            data-i18n="insight.readMore"
             >理由を読む</span
           >
         </article>
@@ -303,43 +302,46 @@
         aria-label="GoalFlowの流れ"
         data-i18n-aria="flow.aria"
       >
-        <article
-          class="flow-card"
-          role="button"
-          tabindex="0"
-          data-insight="goal"
-        >
+        <article class="flow-card">
           <span>1</span>
           <div>
             <h2 data-i18n="flow.goal.title">目標</h2>
             <p data-i18n="flow.goal.body">続けたい理由と期限を決める</p>
-            <small data-i18n="insight.readMore">理由を読む</small>
+            <small
+              role="button"
+              tabindex="0"
+              data-insight="goal"
+              data-i18n="insight.readMore"
+              >理由を読む</small
+            >
           </div>
         </article>
-        <article
-          class="flow-card"
-          role="button"
-          tabindex="0"
-          data-insight="task"
-        >
+        <article class="flow-card">
           <span>2</span>
           <div>
             <h2 data-i18n="flow.task.title">タスク</h2>
             <p data-i18n="flow.task.body">今日できるサイズに分ける</p>
-            <small data-i18n="insight.readMore">理由を読む</small>
+            <small
+              role="button"
+              tabindex="0"
+              data-insight="task"
+              data-i18n="insight.readMore"
+              >理由を読む</small
+            >
           </div>
         </article>
-        <article
-          class="flow-card"
-          role="button"
-          tabindex="0"
-          data-insight="today"
-        >
+        <article class="flow-card">
           <span>3</span>
           <div>
             <h2 data-i18n="flow.today.title">今日の予定</h2>
             <p data-i18n="flow.today.body">置いたら、あとは完了するだけ</p>
-            <small data-i18n="insight.readMore">理由を読む</small>
+            <small
+              role="button"
+              tabindex="0"
+              data-insight="today"
+              data-i18n="insight.readMore"
+              >理由を読む</small
+            >
           </div>
         </article>
         <article
@@ -796,6 +798,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260523-mobileflow"></script>
+    <script defer src="./app.js?v=20260523-mobilecontrols"></script>
   </body>
 </html>
