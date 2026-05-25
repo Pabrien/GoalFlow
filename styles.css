@@ -532,7 +532,8 @@ textarea:focus-visible,
   gap: 8px;
 }
 
-.help-button {
+.help-button,
+.intro-replay-button {
   min-height: 38px;
   border-radius: 999px;
 }

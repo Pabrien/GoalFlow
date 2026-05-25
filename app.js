@@ -26,6 +26,7 @@ let monthCursor = new Date(today.getFullYear(), today.getMonth(), 1);
 let viewMode = "week";
 let activeScreen = "home";
 let introStoryIndex = 0;
+let introStoryForced = shouldForceIntroStory();
 let highlightedCompletionId = "";
 let highlightedScheduleDate = "";
 let highlightedScheduleTimer = null;
@@ -90,6 +91,7 @@ const translations = {
     "introStory.prev": "戻る",
     "introStory.next": "次へ",
     "introStory.start": "始める",
+    "introStory.replay": "初回説明",
     "introStory.page": "{current} / {total}",
     "introStory.0.label": "問題",
     "introStory.0.title": "目標はある。でも今日が見えない。",
@@ -443,6 +445,7 @@ const translations = {
     "introStory.prev": "Back",
     "introStory.next": "Next",
     "introStory.start": "Start",
+    "introStory.replay": "Intro",
     "introStory.page": "{current} / {total}",
     "introStory.0.label": "Problem",
     "introStory.0.title": "You have goals. Today is unclear.",
@@ -826,6 +829,7 @@ const els = {
   introStoryPrev: document.querySelector("#introStoryPrev"),
   introStoryNext: document.querySelector("#introStoryNext"),
   introStorySkip: document.querySelector("#introStorySkip"),
+  replayIntroStory: document.querySelector("#replayIntroStory"),
   onboarding: document.querySelector("#onboarding"),
   startFirstGoal: document.querySelector("#startFirstGoal"),
   dismissOnboarding: document.querySelector("#dismissOnboarding"),
@@ -2220,9 +2224,24 @@ function introStorySlides() {
   }));
 }
 
+function shouldForceIntroStory() {
+  const params = new URLSearchParams(window.location.search);
+  return (
+    params.get("intro") === "1" ||
+    params.get("introStory") === "1" ||
+    params.get("test") === "first"
+  );
+}
+
+function shouldShowIntroStory() {
+  return (
+    introStoryForced || (!state.meta.introCompleted && state.goals.length === 0)
+  );
+}
+
 function renderIntroStory() {
   if (!els.introStory || !els.introStoryTrack) return;
-  const shouldShow = !state.meta.introCompleted && state.goals.length === 0;
+  const shouldShow = shouldShowIntroStory();
   els.introStory.hidden = !shouldShow;
   document.body.classList.toggle("intro-story-open", shouldShow);
   if (!shouldShow) return;
@@ -2283,7 +2302,15 @@ function moveIntroStory(direction) {
 
 function completeIntroStory() {
   state.meta.introCompleted = true;
+  introStoryForced = false;
   introStoryIndex = 0;
+  render();
+}
+
+function replayIntroStory() {
+  introStoryForced = true;
+  introStoryIndex = 0;
+  removeTutorialTargets();
   render();
 }
 
@@ -2366,7 +2393,7 @@ function tutorialSteps() {
 }
 
 function syncTutorialState() {
-  if (!state.meta.introCompleted) {
+  if (shouldShowIntroStory() || !state.meta.introCompleted) {
     removeTutorialTargets();
     return;
   }
@@ -2401,7 +2428,11 @@ function syncTutorialState() {
 function renderTutorialCoach() {
   if (!els.tutorialCoach) return;
   removeTutorialTargets(false);
-  if (!state.meta.introCompleted || !state.meta.tutorialActive) {
+  if (
+    shouldShowIntroStory() ||
+    !state.meta.introCompleted ||
+    !state.meta.tutorialActive
+  ) {
     els.tutorialCoach.hidden = true;
     return;
   }
@@ -4249,6 +4280,7 @@ els.introStoryNext?.addEventListener("click", () => {
 
 els.introStoryPrev?.addEventListener("click", () => moveIntroStory(-1));
 els.introStorySkip?.addEventListener("click", completeIntroStory);
+els.replayIntroStory?.addEventListener("click", replayIntroStory);
 
 let introStoryTouchStartX = 0;
 let introStoryTouchStartY = 0;
@@ -4366,7 +4398,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260525-introstory")
+      .register("./sw.js?v=20260525-introreplay")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
