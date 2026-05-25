@@ -19,12 +19,58 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260523-taskpicker" />
+    <link rel="stylesheet" href="./styles.css?v=20260525-introstory" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
       <div class="launch-logo">GoalFlow</div>
     </div>
+    <section
+      class="intro-story"
+      id="introStory"
+      aria-label="GoalFlowの説明"
+      data-i18n-aria="introStory.aria"
+      tabindex="-1"
+      hidden
+    >
+      <div class="intro-story-card">
+        <div class="intro-story-top">
+          <p class="eyebrow" data-i18n="introStory.kicker">GoalFlow guide</p>
+          <button
+            class="ghost-button intro-story-skip"
+            id="introStorySkip"
+            type="button"
+            data-i18n="introStory.skip"
+          >
+            スキップ
+          </button>
+        </div>
+        <div class="intro-story-window" id="introStoryWindow">
+          <div class="intro-story-track" id="introStoryTrack"></div>
+        </div>
+        <div class="intro-story-footer">
+          <div class="intro-story-progress" id="introStoryProgress"></div>
+          <div class="intro-story-actions">
+            <button
+              class="ghost-button"
+              id="introStoryPrev"
+              type="button"
+              data-i18n="introStory.prev"
+            >
+              戻る
+            </button>
+            <button
+              class="primary-button"
+              id="introStoryNext"
+              type="button"
+              data-i18n="introStory.next"
+            >
+              次へ
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
     <main class="app-shell">
       <header class="topbar">
         <div>
@@ -806,6 +852,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260523-taskpicker"></script>
+    <script defer src="./app.js?v=20260525-introstory"></script>
   </body>
 </html>

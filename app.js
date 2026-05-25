@@ -25,6 +25,7 @@ let weekStart = getWeekStart(today);
 let monthCursor = new Date(today.getFullYear(), today.getMonth(), 1);
 let viewMode = "week";
 let activeScreen = "home";
+let introStoryIndex = 0;
 let highlightedCompletionId = "";
 let highlightedScheduleDate = "";
 let highlightedScheduleTimer = null;
@@ -83,6 +84,41 @@ const translations = {
     "onboarding.step3.body": "進捗がグラフに残り、次の一歩が見えます。",
     "onboarding.primary": "最初の目標を作る",
     "onboarding.secondary": "あとで見る",
+    "introStory.aria": "GoalFlowの初回説明",
+    "introStory.kicker": "GoalFlow guide",
+    "introStory.skip": "スキップ",
+    "introStory.prev": "戻る",
+    "introStory.next": "次へ",
+    "introStory.start": "始める",
+    "introStory.page": "{current} / {total}",
+    "introStory.0.label": "問題",
+    "introStory.0.title": "目標はある。でも今日が見えない。",
+    "introStory.0.body":
+      "GoalFlowは、やる気がない人よりも、やりたいことが多い人のためのアプリです。大きな目標を、今日の一手まで小さくします。",
+    "introStory.1.label": "価値",
+    "introStory.1.title": "予定帳ではなく、前進装置です。",
+    "introStory.1.body":
+      "Appleカレンダーの代わりではありません。目標管理と今日の行動管理の間をつなぎます。",
+    "introStory.2.label": "流れ",
+    "introStory.2.title": "目標 → タスク → 今日やること。",
+    "introStory.2.body":
+      "TOEIC、筋トレ、アプリ制作、資格、就活準備。まず目標を置き、今日できるサイズのタスクへ分けます。",
+    "introStory.3.label": "今日",
+    "introStory.3.title": "「で、今日なにする？」を消す。",
+    "introStory.3.body":
+      "保存タスクを今日に入れると、考える候補が減ります。GoalFlowは、迷う時間を減らして行動に近づけます。",
+    "introStory.4.label": "記録",
+    "introStory.4.title": "完了すると、進捗が残る。",
+    "introStory.4.body":
+      "今日の達成率、7日間の積み上げ、目標別レポート。小さな完了が、次の日の自分を助ける記録になります。",
+    "introStory.5.label": "対象",
+    "introStory.5.title": "長期目標を進めたい個人向け。",
+    "introStory.5.body":
+      "学生、自己投資したい人、個人開発者、クリエイター、副業や起業の準備をしたい人に向いています。",
+    "introStory.6.label": "一言",
+    "introStory.6.title": "将来やりたいことを、今日やる一手に。",
+    "introStory.6.body":
+      "目標はあるのに日々の行動に落とし込めず止まっている人へ。まずは1つ、今日に置くところから始めます。",
     "tabs.aria": "画面切替",
     "tabs.home": "ホーム",
     "tabs.progress": "進捗",
@@ -401,6 +437,41 @@ const translations = {
       "Your progress stays visible, so the next step is clear.",
     "onboarding.primary": "Create first goal",
     "onboarding.secondary": "Later",
+    "introStory.aria": "GoalFlow introduction",
+    "introStory.kicker": "GoalFlow guide",
+    "introStory.skip": "Skip",
+    "introStory.prev": "Back",
+    "introStory.next": "Next",
+    "introStory.start": "Start",
+    "introStory.page": "{current} / {total}",
+    "introStory.0.label": "Problem",
+    "introStory.0.title": "You have goals. Today is unclear.",
+    "introStory.0.body":
+      "GoalFlow is for people with things they want to do. It turns large goals into one clear action for today.",
+    "introStory.1.label": "Value",
+    "introStory.1.title": "Not a calendar. A progress device.",
+    "introStory.1.body":
+      "It is not a replacement for Apple Calendar. It connects goal management with today’s action management.",
+    "introStory.2.label": "Flow",
+    "introStory.2.title": "Goal → Task → Today.",
+    "introStory.2.body":
+      "TOEIC, training, app building, certifications, job preparation. Place the goal, then break it into today-sized tasks.",
+    "introStory.3.label": "Today",
+    "introStory.3.title": "Remove “what should I do today?”",
+    "introStory.3.body":
+      "Putting a saved task on today reduces choices. GoalFlow lowers the thinking load so action feels closer.",
+    "introStory.4.label": "Record",
+    "introStory.4.title": "Completion becomes progress.",
+    "introStory.4.body":
+      "Today’s rate, the 7-day stack, and goal reports turn small wins into records that help tomorrow.",
+    "introStory.5.label": "For",
+    "introStory.5.title": "For individuals with long-term goals.",
+    "introStory.5.body":
+      "It fits students, self-improvers, indie developers, creators, and people preparing a side project or business.",
+    "introStory.6.label": "Core",
+    "introStory.6.title": "Turn future goals into today’s next move.",
+    "introStory.6.body":
+      "For people who have goals but get stuck translating them into daily action. Start by placing one task on today.",
     "tabs.aria": "Screens",
     "tabs.home": "Home",
     "tabs.progress": "Progress",
@@ -748,6 +819,13 @@ const els = {
   calendarZoomOut: document.querySelector("#calendarZoomOut"),
   calendarZoomIn: document.querySelector("#calendarZoomIn"),
   screenTabs: document.querySelectorAll("[data-screen-target]"),
+  introStory: document.querySelector("#introStory"),
+  introStoryTrack: document.querySelector("#introStoryTrack"),
+  introStoryWindow: document.querySelector("#introStoryWindow"),
+  introStoryProgress: document.querySelector("#introStoryProgress"),
+  introStoryPrev: document.querySelector("#introStoryPrev"),
+  introStoryNext: document.querySelector("#introStoryNext"),
+  introStorySkip: document.querySelector("#introStorySkip"),
   onboarding: document.querySelector("#onboarding"),
   startFirstGoal: document.querySelector("#startFirstGoal"),
   dismissOnboarding: document.querySelector("#dismissOnboarding"),
@@ -786,6 +864,7 @@ function createEmptyState() {
     tasks: [],
     scheduled: [],
     meta: {
+      introCompleted: false,
       onboardingDismissed: false,
       lastVisitDate: "",
       visitStreak: 0,
@@ -882,6 +961,9 @@ function loadState() {
         ? parsed.scheduled.map(normalizeScheduledItem)
         : [],
       meta: {
+        introCompleted:
+          parsed.meta?.introCompleted === true ||
+          (Array.isArray(parsed.goals) && parsed.goals.length > 0),
         onboardingDismissed: Boolean(parsed.meta?.onboardingDismissed),
         lastVisitDate: parsed.meta?.lastVisitDate ?? "",
         visitStreak: Number(parsed.meta?.visitStreak ?? 0),
@@ -1064,6 +1146,7 @@ function render() {
     selectedGoalId = state.goals[0]?.id ?? "";
   }
   syncTutorialState();
+  renderIntroStory();
   renderGoals();
   renderTaskBank();
   renderCalendar();
@@ -2121,11 +2204,87 @@ function renderOnboarding() {
   const isGuiding = state.meta.tutorialActive;
   const shouldShow =
     activeScreen === "home" &&
+    state.meta.introCompleted &&
     !isGuiding &&
     !state.meta.onboardingDismissed &&
     state.goals.length === 0;
   els.onboarding.hidden = !shouldShow;
   els.emptyStart.hidden = isGuiding || state.goals.length > 0;
+}
+
+function introStorySlides() {
+  return Array.from({ length: 7 }, (_, index) => ({
+    label: t(`introStory.${index}.label`),
+    title: t(`introStory.${index}.title`),
+    body: t(`introStory.${index}.body`),
+  }));
+}
+
+function renderIntroStory() {
+  if (!els.introStory || !els.introStoryTrack) return;
+  const shouldShow = !state.meta.introCompleted && state.goals.length === 0;
+  els.introStory.hidden = !shouldShow;
+  document.body.classList.toggle("intro-story-open", shouldShow);
+  if (!shouldShow) return;
+  const slides = introStorySlides();
+  introStoryIndex = Math.max(0, Math.min(slides.length - 1, introStoryIndex));
+  els.introStoryTrack.innerHTML = slides
+    .map(
+      (slide, index) => `
+        <article class="intro-story-slide" aria-hidden="${index === introStoryIndex ? "false" : "true"}">
+          <span class="intro-story-count">${escapeHtml(
+            t("introStory.page", {
+              current: index + 1,
+              total: slides.length,
+            }),
+          )}</span>
+          <p class="intro-story-label">${escapeHtml(slide.label)}</p>
+          <h2>${escapeHtml(slide.title)}</h2>
+          <p>${escapeHtml(slide.body)}</p>
+        </article>
+      `,
+    )
+    .join("");
+  els.introStoryTrack.style.transform = `translateX(-${introStoryIndex * 100}%)`;
+  els.introStoryProgress.innerHTML = slides
+    .map(
+      (_, index) =>
+        `<button type="button" class="${index === introStoryIndex ? "active" : ""}" aria-label="${escapeHtml(
+          t("introStory.page", {
+            current: index + 1,
+            total: slides.length,
+          }),
+        )}" data-intro-dot="${index}"></button>`,
+    )
+    .join("");
+  els.introStoryPrev.disabled = introStoryIndex === 0;
+  els.introStoryNext.textContent =
+    introStoryIndex === slides.length - 1
+      ? t("introStory.start")
+      : t("introStory.next");
+  els.introStoryProgress
+    .querySelectorAll("[data-intro-dot]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        introStoryIndex = Number(button.dataset.introDot);
+        renderIntroStory();
+      });
+    });
+}
+
+function moveIntroStory(direction) {
+  const slides = introStorySlides();
+  introStoryIndex = Math.max(
+    0,
+    Math.min(slides.length - 1, introStoryIndex + direction),
+  );
+  renderIntroStory();
+}
+
+function completeIntroStory() {
+  state.meta.introCompleted = true;
+  introStoryIndex = 0;
+  render();
 }
 
 function tutorialSteps() {
@@ -2207,6 +2366,10 @@ function tutorialSteps() {
 }
 
 function syncTutorialState() {
+  if (!state.meta.introCompleted) {
+    removeTutorialTargets();
+    return;
+  }
   if (!state.meta.tutorialActive) {
     removeTutorialTargets();
     return;
@@ -2238,7 +2401,7 @@ function syncTutorialState() {
 function renderTutorialCoach() {
   if (!els.tutorialCoach) return;
   removeTutorialTargets(false);
-  if (!state.meta.tutorialActive) {
+  if (!state.meta.introCompleted || !state.meta.tutorialActive) {
     els.tutorialCoach.hidden = true;
     return;
   }
@@ -4075,6 +4238,51 @@ els.languageToggle.addEventListener("click", () => {
   render();
 });
 
+els.introStoryNext?.addEventListener("click", () => {
+  const isLast = introStoryIndex >= introStorySlides().length - 1;
+  if (isLast) {
+    completeIntroStory();
+    return;
+  }
+  moveIntroStory(1);
+});
+
+els.introStoryPrev?.addEventListener("click", () => moveIntroStory(-1));
+els.introStorySkip?.addEventListener("click", completeIntroStory);
+
+let introStoryTouchStartX = 0;
+let introStoryTouchStartY = 0;
+
+els.introStoryWindow?.addEventListener(
+  "touchstart",
+  (event) => {
+    if (event.touches.length !== 1) return;
+    introStoryTouchStartX = event.touches[0].clientX;
+    introStoryTouchStartY = event.touches[0].clientY;
+  },
+  { passive: true },
+);
+
+els.introStoryWindow?.addEventListener(
+  "touchend",
+  (event) => {
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    const deltaX = touch.clientX - introStoryTouchStartX;
+    const deltaY = touch.clientY - introStoryTouchStartY;
+    if (Math.abs(deltaX) < 46 || Math.abs(deltaY) > Math.abs(deltaX) * 0.75)
+      return;
+    moveIntroStory(deltaX < 0 ? 1 : -1);
+  },
+  { passive: true },
+);
+
+document.addEventListener("keydown", (event) => {
+  if (els.introStory?.hidden) return;
+  if (event.key === "ArrowRight") moveIntroStory(1);
+  if (event.key === "ArrowLeft") moveIntroStory(-1);
+});
+
 els.openTutorial?.addEventListener("click", startTutorial);
 
 els.tutorialPrimary?.addEventListener("click", () => {
@@ -4158,7 +4366,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260523-taskpicker")
+      .register("./sw.js?v=20260525-introstory")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
