@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v47-20260526-iconui";
+const cacheName = "goalflow-v48-20260526-goalbridge";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260526-iconui",
-  "./app.js?v=20260526-iconui",
+  "./styles.css?v=20260526-goalbridge",
+  "./app.js?v=20260526-goalbridge",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",

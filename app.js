@@ -66,8 +66,8 @@ const translations = {
       "GoalFlowは、目標を小さなタスクに分けて、今日やることだけを見せるアプリです。",
     "app.heroPrimary": "はじめる",
     "app.heroSecondary": "使い方を見る",
-    "app.point1": "目標を作る",
-    "app.point2": "タスクに分ける",
+    "app.point1": "目標＝向かう先",
+    "app.point2": "タスク＝今日の一歩",
     "app.point3": "今日に入れる",
     "app.pointsAria": "GoalFlowの特徴",
     "status.autoSave": "自動保存",
@@ -186,9 +186,9 @@ const translations = {
       "今日の予定に入れる意味は、カレンダーを埋めることではありません。今やる候補を減らし、目の前の一手だけにすることです。迷いが減ると、完了までの心理的な距離も短くなります。",
     "flow.aria": "GoalFlowの流れ",
     "flow.goal.title": "目標",
-    "flow.goal.body": "TOEIC、筋トレ、アプリ制作など",
+    "flow.goal.body": "向かう先",
     "flow.task.title": "タスク",
-    "flow.task.body": "大きな目標を小さな行動に",
+    "flow.task.body": "今日の一歩",
     "flow.today.title": "今日の予定",
     "flow.today.body": "迷わず次の一歩だけ進める",
     "flow.progress.title": "今日の進み具合",
@@ -245,8 +245,10 @@ const translations = {
       "保存タスクを選択して、カレンダーの日付を押すと予定に入ります。",
     "tasks.add": "＋",
     "tasks.addAria": "保存タスクを追加",
-    "tasks.scopeAll": "すべての目標の保存タスク",
-    "tasks.scopeGoal": "「{goal}」の保存タスク",
+    "tasks.scopeAll": "すべて",
+    "tasks.scopeGoal": "すべて",
+    "tasks.goalLabel": "目標",
+    "tasks.goalChanged": "タスクの目標を変更しました。",
     "tasks.empty": "＋で追加",
     "tasks.dragAria": "カレンダーへドラッグ",
     "tasks.pickDate": "日付",
@@ -298,12 +300,12 @@ const translations = {
     "taskDialog.title": "タスクを保存",
     "taskDialog.name": "タスク名",
     "taskDialog.namePlaceholder": "例：英単語 30個",
-    "taskDialog.goal": "紐づける目標",
+    "taskDialog.goal": "どの目標の一歩？",
     "taskDialog.duration": "所要時間",
     "taskDialog.unit": "単位",
     "taskDialog.color": "色",
     "taskEdit.name": "タスク名",
-    "taskEdit.goal": "目標",
+    "taskEdit.goal": "どの目標の一歩？",
     "taskEdit.duration": "時間",
     "taskEdit.unit": "単位",
     "taskEdit.color": "色",
@@ -332,7 +334,7 @@ const translations = {
     "calendar.goalEnd": "終了",
     "calendar.goalRange": "期間中",
     "calendar.rangeLabel": "開始日と終了日",
-    "calendar.rangeEmpty": "目標を選ぶと、開始日と終了日がここに表示されます。",
+    "calendar.rangeEmpty": "目標の開始日と終了日がここに出ます。",
     "calendar.rangeChip": "{goal}：{start} - {deadline}",
     "calendar.rangeOverflow": "+{count}件",
     "next.noGoal.title": "最初の目標を作成",
@@ -409,8 +411,8 @@ const translations = {
       "GoalFlow breaks goals into small tasks and shows only what to do today.",
     "app.heroPrimary": "Start",
     "app.heroSecondary": "See how it works",
-    "app.point1": "Create a goal",
-    "app.point2": "Break it down",
+    "app.point1": "Goal = direction",
+    "app.point2": "Task = next action",
     "app.point3": "Put it on today",
     "app.pointsAria": "GoalFlow features",
     "status.autoSave": "Auto-save",
@@ -534,9 +536,9 @@ const translations = {
       "Putting a task on today is not about filling a calendar. It removes extra options and leaves one clear action. Less choice means less friction, and less friction makes completion feel closer.",
     "flow.aria": "GoalFlow flow",
     "flow.goal.title": "Goal",
-    "flow.goal.body": "TOEIC, training, app building",
+    "flow.goal.body": "Direction",
     "flow.task.title": "Task",
-    "flow.task.body": "Turn the goal into small actions",
+    "flow.task.body": "Today’s next action",
     "flow.today.title": "Today",
     "flow.today.body": "Move only the next step forward",
     "flow.progress.title": "Today’s progress",
@@ -593,8 +595,10 @@ const translations = {
       "Select a saved task, then tap a calendar date to schedule it.",
     "tasks.add": "+",
     "tasks.addAria": "Add saved task",
-    "tasks.scopeAll": "Saved tasks for all goals",
-    "tasks.scopeGoal": "Saved tasks for “{goal}”",
+    "tasks.scopeAll": "All",
+    "tasks.scopeGoal": "All",
+    "tasks.goalLabel": "Goal",
+    "tasks.goalChanged": "Task goal changed.",
     "tasks.empty": "Add with +",
     "tasks.dragAria": "Drag to calendar",
     "tasks.pickDate": "Date",
@@ -646,12 +650,12 @@ const translations = {
     "taskDialog.title": "Save task",
     "taskDialog.name": "Task name",
     "taskDialog.namePlaceholder": "Example: Review 30 words",
-    "taskDialog.goal": "Linked goal",
+    "taskDialog.goal": "Which goal is this for?",
     "taskDialog.duration": "Duration",
     "taskDialog.unit": "Unit",
     "taskDialog.color": "Color",
     "taskEdit.name": "Task name",
-    "taskEdit.goal": "Goal",
+    "taskEdit.goal": "Which goal is this for?",
     "taskEdit.duration": "Time",
     "taskEdit.unit": "Unit",
     "taskEdit.color": "Color",
@@ -680,7 +684,7 @@ const translations = {
     "calendar.goalEnd": "End",
     "calendar.goalRange": "Range",
     "calendar.rangeLabel": "Start and end date",
-    "calendar.rangeEmpty": "Select a goal to show its start and due date here.",
+    "calendar.rangeEmpty": "Goal start and due dates appear here.",
     "calendar.rangeChip": "{goal}: {start} - {deadline}",
     "calendar.rangeOverflow": "+{count} more",
     "next.noGoal.title": "Create your first goal",
@@ -1235,16 +1239,11 @@ function renderGoals() {
 function renderTaskBank() {
   els.taskBank.innerHTML = "";
   bindTaskBankReturnDrop();
-  const selectedGoal = findGoal(selectedGoalId);
   const scope = document.createElement("div");
   scope.className = "task-scope";
-  scope.textContent = selectedGoal
-    ? t("tasks.scopeGoal", { goal: selectedGoal.name })
-    : t("tasks.scopeAll");
+  scope.textContent = t("tasks.scopeAll");
   els.taskBank.append(scope);
-  const tasks = state.tasks.filter(
-    (task) => !selectedGoalId || task.goalId === selectedGoalId,
-  );
+  const tasks = state.tasks;
   if (!tasks.length) {
     els.taskBank.append(empty(t("tasks.empty")));
     return;
@@ -1269,6 +1268,10 @@ function renderTaskBank() {
         <span class="task-drag-handle" data-drag-handle draggable="true" role="button" tabindex="0" aria-label="${escapeHtml(t("tasks.dragAria"))}"></span>
         <div class="bank-task-copy">${taskMarkup(task, goal)}</div>
       </div>
+      <label class="task-goal-link">
+        <span>${escapeHtml(t("tasks.goalLabel"))}</span>
+        <select data-action="task-goal">${taskGoalOptions(task.goalId)}</select>
+      </label>
       ${
         editingTaskId === task.id
           ? `
@@ -1381,6 +1384,11 @@ function renderTaskBank() {
         activeScreen = "today";
         render();
       });
+    item
+      .querySelector('[data-action="task-goal"]')
+      .addEventListener("change", (event) => {
+        updateTaskGoal(task, event.target.value);
+      });
     bindDoubleActivate(item.querySelector(".bank-task-copy"), () => {
       editingTaskId = editingTaskId === task.id ? "" : task.id;
       renderTaskBank();
@@ -1451,6 +1459,18 @@ function taskGoalOptions(selectedId) {
         `<option value="${escapeHtml(goal.id)}" ${goal.id === selectedId ? "selected" : ""}>${escapeHtml(goal.name)}</option>`,
     )
     .join("");
+}
+
+function updateTaskGoal(task, goalId) {
+  if (!state.goals.some((goal) => goal.id === goalId)) return;
+  task.goalId = goalId;
+  state.scheduled
+    .filter((item) => item.taskId === task.id)
+    .forEach((item) => {
+      item.goalId = goalId;
+    });
+  showToast(t("tasks.goalChanged"));
+  render();
 }
 
 function durationUnitOptions(selectedUnit) {
@@ -1643,11 +1663,7 @@ function renderCalendar() {
   els.calendarGrid.innerHTML = "";
   days.forEach((date) => {
     const iso = toISO(date);
-    const scheduled = state.scheduled.filter(
-      (item) =>
-        item.date === iso &&
-        (!selectedGoalId || item.goalId === selectedGoalId),
-    );
+    const scheduled = state.scheduled.filter((item) => item.date === iso);
     const goalMarkers = calendarGoalMarkers(iso);
     const column = document.createElement("section");
     const isOutsideMonth =
@@ -1719,7 +1735,6 @@ function renderCalendar() {
 function renderCalendarRange() {
   if (!els.calendarRange) return;
   const goals = state.goals.filter((goal) => {
-    if (selectedGoalId && goal.id !== selectedGoalId) return false;
     return goal.createdAt && goal.deadline;
   });
   if (!goals.length) {
@@ -1753,7 +1768,6 @@ function renderCalendarRange() {
 
 function calendarGoalMarkers(iso) {
   const relevantGoals = state.goals.filter((goal) => {
-    if (selectedGoalId && goal.id !== selectedGoalId) return false;
     return goal.createdAt && goal.deadline;
   });
   const inRange = relevantGoals.some(
@@ -3123,11 +3137,7 @@ function saveScheduledEdit(event, item) {
 
 function openDayDialog(date) {
   const items = state.scheduled
-    .filter(
-      (item) =>
-        item.date === date &&
-        (!selectedGoalId || item.goalId === selectedGoalId),
-    )
+    .filter((item) => item.date === date)
     .sort((a, b) =>
       a.title.localeCompare(b.title, currentLanguage() === "en" ? "en" : "ja"),
     );
@@ -4391,7 +4401,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260526-iconui")
+      .register("./sw.js?v=20260526-goalbridge")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

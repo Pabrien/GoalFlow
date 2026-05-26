@@ -19,7 +19,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260526-iconui" />
+    <link rel="stylesheet" href="./styles.css?v=20260526-goalbridge" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -105,8 +105,10 @@
             aria-label="GoalFlowの特徴"
             data-i18n-aria="app.pointsAria"
           >
-            <span><b>01</b><em data-i18n="app.point1">目標を作る</em></span>
-            <span><b>02</b><em data-i18n="app.point2">タスクに分ける</em></span>
+            <span><b>01</b><em data-i18n="app.point1">目標＝向かう先</em></span>
+            <span
+              ><b>02</b><em data-i18n="app.point2">タスク＝今日の一歩</em></span
+            >
             <span><b>03</b><em data-i18n="app.point3">今日に入れる</em></span>
           </div>
         </div>
@@ -332,14 +334,14 @@
           <span>1</span>
           <div>
             <h2 data-i18n="flow.goal.title">目標</h2>
-            <p data-i18n="flow.goal.body">TOEIC、筋トレ、アプリ制作など</p>
+            <p data-i18n="flow.goal.body">向かう先</p>
           </div>
         </article>
         <article class="flow-card">
           <span>2</span>
           <div>
             <h2 data-i18n="flow.task.title">タスク</h2>
-            <p data-i18n="flow.task.body">大きな目標を小さな行動に</p>
+            <p data-i18n="flow.task.body">今日の一歩</p>
           </div>
         </article>
         <article class="flow-card">
@@ -703,7 +705,7 @@
           />
         </label>
         <label>
-          <span data-i18n="taskDialog.goal">紐づける目標</span>
+          <span data-i18n="taskDialog.goal">どの目標の一歩？</span>
           <select name="goalId" id="taskGoalSelect"></select>
         </label>
         <div class="field-row">
@@ -814,6 +816,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260526-iconui"></script>
+    <script defer src="./app.js?v=20260526-goalbridge"></script>
   </body>
 </html>
