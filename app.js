@@ -61,12 +61,14 @@ const screenOrder = ["home", "progress", "goals", "schedule", "today"];
 const translations = {
   ja: {
     "app.kicker": "Goal planner",
-    "app.tagline": "目標を、今日やる一歩へ。",
+    "app.tagline": "目標はある。でも、今日なにすればいいか分からない。",
     "app.heroCopy":
-      "GoalFlowは、目標を今日の行動に変えるアプリです。目標を作り、タスクに分け、今日へ置くだけで次にやることが見えます。",
-    "app.point1": "目標から逆算",
-    "app.point2": "タスクを予定へ",
-    "app.point3": "今日だけに集中",
+      "GoalFlowは、目標を小さなタスクに分けて、今日やることだけを見せるアプリです。",
+    "app.heroPrimary": "はじめる",
+    "app.heroSecondary": "使い方を見る",
+    "app.point1": "目標を作る",
+    "app.point2": "タスクに分ける",
+    "app.point3": "今日に入れる",
     "app.pointsAria": "GoalFlowの特徴",
     "status.autoSave": "自動保存",
     "status.saved": "保存済み {time}",
@@ -78,11 +80,11 @@ const translations = {
     "onboarding.kicker": "Start small",
     "onboarding.title": "最初は3ステップだけ",
     "onboarding.step1.title": "目標を1つ作る",
-    "onboarding.step1.body": "筋トレ、勉強、習慣など、続けたい理由を残します。",
-    "onboarding.step2.title": "小さなタスクに分ける",
-    "onboarding.step2.body": "今日できるサイズにすると、続けやすくなります。",
-    "onboarding.step3.title": "今日に入れて完了する",
-    "onboarding.step3.body": "進捗がグラフに残り、次の一歩が見えます。",
+    "onboarding.step1.body": "TOEIC、筋トレ、アプリ制作など。",
+    "onboarding.step2.title": "タスクに分ける",
+    "onboarding.step2.body": "大きな目標を、小さな行動に。",
+    "onboarding.step3.title": "今日やることに入れる",
+    "onboarding.step3.body": "迷わず、次の一歩だけ進めます。",
     "onboarding.primary": "最初の目標を作る",
     "onboarding.secondary": "あとで見る",
     "introStory.aria": "GoalFlowの初回説明",
@@ -94,33 +96,23 @@ const translations = {
     "introStory.replay": "初回説明",
     "introStory.page": "{current} / {total}",
     "introStory.0.label": "問題",
-    "introStory.0.title": "目標はある。でも今日が見えない。",
+    "introStory.0.title": "目標はある。でも、今日なにすればいいか分からない。",
     "introStory.0.body":
-      "GoalFlowは、やる気がない人よりも、やりたいことが多い人のためのアプリです。大きな目標を、今日の一手まで小さくします。",
-    "introStory.1.label": "価値",
-    "introStory.1.title": "予定帳ではなく、前進装置です。",
+      "GoalFlowは、その迷いを「今日やる一歩」に変えるアプリです。",
+    "introStory.1.label": "1",
+    "introStory.1.title": "目標を作る。",
     "introStory.1.body":
-      "Appleカレンダーの代わりではありません。目標管理と今日の行動管理の間をつなぎます。",
-    "introStory.2.label": "流れ",
-    "introStory.2.title": "目標 → タスク → 今日やること。",
-    "introStory.2.body":
-      "TOEIC、筋トレ、アプリ制作、資格、就活準備。まず目標を置き、今日できるサイズのタスクへ分けます。",
-    "introStory.3.label": "今日",
-    "introStory.3.title": "「で、今日なにする？」を消す。",
-    "introStory.3.body":
-      "保存タスクを今日に入れると、考える候補が減ります。GoalFlowは、迷う時間を減らして行動に近づけます。",
+      "TOEIC、筋トレ、アプリ制作。まず進めたいことを1つ置きます。",
+    "introStory.2.label": "2",
+    "introStory.2.title": "タスクに分ける。",
+    "introStory.2.body": "大きな目標を、今日できる小さな行動にします。",
+    "introStory.3.label": "3",
+    "introStory.3.title": "今日に入れる。",
+    "introStory.3.body": "今日やることだけを見れば、迷わず始められます。",
     "introStory.4.label": "記録",
-    "introStory.4.title": "完了すると、進捗が残る。",
+    "introStory.4.title": "完了が進捗になる。",
     "introStory.4.body":
-      "今日の達成率、7日間の積み上げ、目標別レポート。小さな完了が、次の日の自分を助ける記録になります。",
-    "introStory.5.label": "対象",
-    "introStory.5.title": "長期目標を進めたい個人向け。",
-    "introStory.5.body":
-      "学生、自己投資したい人、個人開発者、クリエイター、副業や起業の準備をしたい人に向いています。",
-    "introStory.6.label": "一言",
-    "introStory.6.title": "将来やりたいことを、今日やる一手に。",
-    "introStory.6.body":
-      "目標はあるのに日々の行動に落とし込めず止まっている人へ。まずは1つ、今日に置くところから始めます。",
+      "終わったタスクは、達成率・グラフ・目標別レポートに残ります。",
     "tabs.aria": "画面切替",
     "tabs.home": "ホーム",
     "tabs.progress": "進捗",
@@ -194,11 +186,11 @@ const translations = {
       "今日の予定に入れる意味は、カレンダーを埋めることではありません。今やる候補を減らし、目の前の一手だけにすることです。迷いが減ると、完了までの心理的な距離も短くなります。",
     "flow.aria": "GoalFlowの流れ",
     "flow.goal.title": "目標",
-    "flow.goal.body": "続けたい理由と期限を決める",
+    "flow.goal.body": "TOEIC、筋トレ、アプリ制作など",
     "flow.task.title": "タスク",
-    "flow.task.body": "今日できるサイズに分ける",
+    "flow.task.body": "大きな目標を小さな行動に",
     "flow.today.title": "今日の予定",
-    "flow.today.body": "置いたら、あとは完了するだけ",
+    "flow.today.body": "迷わず次の一歩だけ進める",
     "flow.progress.title": "今日の進み具合",
     "flow.progress.cta": "進捗を見る",
     "dashboard.aria": "ホームダッシュボード",
@@ -412,12 +404,14 @@ const translations = {
   },
   en: {
     "app.kicker": "Goal planner",
-    "app.tagline": "Turn goals into today’s next action.",
+    "app.tagline": "You have goals. But today is unclear.",
     "app.heroCopy":
-      "GoalFlow turns goals into today’s actions. Create a goal, break it into tasks, place one on today, and the next step stays clear.",
-    "app.point1": "Plan backward",
-    "app.point2": "Place tasks",
-    "app.point3": "Focus on today",
+      "GoalFlow breaks goals into small tasks and shows only what to do today.",
+    "app.heroPrimary": "Start",
+    "app.heroSecondary": "See how it works",
+    "app.point1": "Create a goal",
+    "app.point2": "Break it down",
+    "app.point3": "Put it on today",
     "app.pointsAria": "GoalFlow features",
     "status.autoSave": "Auto-save",
     "status.saved": "Saved {time}",
@@ -430,13 +424,11 @@ const translations = {
     "onboarding.title": "Start with 3 steps",
     "onboarding.step1.title": "Create one goal",
     "onboarding.step1.body":
-      "Keep the reason you want to continue, whether it is training, study, or a habit.",
-    "onboarding.step2.title": "Break it into small tasks",
-    "onboarding.step2.body":
-      "Tasks that fit into today are much easier to keep going.",
-    "onboarding.step3.title": "Put it on today and finish it",
-    "onboarding.step3.body":
-      "Your progress stays visible, so the next step is clear.",
+      "TOEIC, training, app building, or any long-term aim.",
+    "onboarding.step2.title": "Break it into tasks",
+    "onboarding.step2.body": "Turn a large goal into small actions.",
+    "onboarding.step3.title": "Put it on today",
+    "onboarding.step3.body": "Move forward with only the next step.",
     "onboarding.primary": "Create first goal",
     "onboarding.secondary": "Later",
     "introStory.aria": "GoalFlow introduction",
@@ -448,33 +440,25 @@ const translations = {
     "introStory.replay": "Intro",
     "introStory.page": "{current} / {total}",
     "introStory.0.label": "Problem",
-    "introStory.0.title": "You have goals. Today is unclear.",
+    "introStory.0.title": "You have goals. But today is unclear.",
     "introStory.0.body":
-      "GoalFlow is for people with things they want to do. It turns large goals into one clear action for today.",
-    "introStory.1.label": "Value",
-    "introStory.1.title": "Not a calendar. A progress device.",
+      "GoalFlow turns that confusion into one clear action for today.",
+    "introStory.1.label": "1",
+    "introStory.1.title": "Create a goal.",
     "introStory.1.body":
-      "It is not a replacement for Apple Calendar. It connects goal management with today’s action management.",
-    "introStory.2.label": "Flow",
-    "introStory.2.title": "Goal → Task → Today.",
+      "TOEIC, training, app building. Put down one thing you want to move forward.",
+    "introStory.2.label": "2",
+    "introStory.2.title": "Break it into tasks.",
     "introStory.2.body":
-      "TOEIC, training, app building, certifications, job preparation. Place the goal, then break it into today-sized tasks.",
-    "introStory.3.label": "Today",
-    "introStory.3.title": "Remove “what should I do today?”",
+      "Turn the big goal into actions small enough for today.",
+    "introStory.3.label": "3",
+    "introStory.3.title": "Put it on today.",
     "introStory.3.body":
-      "Putting a saved task on today reduces choices. GoalFlow lowers the thinking load so action feels closer.",
+      "See only today’s tasks, then start without overthinking.",
     "introStory.4.label": "Record",
     "introStory.4.title": "Completion becomes progress.",
     "introStory.4.body":
-      "Today’s rate, the 7-day stack, and goal reports turn small wins into records that help tomorrow.",
-    "introStory.5.label": "For",
-    "introStory.5.title": "For individuals with long-term goals.",
-    "introStory.5.body":
-      "It fits students, self-improvers, indie developers, creators, and people preparing a side project or business.",
-    "introStory.6.label": "Core",
-    "introStory.6.title": "Turn future goals into today’s next move.",
-    "introStory.6.body":
-      "For people who have goals but get stuck translating them into daily action. Start by placing one task on today.",
+      "Finished tasks stay visible in rates, charts, and goal reports.",
     "tabs.aria": "Screens",
     "tabs.home": "Home",
     "tabs.progress": "Progress",
@@ -550,11 +534,11 @@ const translations = {
       "Putting a task on today is not about filling a calendar. It removes extra options and leaves one clear action. Less choice means less friction, and less friction makes completion feel closer.",
     "flow.aria": "GoalFlow flow",
     "flow.goal.title": "Goal",
-    "flow.goal.body": "Choose the reason and deadline",
+    "flow.goal.body": "TOEIC, training, app building",
     "flow.task.title": "Task",
-    "flow.task.body": "Break it into today-sized actions",
+    "flow.task.body": "Turn the goal into small actions",
     "flow.today.title": "Today",
-    "flow.today.body": "Place it, then finish it",
+    "flow.today.body": "Move only the next step forward",
     "flow.progress.title": "Today’s progress",
     "flow.progress.cta": "View progress",
     "dashboard.aria": "Home dashboard",
@@ -830,6 +814,8 @@ const els = {
   introStoryNext: document.querySelector("#introStoryNext"),
   introStorySkip: document.querySelector("#introStorySkip"),
   replayIntroStory: document.querySelector("#replayIntroStory"),
+  heroStartGoal: document.querySelector("#heroStartGoal"),
+  heroWatchGuide: document.querySelector("#heroWatchGuide"),
   onboarding: document.querySelector("#onboarding"),
   startFirstGoal: document.querySelector("#startFirstGoal"),
   dismissOnboarding: document.querySelector("#dismissOnboarding"),
@@ -2217,7 +2203,7 @@ function renderOnboarding() {
 }
 
 function introStorySlides() {
-  return Array.from({ length: 7 }, (_, index) => ({
+  return Array.from({ length: 5 }, (_, index) => ({
     label: t(`introStory.${index}.label`),
     title: t(`introStory.${index}.title`),
     body: t(`introStory.${index}.body`),
@@ -4339,6 +4325,15 @@ els.startFirstGoal.addEventListener("click", () => {
   openGoalDialog();
 });
 
+els.heroStartGoal?.addEventListener("click", () => {
+  activeScreen = "goals";
+  state.meta.onboardingDismissed = true;
+  render();
+  openGoalDialog();
+});
+
+els.heroWatchGuide?.addEventListener("click", replayIntroStory);
+
 els.emptyCreateGoal.addEventListener("click", () => {
   activeScreen = "goals";
   render();
@@ -4398,7 +4393,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260525-introreplay")
+      .register("./sw.js?v=20260526-simpleintro")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

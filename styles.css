@@ -470,20 +470,35 @@ textarea:focus-visible,
 }
 
 .product-line {
-  max-width: 520px;
+  max-width: 680px;
   margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.5;
+  color: var(--ink);
+  font-size: clamp(24px, 3.6vw, 52px);
+  font-weight: 920;
+  letter-spacing: 0;
+  line-height: 1.02;
 }
 
 .hero-copy {
-  max-width: 680px;
-  margin: 12px 0 0;
-  color: var(--ink);
-  font-size: clamp(18px, 2vw, 26px);
-  font-weight: 850;
-  line-height: 1.32;
+  max-width: 580px;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.65;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.hero-actions .primary-button,
+.hero-actions .ghost-button {
+  min-height: 44px;
+  padding-inline: 18px;
 }
 
 .hero-points {
@@ -505,6 +520,7 @@ textarea:focus-visible,
   color: var(--accent-strong);
   font-size: 12px;
   font-weight: 850;
+  pointer-events: none;
 }
 
 .hero-points span:not(:last-child)::after {
@@ -2998,6 +3014,19 @@ textarea:focus {
     font-size: 36px;
   }
 
+  .product-line {
+    font-size: 34px;
+  }
+
+  .hero-actions {
+    width: 100%;
+  }
+
+  .hero-actions .primary-button,
+  .hero-actions .ghost-button {
+    flex: 1 1 150px;
+  }
+
   .save-status {
     min-height: 32px;
   }
@@ -4452,7 +4481,6 @@ body[data-theme="dark"][data-active-screen="today"] .workspace::before {
   opacity: 0.32;
 }
 
-body[data-theme="dark"] .product-line,
 body[data-theme="dark"] .hero-copy,
 body[data-theme="dark"] .screen-tab,
 body[data-theme="dark"] .goal-meta,
@@ -4464,7 +4492,7 @@ body[data-theme="dark"] .save-status {
   color: var(--muted);
 }
 
-body[data-theme="dark"] .hero-copy {
+body[data-theme="dark"] .product-line {
   color: var(--ink);
 }
 

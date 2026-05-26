@@ -19,7 +19,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260525-introreplay" />
+    <link rel="stylesheet" href="./styles.css?v=20260526-simpleintro" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -77,19 +77,37 @@
           <p class="eyebrow" data-i18n="app.kicker">Goal planner</p>
           <h1>GoalFlow</h1>
           <p class="product-line" data-i18n="app.tagline">
-            目標を、今日やる一歩へ。
+            目標はある。でも、今日なにすればいいか分からない。
           </p>
           <p class="hero-copy" data-i18n="app.heroCopy">
-            GoalFlowは、目標を今日の行動に変えるアプリです。目標を作り、タスクに分け、今日へ置くだけで次にやることが見えます。
+            GoalFlowは、目標を小さなタスクに分けて、今日やることだけを見せるアプリです。
           </p>
+          <div class="hero-actions" aria-label="はじめる">
+            <button
+              class="primary-button"
+              id="heroStartGoal"
+              type="button"
+              data-i18n="app.heroPrimary"
+            >
+              はじめる
+            </button>
+            <button
+              class="ghost-button"
+              id="heroWatchGuide"
+              type="button"
+              data-i18n="app.heroSecondary"
+            >
+              使い方を見る
+            </button>
+          </div>
           <div
             class="hero-points"
             aria-label="GoalFlowの特徴"
             data-i18n-aria="app.pointsAria"
           >
-            <span><b>01</b><em data-i18n="app.point1">目標から逆算</em></span>
-            <span><b>02</b><em data-i18n="app.point2">タスクを予定へ</em></span>
-            <span><b>03</b><em data-i18n="app.point3">今日だけに集中</em></span>
+            <span><b>01</b><em data-i18n="app.point1">目標を作る</em></span>
+            <span><b>02</b><em data-i18n="app.point2">タスクに分ける</em></span>
+            <span><b>03</b><em data-i18n="app.point3">今日に入れる</em></span>
           </div>
         </div>
         <div class="topbar-actions">
@@ -154,18 +172,16 @@
             <div>
               <strong data-i18n="onboarding.step1.title">目標を1つ作る</strong>
               <p data-i18n="onboarding.step1.body">
-                筋トレ、勉強、習慣など、続けたい理由を残します。
+                TOEIC、筋トレ、アプリ制作など。
               </p>
             </div>
           </li>
           <li>
             <span>2</span>
             <div>
-              <strong data-i18n="onboarding.step2.title"
-                >小さなタスクに分ける</strong
-              >
+              <strong data-i18n="onboarding.step2.title">タスクに分ける</strong>
               <p data-i18n="onboarding.step2.body">
-                今日できるサイズにすると、続けやすくなります。
+                大きな目標を、小さな行動に。
               </p>
             </div>
           </li>
@@ -173,10 +189,10 @@
             <span>3</span>
             <div>
               <strong data-i18n="onboarding.step3.title"
-                >今日に入れて完了する</strong
+                >今日やることに入れる</strong
               >
               <p data-i18n="onboarding.step3.body">
-                進捗がグラフに残り、次の一歩が見えます。
+                迷わず、次の一歩だけ進めます。
               </p>
             </div>
           </li>
@@ -360,7 +376,7 @@
           <span>1</span>
           <div>
             <h2 data-i18n="flow.goal.title">目標</h2>
-            <p data-i18n="flow.goal.body">続けたい理由と期限を決める</p>
+            <p data-i18n="flow.goal.body">TOEIC、筋トレ、アプリ制作など</p>
             <small
               role="button"
               tabindex="0"
@@ -374,7 +390,7 @@
           <span>2</span>
           <div>
             <h2 data-i18n="flow.task.title">タスク</h2>
-            <p data-i18n="flow.task.body">今日できるサイズに分ける</p>
+            <p data-i18n="flow.task.body">大きな目標を小さな行動に</p>
             <small
               role="button"
               tabindex="0"
@@ -388,7 +404,7 @@
           <span>3</span>
           <div>
             <h2 data-i18n="flow.today.title">今日の予定</h2>
-            <p data-i18n="flow.today.body">置いたら、あとは完了するだけ</p>
+            <p data-i18n="flow.today.body">迷わず次の一歩だけ進める</p>
             <small
               role="button"
               tabindex="0"
@@ -860,6 +876,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260525-introreplay"></script>
+    <script defer src="./app.js?v=20260526-simpleintro"></script>
   </body>
 </html>
