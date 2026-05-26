@@ -19,7 +19,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260526-simpleintro" />
+    <link rel="stylesheet" href="./styles.css?v=20260526-iconui" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -112,20 +112,24 @@
         </div>
         <div class="topbar-actions">
           <button
-            class="ghost-button intro-replay-button"
+            class="icon-button topbar-icon intro-replay-button"
             id="replayIntroStory"
             type="button"
             data-i18n="introStory.replay"
+            data-i18n-aria="introStory.aria"
+            data-i18n-title="introStory.aria"
           >
-            初回説明
+            i
           </button>
           <button
-            class="ghost-button help-button"
+            class="icon-button topbar-icon help-button"
             id="openTutorial"
             type="button"
             data-i18n="tutorial.open"
+            data-i18n-aria="tutorial.aria"
+            data-i18n-title="tutorial.openTitle"
           >
-            使い方
+            ?
           </button>
           <button
             class="language-toggle"
@@ -155,13 +159,7 @@
         </div>
       </header>
 
-      <section
-        class="onboarding"
-        id="onboarding"
-        data-view-panel="home"
-        aria-label="初回チュートリアル"
-        data-i18n-aria="onboarding.aria"
-      >
+      <section class="onboarding" id="onboarding" data-view-panel="home">
         <div>
           <p class="eyebrow" data-i18n="onboarding.kicker">Start small</p>
           <h2 data-i18n="onboarding.title">最初は3ステップだけ</h2>
@@ -199,12 +197,14 @@
         </ol>
         <div class="onboarding-actions">
           <button
-            class="primary-button"
+            class="icon-button add-button"
             id="startFirstGoal"
             type="button"
             data-i18n="onboarding.primary"
+            data-i18n-aria="onboarding.primaryAria"
+            data-i18n-title="onboarding.primaryAria"
           >
-            最初の目標を作る
+            ＋
           </button>
           <button
             class="ghost-button"
@@ -265,42 +265,6 @@
         </button>
       </nav>
 
-      <section class="screen-intro" data-screen-intro="home">
-        <p class="eyebrow" data-i18n="intro.home.kicker">Focus</p>
-        <h2 data-i18n="intro.home.title">今日の次の一手だけを見る</h2>
-        <p data-i18n="intro.home.body">
-          目標から今日の行動までの流れを確認し、迷わず始めます。
-        </p>
-      </section>
-      <section class="screen-intro" data-screen-intro="progress">
-        <p class="eyebrow" data-i18n="intro.progress.kicker">Progress</p>
-        <h2 data-i18n="intro.progress.title">積み上げを確認する</h2>
-        <p data-i18n="intro.progress.body">
-          達成率、7日間の記録、目標別レポートをここだけで見ます。
-        </p>
-      </section>
-      <section class="screen-intro" data-screen-intro="goals">
-        <p class="eyebrow" data-i18n="intro.goals.kicker">Goals</p>
-        <h2 data-i18n="intro.goals.title">目標を整理する</h2>
-        <p data-i18n="intro.goals.body">
-          続けたい理由、カテゴリ、期限を決める場所です。
-        </p>
-      </section>
-      <section class="screen-intro" data-screen-intro="schedule">
-        <p class="eyebrow" data-i18n="intro.schedule.kicker">Schedule</p>
-        <h2 data-i18n="intro.schedule.title">タスクを予定に置く</h2>
-        <p data-i18n="intro.schedule.body">
-          保存タスクをドラッグ、または今日に入れて行動へ変えます。
-        </p>
-      </section>
-      <section class="screen-intro" data-screen-intro="today">
-        <p class="eyebrow" data-i18n="intro.today.kicker">Today</p>
-        <h2 data-i18n="intro.today.title">今日やることを完了する</h2>
-        <p data-i18n="intro.today.body">
-          今日の予定だけを見て、終わったものを記録します。
-        </p>
-      </section>
-
       <section
         class="summary-strip"
         data-view-panel="progress"
@@ -349,19 +313,11 @@
             </button>
           </div>
         </article>
-        <article class="buddy-card insight-card" id="buddyCard">
+        <article class="buddy-card insight-card" id="buddyCard" hidden>
           <p class="eyebrow" data-i18n="buddy.kicker">ひとこと</p>
           <div class="flow-orbit" id="flowOrbit" aria-hidden="true"></div>
           <h2 id="buddyTitle">今日の流れ</h2>
           <p id="buddyMessage">小さく始めて、完了を1つ残しましょう。</p>
-          <span
-            class="insight-link"
-            role="button"
-            tabindex="0"
-            data-insight="buddy"
-            data-i18n="insight.readMore"
-            >理由を読む</span
-          >
         </article>
       </section>
 
@@ -377,13 +333,6 @@
           <div>
             <h2 data-i18n="flow.goal.title">目標</h2>
             <p data-i18n="flow.goal.body">TOEIC、筋トレ、アプリ制作など</p>
-            <small
-              role="button"
-              tabindex="0"
-              data-insight="goal"
-              data-i18n="insight.readMore"
-              >理由を読む</small
-            >
           </div>
         </article>
         <article class="flow-card">
@@ -391,13 +340,6 @@
           <div>
             <h2 data-i18n="flow.task.title">タスク</h2>
             <p data-i18n="flow.task.body">大きな目標を小さな行動に</p>
-            <small
-              role="button"
-              tabindex="0"
-              data-insight="task"
-              data-i18n="insight.readMore"
-              >理由を読む</small
-            >
           </div>
         </article>
         <article class="flow-card">
@@ -405,13 +347,6 @@
           <div>
             <h2 data-i18n="flow.today.title">今日の予定</h2>
             <p data-i18n="flow.today.body">迷わず次の一歩だけ進める</p>
-            <small
-              role="button"
-              tabindex="0"
-              data-insight="today"
-              data-i18n="insight.readMore"
-              >理由を読む</small
-            >
           </div>
         </article>
         <article
@@ -446,12 +381,14 @@
             </p>
           </div>
           <button
-            class="primary-button"
+            class="icon-button add-button"
             id="emptyCreateGoal"
             type="button"
             data-i18n="empty.button"
+            data-i18n-aria="empty.buttonAria"
+            data-i18n-title="empty.buttonAria"
           >
-            目標を作る
+            ＋
           </button>
         </section>
 
@@ -521,12 +458,14 @@
               <div class="panel-actions">
                 <span id="goalCount">0</span>
                 <button
-                  class="primary-button"
+                  class="icon-button add-button"
                   id="openGoalDialog"
                   type="button"
                   data-i18n="goals.add"
+                  data-i18n-aria="goals.addAria"
+                  data-i18n-title="goals.addAria"
                 >
-                  目標を追加
+                  ＋
                 </button>
               </div>
             </div>
@@ -542,17 +481,16 @@
                 <h2 data-i18n="tasks.title">保存タスク</h2>
               </div>
               <button
-                class="ghost-button"
+                class="icon-button add-button"
                 id="openTaskDialog"
                 type="button"
                 data-i18n="tasks.add"
+                data-i18n-aria="tasks.addAria"
+                data-i18n-title="tasks.addAria"
               >
-                追加
+                ＋
               </button>
             </div>
-            <p class="task-picker-guide" data-i18n="tasks.pickerGuide">
-              保存タスクを選択して、カレンダーの日付を押すと予定に入ります。
-            </p>
             <div class="task-bank" id="taskBank"></div>
           </section>
         </aside>
@@ -876,6 +814,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260526-simpleintro"></script>
+    <script defer src="./app.js?v=20260526-iconui"></script>
   </body>
 </html>

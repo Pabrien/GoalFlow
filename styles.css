@@ -469,6 +469,13 @@ textarea:focus-visible,
   margin-bottom: 18px;
 }
 
+.topbar .eyebrow,
+.onboarding .eyebrow,
+.empty-start .eyebrow,
+.planner-head .eyebrow {
+  display: none;
+}
+
 .product-line {
   max-width: 680px;
   margin: 8px 0 0;
@@ -552,6 +559,29 @@ textarea:focus-visible,
 .intro-replay-button {
   min-height: 38px;
   border-radius: 999px;
+}
+
+.topbar-icon,
+.add-button {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.topbar-icon {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.add-button {
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(22, 24, 29, 0.16);
 }
 
 .save-status {
@@ -868,7 +898,7 @@ textarea:focus-visible,
 
 .flow-focus {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(260px, 0.72fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   margin-bottom: 14px;
 }
@@ -917,6 +947,11 @@ textarea:focus-visible,
   transition:
     color 0.16s ease,
     transform 0.16s ease;
+}
+
+.buddy-card[hidden],
+.flow-map small {
+  display: none;
 }
 
 .flow-map small::after,
@@ -1144,6 +1179,7 @@ textarea:focus-visible,
 }
 
 .panel-note {
+  display: none;
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 12px;
@@ -1533,8 +1569,7 @@ body[data-active-screen="schedule"] [data-view-panel="tasks"]::before {
   background: linear-gradient(180deg, var(--accent), #58cc7a);
 }
 
-body[data-active-screen="schedule"] .task-picker-label,
-body[data-active-screen="schedule"] .task-picker-guide {
+body[data-active-screen="schedule"] .task-picker-label {
   display: block;
 }
 
@@ -4598,6 +4633,13 @@ body[data-theme="dark"] .primary-button {
   background: #1f2937;
   color: #f3f7ff;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+body[data-theme="dark"] .add-button {
+  border-color: rgba(79, 214, 154, 0.32);
+  background: #dffbea;
+  color: #082018;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
 }
 
 body[data-theme="dark"] .primary-button:hover {
