@@ -903,6 +903,86 @@ textarea:focus-visible,
   margin-bottom: 14px;
 }
 
+.daily-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.86fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.daily-panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(14px);
+}
+
+.daily-count {
+  display: inline-grid;
+  min-width: 44px;
+  height: 32px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.daily-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.daily-task {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 58px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--task-color) 24%, var(--line));
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 56%), #fbfcfa;
+}
+
+.daily-task strong,
+.daily-task span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.daily-task strong {
+  font-size: 14px;
+}
+
+.daily-task span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.daily-task.done {
+  opacity: 0.68;
+}
+
+.daily-task.done strong {
+  text-decoration: line-through;
+}
+
+.daily-task .mini-button {
+  min-width: 58px;
+}
+
 .flow-map {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1283,6 +1363,7 @@ textarea:focus-visible,
 body:not([data-active-screen="progress"]) .summary-strip,
 body:not([data-active-screen="progress"]) .home-dashboard,
 body:not([data-active-screen="home"]) .flow-focus,
+body:not([data-active-screen="home"]) .daily-flow,
 body:not([data-active-screen="home"]) .flow-map {
   display: none;
 }
@@ -3142,6 +3223,7 @@ textarea:focus {
 
   .summary-strip,
   .flow-focus,
+  .daily-flow,
   .flow-map,
   .home-dashboard,
   .workspace,
@@ -4807,7 +4889,8 @@ body[data-theme="dark"] .category-chip-wrap:has(.category-chip.is-holding) {
 }
 
 body[data-theme="dark"] .today-summary,
-body[data-theme="dark"] .next-step-card {
+body[data-theme="dark"] .next-step-card,
+body[data-theme="dark"] .daily-panel {
   background: linear-gradient(
     135deg,
     rgba(7, 11, 20, 0.98) 0%,
@@ -4896,6 +4979,7 @@ body[data-theme="dark"] .day-column.today {
 body[data-theme="dark"] .bank-task,
 body[data-theme="dark"] .scheduled-task,
 body[data-theme="dark"] .today-task,
+body[data-theme="dark"] .daily-task,
 body[data-theme="dark"] .day-dialog-item {
   background:
     linear-gradient(135deg, var(--task-soft), transparent 56%),

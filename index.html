@@ -19,7 +19,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260526-goalbridge" />
+    <link rel="stylesheet" href="./styles.css?v=20260526-dailyflow" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -320,6 +320,34 @@
           <div class="flow-orbit" id="flowOrbit" aria-hidden="true"></div>
           <h2 id="buddyTitle">今日の流れ</h2>
           <p id="buddyMessage">小さく始めて、完了を1つ残しましょう。</p>
+        </article>
+      </section>
+
+      <section
+        class="daily-flow"
+        id="dailyFlow"
+        data-view-panel="home"
+        aria-label="今日の流れ"
+        data-i18n-aria="daily.aria"
+      >
+        <article class="daily-panel today-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow" data-i18n="daily.todayKicker">Today</p>
+              <h2 data-i18n="daily.todayTitle">今日</h2>
+            </div>
+            <span class="daily-count" id="dailyTodayCount">0</span>
+          </div>
+          <div class="daily-list" id="dailyTodayList"></div>
+        </article>
+        <article class="daily-panel suggest-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow" data-i18n="daily.suggestKicker">Next</p>
+              <h2 data-i18n="daily.suggestTitle">今日に入れる</h2>
+            </div>
+          </div>
+          <div class="daily-list" id="dailySuggestionList"></div>
         </article>
       </section>
 
@@ -816,6 +844,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260526-goalbridge"></script>
+    <script defer src="./app.js?v=20260526-dailyflow"></script>
   </body>
 </html>

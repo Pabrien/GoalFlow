@@ -152,6 +152,16 @@ const translations = {
     "focus.defaultTitle": "次の一手",
     "focus.defaultBody": "まず1つだけ決めます。",
     "focus.defaultButton": "始める",
+    "daily.aria": "今日の流れ",
+    "daily.todayKicker": "Today",
+    "daily.todayTitle": "今日",
+    "daily.suggestKicker": "Next",
+    "daily.suggestTitle": "今日に入れる",
+    "daily.emptyToday": "まだありません。",
+    "daily.emptySuggestions": "保存タスクを作ると出ます。",
+    "daily.addToday": "今日",
+    "daily.done": "完了",
+    "daily.undo": "戻す",
     "buddy.kicker": "ひとこと",
     "buddy.defaultTitle": "今日の流れ",
     "buddy.defaultMessage": "小さく始めて、完了を1つ残しましょう。",
@@ -502,6 +512,16 @@ const translations = {
     "focus.defaultTitle": "Next step",
     "focus.defaultBody": "Choose just one thing.",
     "focus.defaultButton": "Start",
+    "daily.aria": "Today flow",
+    "daily.todayKicker": "Today",
+    "daily.todayTitle": "Today",
+    "daily.suggestKicker": "Next",
+    "daily.suggestTitle": "Put on today",
+    "daily.emptyToday": "Nothing yet.",
+    "daily.emptySuggestions": "Saved tasks will appear here.",
+    "daily.addToday": "Today",
+    "daily.done": "Done",
+    "daily.undo": "Undo",
     "buddy.kicker": "Note",
     "buddy.defaultTitle": "Today’s flow",
     "buddy.defaultMessage": "Start small and leave one completed task behind.",
@@ -840,6 +860,10 @@ const els = {
   nextActionTitle: document.querySelector("#nextActionTitle"),
   nextActionBody: document.querySelector("#nextActionBody"),
   nextActionButton: document.querySelector("#nextActionButton"),
+  dailyFlow: document.querySelector("#dailyFlow"),
+  dailyTodayCount: document.querySelector("#dailyTodayCount"),
+  dailyTodayList: document.querySelector("#dailyTodayList"),
+  dailySuggestionList: document.querySelector("#dailySuggestionList"),
   progressSection: document.querySelector("#progressSection"),
   miniProgressCard: document.querySelector("#miniProgressCard"),
   buddyCard: document.querySelector("#buddyCard"),
@@ -1148,6 +1172,7 @@ function render() {
   renderScreenTabs();
   renderOnboarding();
   renderNextAction();
+  renderDailyFlow();
 
   renderSummary();
   renderChart();
@@ -2594,6 +2619,72 @@ function getNextAction(todaysItems, todaysDone) {
     buddyTitle: t("next.done.buddyTitle"),
     buddyMessage: t("next.done.buddyMessage"),
   };
+}
+
+function renderDailyFlow() {
+  if (!els.dailyTodayList || !els.dailySuggestionList) return;
+  const todayIso = toISO(today);
+  const todaysItems = state.scheduled
+    .filter((item) => item.date === todayIso)
+    .sort((a, b) =>
+      a.title.localeCompare(b.title, currentLanguage() === "en" ? "en" : "ja"),
+    );
+  const doneCount = todaysItems.filter((item) => item.done).length;
+  if (els.dailyTodayCount) {
+    els.dailyTodayCount.textContent = `${doneCount}/${todaysItems.length}`;
+  }
+  els.dailyTodayList.innerHTML = "";
+  if (!todaysItems.length) {
+    els.dailyTodayList.append(empty(t("daily.emptyToday")));
+  } else {
+    todaysItems.slice(0, 5).forEach((item) => {
+      const goal = findGoal(item.goalId);
+      const card = document.createElement("article");
+      card.className = `daily-task ${item.done ? "done" : ""}`;
+      card.setAttribute("style", taskColorStyle(item));
+      card.innerHTML = `
+        <div>
+          <strong>${escapeHtml(item.title)}</strong>
+          <span>${escapeHtml(goal?.name ?? t("tasks.noGoal"))}・${escapeHtml(formatDuration(item))}</span>
+        </div>
+        <button class="mini-button" type="button">${escapeHtml(item.done ? t("daily.undo") : t("daily.done"))}</button>
+      `;
+      card.querySelector("button").addEventListener("click", () => {
+        toggleScheduledDone(item);
+      });
+      els.dailyTodayList.append(card);
+    });
+  }
+
+  const scheduledTodayTaskIds = new Set(
+    todaysItems.map((item) => item.taskId).filter(Boolean),
+  );
+  const suggestions = state.tasks
+    .filter((task) => !scheduledTodayTaskIds.has(task.id))
+    .slice(0, 5);
+  els.dailySuggestionList.innerHTML = "";
+  if (!suggestions.length) {
+    els.dailySuggestionList.append(empty(t("daily.emptySuggestions")));
+    return;
+  }
+  suggestions.forEach((task) => {
+    const goal = findGoal(task.goalId);
+    const card = document.createElement("article");
+    card.className = "daily-task suggestion";
+    card.setAttribute("style", taskColorStyle(task));
+    card.innerHTML = `
+      <div>
+        <strong>${escapeHtml(task.title)}</strong>
+        <span>${escapeHtml(goal?.name ?? t("tasks.noGoal"))}・${escapeHtml(formatDuration(task))}</span>
+      </div>
+      <button class="mini-button" type="button">${escapeHtml(t("daily.addToday"))}</button>
+    `;
+    card.querySelector("button").addEventListener("click", () => {
+      activeScreen = "home";
+      scheduleTask(task.id, todayIso);
+    });
+    els.dailySuggestionList.append(card);
+  });
 }
 
 function renderScreenTabs() {
@@ -4401,7 +4492,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260526-goalbridge")
+      .register("./sw.js?v=20260526-dailyflow")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
