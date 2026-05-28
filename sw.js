@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v50-20260528-directui";
+const cacheName = "goalflow-v51-20260528-lesscopy";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260528-directui",
-  "./app.js?v=20260528-directui",
+  "./styles.css?v=20260528-lesscopy",
+  "./app.js?v=20260528-lesscopy",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",

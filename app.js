@@ -61,7 +61,7 @@ const screenOrder = ["home", "progress", "goals", "schedule", "today"];
 const translations = {
   ja: {
     "app.kicker": "Goal planner",
-    "app.tagline": "目標はある。でも、今日なにすればいいか分からない。",
+    "app.tagline": "",
     "app.heroCopy":
       "GoalFlowは、目標を小さなタスクに分けて、今日やることだけを見せるアプリです。",
     "app.heroPrimary": "はじめる",
@@ -80,7 +80,7 @@ const translations = {
     "onboarding.kicker": "Start small",
     "onboarding.title": "最初は3ステップだけ",
     "onboarding.step1.title": "目標を1つ作る",
-    "onboarding.step1.body": "TOEIC、筋トレ、アプリ制作など。",
+    "onboarding.step1.body": "勉強、受験、資格、作品づくりなど。",
     "onboarding.step2.title": "タスクに分ける",
     "onboarding.step2.body": "大きな目標を、小さな行動に。",
     "onboarding.step3.title": "今日やることに入れる",
@@ -103,7 +103,7 @@ const translations = {
     "introStory.1.label": "1",
     "introStory.1.title": "目標を作る。",
     "introStory.1.body":
-      "TOEIC、筋トレ、アプリ制作。まず進めたいことを1つ置きます。",
+      "勉強、受験、資格、作品づくり。進めたいことを1つ置きます。",
     "introStory.2.label": "2",
     "introStory.2.title": "タスクに分ける。",
     "introStory.2.body": "大きな目標を、今日できる小さな行動にします。",
@@ -295,7 +295,7 @@ const translations = {
     "goalDialog.createTitle": "目標を作る",
     "goalDialog.editTitle": "目標を編集",
     "goalDialog.name": "目標名",
-    "goalDialog.namePlaceholder": "例：3か月でベンチプレス +10kg",
+    "goalDialog.namePlaceholder": "例：8週間で英単語帳を1周する",
     "goalDialog.category": "カテゴリ",
     "goalDialog.categoryPlaceholder": "例：筋トレ、勉強、副業",
     "goalDialog.deleteCategory": "長押しで{category}を候補から削除",
@@ -416,7 +416,7 @@ const translations = {
   },
   en: {
     "app.kicker": "Goal planner",
-    "app.tagline": "You have goals. But today is unclear.",
+    "app.tagline": "",
     "app.heroCopy":
       "GoalFlow breaks goals into small tasks and shows only what to do today.",
     "app.heroPrimary": "Start",
@@ -459,7 +459,7 @@ const translations = {
     "introStory.1.label": "1",
     "introStory.1.title": "Create a goal.",
     "introStory.1.body":
-      "TOEIC, training, app building. Put down one thing you want to move forward.",
+      "Study, exams, certifications, creative work. Put down one thing you want to move forward.",
     "introStory.2.label": "2",
     "introStory.2.title": "Break it into tasks.",
     "introStory.2.body":
@@ -654,7 +654,8 @@ const translations = {
     "goalDialog.createTitle": "Create goal",
     "goalDialog.editTitle": "Edit goal",
     "goalDialog.name": "Goal name",
-    "goalDialog.namePlaceholder": "Example: Bench press +10kg in 3 months",
+    "goalDialog.namePlaceholder":
+      "Example: Finish one vocabulary book in 8 weeks",
     "goalDialog.category": "Category",
     "goalDialog.categoryPlaceholder": "Example: Training, Study, Side project",
     "goalDialog.deleteCategory":
@@ -904,11 +905,11 @@ function seedState() {
   const goals = [
     {
       id: crypto.randomUUID(),
-      name: "3か月でベンチプレス +10kg",
-      category: "筋トレ",
+      name: "8週間で英単語帳を1周する",
+      category: "勉強",
       createdAt: toISO(today),
-      deadline: addDays(today, 88).toISOString().slice(0, 10),
-      note: "週3回の重量管理。無理なく継続する。",
+      deadline: addDays(today, 56).toISOString().slice(0, 10),
+      note: "毎週1章ずつ進める。",
     },
     {
       id: crypto.randomUUID(),
@@ -1264,10 +1265,6 @@ function renderGoals() {
 function renderTaskBank() {
   els.taskBank.innerHTML = "";
   bindTaskBankReturnDrop();
-  const scope = document.createElement("div");
-  scope.className = "task-scope";
-  scope.textContent = t("tasks.scopeAll");
-  els.taskBank.append(scope);
   const tasks = state.tasks;
   if (!tasks.length) {
     els.taskBank.append(empty(t("tasks.empty")));
@@ -4473,7 +4470,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260528-directui")
+      .register("./sw.js?v=20260528-lesscopy")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
