@@ -1374,8 +1374,7 @@ function renderTaskBank() {
         nativeDragging
       )
         return;
-      editingTaskId = editingTaskId === task.id ? "" : task.id;
-      renderTaskBank();
+      event.preventDefault();
     });
     item.addEventListener("selectstart", (event) => event.preventDefault());
     item.addEventListener("contextmenu", (event) => {
@@ -3264,7 +3263,7 @@ function openDayDialog(date) {
       openDayDialog(date);
     });
   });
-  if (!els.dayDialog.open) els.dayDialog.showModal();
+  openDialog(els.dayDialog);
 }
 
 function openInsightDialog(key) {
@@ -3284,7 +3283,7 @@ function openInsightDialog(key) {
   els.insightDialogKicker.textContent = t("insight.kicker");
   els.insightDialogTitle.textContent = t(`insight.${normalizedKey}.title`);
   els.insightDialogBody.textContent = t(`insight.${normalizedKey}.body`);
-  if (!els.insightDialog.open) els.insightDialog.showModal();
+  openDialog(els.insightDialog);
   const gsap = getGsap();
   const card = els.insightDialog.querySelector(".dialog-card");
   if (gsap && card) {
@@ -4033,13 +4032,9 @@ els.openTaskDialog.addEventListener("click", () => {
     return;
   }
   els.taskForm.reset();
-  els.taskForm.elements.namedItem("color").value = normalizeTaskColor(
-    "",
-    `${Date.now()}-${state.tasks.length}`,
-  );
   updateDurationInput();
   renderSelectors();
-  els.taskDialog.showModal();
+  openDialog(els.taskDialog);
 });
 
 function openGoalDialog(goal = null) {
@@ -4061,7 +4056,15 @@ function openGoalDialog(goal = null) {
     goal?.deadline ?? addDays(today, 30).toISOString().slice(0, 10);
   els.goalForm.elements.namedItem("note").value = goal?.note ?? "";
   renderCategoryOptions();
-  els.goalDialog.showModal();
+  openDialog(els.goalDialog);
+}
+
+function openDialog(dialog) {
+  if (!dialog) return;
+  if (!dialog.open) dialog.showModal();
+  dialog.classList.remove("dialog-pop");
+  void dialog.offsetWidth;
+  dialog.classList.add("dialog-pop");
 }
 
 els.goalForm.addEventListener("submit", (event) => {
@@ -4104,6 +4107,14 @@ els.goalDialog.addEventListener("pointerdown", (event) => {
   if (event.target !== els.goalDialog) return;
   editingGoalId = "";
   els.goalDialog.close();
+});
+
+[els.taskDialog, els.dayDialog, els.insightDialog].forEach((dialog) => {
+  dialog?.addEventListener("pointerdown", (event) => {
+    if (event.target !== dialog) return;
+    if (dialog === els.dayDialog) editingScheduledId = "";
+    dialog.close();
+  });
 });
 
 els.insightDialog?.addEventListener("pointerdown", (event) => {
@@ -4481,7 +4492,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260529-home-schedule")
+      .register("./sw.js?v=20260529-dialog-flow")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

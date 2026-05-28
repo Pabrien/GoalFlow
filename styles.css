@@ -3147,7 +3147,31 @@ dialog {
 }
 
 dialog::backdrop {
-  background: rgba(32, 35, 31, 0.38);
+  background: rgba(32, 35, 31, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+dialog.dialog-pop .dialog-card {
+  animation: dialog-stretch-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: 50% 82%;
+}
+
+@keyframes dialog-stretch-in {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94, 0.88);
+    filter: blur(10px);
+  }
+  62% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.012, 1.018);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
 
 .toast {
@@ -5583,7 +5607,7 @@ body[data-active-screen="home"] .task-bank {
 
 body[data-active-screen="home"] .bank-task {
   cursor: pointer;
-  border-color: rgba(20, 108, 99, 0.18);
+  border-color: color-mix(in srgb, var(--task-color) 30%, var(--line));
   background:
     linear-gradient(135deg, var(--task-soft), transparent 50%),
     linear-gradient(180deg, #ffffff, #f8faf7);
@@ -5592,7 +5616,7 @@ body[data-active-screen="home"] .bank-task {
 
 body[data-active-screen="home"] .bank-task:hover,
 body[data-active-screen="home"] .bank-task:focus-visible {
-  border-color: rgba(20, 108, 99, 0.38);
+  border-color: color-mix(in srgb, var(--task-color) 48%, var(--line));
   transform: translateY(-2px);
   box-shadow:
     inset 0 0 0 1px rgba(20, 108, 99, 0.08),
@@ -5770,8 +5794,9 @@ body[data-active-screen="home"] .bank-task:focus-visible {
   body[data-active-screen="home"] .week-controls {
     width: 100%;
     display: grid;
-    grid-template-columns: auto auto 1fr auto auto;
+    grid-template-columns: auto auto auto auto auto;
     align-items: center;
+    justify-content: center;
     gap: 5px;
   }
 
@@ -5912,4 +5937,36 @@ body[data-active-screen="home"] .bank-task:focus-visible {
   body[data-active-screen="home"] .calendar-grid.month-mode .scheduled-task * {
     display: none;
   }
+}
+
+body[data-theme="dark"][data-active-screen="home"] [data-view-panel="tasks"] {
+  border-color: rgba(79, 214, 154, 0.28);
+  background:
+    linear-gradient(135deg, rgba(79, 214, 154, 0.1), transparent 52%),
+    rgba(8, 13, 24, 0.92);
+  box-shadow:
+    0 20px 54px rgba(0, 0, 0, 0.24),
+    inset 0 0 0 1px rgba(79, 214, 154, 0.04);
+}
+
+body[data-theme="dark"][data-active-screen="home"] .bank-task {
+  border-color: color-mix(in srgb, var(--task-color) 38%, var(--line));
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 58%),
+    rgba(8, 13, 24, 0.96);
+  color: var(--ink);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+body[data-theme="dark"][data-active-screen="home"] .bank-task:hover,
+body[data-theme="dark"][data-active-screen="home"] .bank-task:focus-visible {
+  border-color: color-mix(in srgb, var(--task-color) 58%, var(--line));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--task-color) 12%, transparent),
+    0 18px 40px rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="dark"][data-active-screen="home"] .bank-task .task-title,
+body[data-theme="dark"][data-active-screen="home"] .bank-task .task-meta {
+  color: var(--ink);
 }
