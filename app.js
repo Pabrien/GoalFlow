@@ -2219,10 +2219,61 @@ function renderOnboarding() {
 
 function introStorySlides() {
   return Array.from({ length: 5 }, (_, index) => ({
+    index,
     label: t(`introStory.${index}.label`),
     title: t(`introStory.${index}.title`),
     body: t(`introStory.${index}.body`),
   }));
+}
+
+function introStoryVisual(index) {
+  const frames = [
+    `
+      <div class="intro-visual-scene problem">
+        <span class="intro-phone-line"></span>
+        <span class="intro-phone-line short"></span>
+        <span class="intro-floating-task one"></span>
+        <span class="intro-floating-task two"></span>
+        <span class="intro-focus-dot"></span>
+      </div>
+    `,
+    `
+      <div class="intro-visual-scene goal">
+        <span class="intro-goal-card primary"></span>
+        <span class="intro-goal-card secondary"></span>
+        <span class="intro-goal-date start"></span>
+        <span class="intro-goal-date end"></span>
+      </div>
+    `,
+    `
+      <div class="intro-visual-scene task">
+        <span class="intro-big-goal"></span>
+        <span class="intro-task-chip one"></span>
+        <span class="intro-task-chip two"></span>
+        <span class="intro-task-chip three"></span>
+      </div>
+    `,
+    `
+      <div class="intro-visual-scene today">
+        <span class="intro-saved-task"></span>
+        <span class="intro-arrow"></span>
+        <span class="intro-today-slot"></span>
+      </div>
+    `,
+    `
+      <div class="intro-visual-scene progress">
+        <span class="intro-check-ring"></span>
+        <span class="intro-bar one"></span>
+        <span class="intro-bar two"></span>
+        <span class="intro-bar three"></span>
+      </div>
+    `,
+  ];
+  return `
+    <div class="intro-visual" aria-hidden="true">
+      <div class="intro-visual-device">${frames[index] ?? frames[0]}</div>
+    </div>
+  `;
 }
 
 function shouldForceIntroStory() {
@@ -2252,15 +2303,18 @@ function renderIntroStory() {
     .map(
       (slide, index) => `
         <article class="intro-story-slide" aria-hidden="${index === introStoryIndex ? "false" : "true"}">
-          <span class="intro-story-count">${escapeHtml(
-            t("introStory.page", {
-              current: index + 1,
-              total: slides.length,
-            }),
-          )}</span>
-          <p class="intro-story-label">${escapeHtml(slide.label)}</p>
-          <h2>${escapeHtml(slide.title)}</h2>
-          <p>${escapeHtml(slide.body)}</p>
+          <div class="intro-story-copy">
+            <span class="intro-story-count">${escapeHtml(
+              t("introStory.page", {
+                current: index + 1,
+                total: slides.length,
+              }),
+            )}</span>
+            <p class="intro-story-label">${escapeHtml(slide.label)}</p>
+            <h2>${escapeHtml(slide.title)}</h2>
+            <p>${escapeHtml(slide.body)}</p>
+          </div>
+          ${introStoryVisual(slide.index)}
         </article>
       `,
     )
@@ -4470,7 +4524,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260528-lesscopy")
+      .register("./sw.js?v=20260528-animatedguide")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
