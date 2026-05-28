@@ -56,7 +56,7 @@ let lastFocusSoundTarget = null;
 let lastTutorialTarget = "";
 let categoryHoldTimer = null;
 let categoryHoldTarget = null;
-const screenOrder = ["home", "progress", "goals", "schedule", "today"];
+const screenOrder = ["home", "goals", "progress", "today"];
 
 const translations = {
   ja: {
@@ -1786,7 +1786,7 @@ function setPendingScheduleTask(taskId) {
     showToast(t("schedule.pickDateCancelled"));
   } else {
     pendingScheduleTaskId = taskId;
-    activeScreen = "schedule";
+    activeScreen = "home";
     showToast(t("schedule.pickDateHint"));
     vibrate(8);
   }
@@ -2343,7 +2343,7 @@ function tutorialSteps() {
       secondaryAction: () => {
         createTutorialSample();
         state.meta.tutorialStep = 3;
-        activeScreen = "schedule";
+        activeScreen = "home";
         render();
       },
     },
@@ -2363,7 +2363,7 @@ function tutorialSteps() {
       primary: t("tutorial.step2.primary"),
       secondary: t("tutorial.step2.secondary"),
       target: "#openTaskDialog",
-      screen: "schedule",
+      screen: "home",
       completed: () => state.tasks.length > 0,
       action: () => els.openTaskDialog.click(),
     },
@@ -2373,7 +2373,7 @@ function tutorialSteps() {
       primary: t("tutorial.step3.primary"),
       secondary: t("tutorial.step3.secondary"),
       target: ".bank-task",
-      screen: "schedule",
+      screen: "home",
       completed: () =>
         state.scheduled.some((item) => item.date === toISO(today)),
       action: () => {
@@ -4436,12 +4436,12 @@ els.nextActionButton.addEventListener("click", () => {
     openGoalDialog();
   }
   if (action === "createTask") {
-    activeScreen = "schedule";
+    activeScreen = "home";
     render();
     els.openTaskDialog.click();
   }
   if (action === "openTasks") {
-    activeScreen = "schedule";
+    activeScreen = "home";
     render();
   }
   if (action === "openToday") {
@@ -4449,7 +4449,7 @@ els.nextActionButton.addEventListener("click", () => {
     render();
   }
   if (action === "openSchedule") {
-    activeScreen = "schedule";
+    activeScreen = "home";
     render();
   }
 });
@@ -4481,7 +4481,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260528-goal-colors")
+      .register("./sw.js?v=20260529-home-schedule")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
