@@ -96,23 +96,23 @@ const translations = {
     "introStory.start": "始める",
     "introStory.replay": "i",
     "introStory.page": "{current} / {total}",
-    "introStory.0.label": "直感操作",
+    "introStory.0.label": "",
     "introStory.0.title": "今日の一手が見える。",
     "introStory.0.body":
       "GoalFlowは、目標を小さなタスクに分け、カレンダーへ置いて、今日やることだけに絞るアプリです。",
-    "introStory.1.label": "逆算",
+    "introStory.1.label": "",
     "introStory.1.title": "期限から逆算する。",
     "introStory.1.body":
       "大きな目標を、週ごと・1日ごとの小さな行動へ分けます。気合いではなく、進む順番を作ります。",
-    "introStory.2.label": "保存",
+    "introStory.2.label": "",
     "introStory.2.title": "一歩を保存する。",
     "introStory.2.body":
       "何度も使う行動は保存タスクに。迷った日でも、次に置くべき行動をすぐ選べます。",
-    "introStory.3.label": "予定化",
+    "introStory.3.label": "",
     "introStory.3.title": "日付に置く。",
     "introStory.3.body":
       "保存タスクを日付へ置くと、目標がただの願望ではなく、今日動かす予定に変わります。",
-    "introStory.4.label": "継続",
+    "introStory.4.label": "",
     "introStory.4.title": "進捗が残る。",
     "introStory.4.body":
       "完了した一歩は記録になります。自分がどれだけ前へ進んだかが見えるから、戻ってきたくなります。",
@@ -302,6 +302,7 @@ const translations = {
     "goalDialog.categoryPlaceholder": "例：筋トレ、勉強、副業",
     "goalDialog.deleteCategory": "長押しで{category}を候補から削除",
     "goalDialog.categoryDeleted": "{category}を候補から削除しました。",
+    "goalDialog.color": "目標カラー",
     "goalDialog.deadline": "期限",
     "goalDialog.startDate": "開始日",
     "goalDialog.note": "目標メモ",
@@ -315,12 +316,10 @@ const translations = {
     "taskDialog.goal": "どの目標の一歩？",
     "taskDialog.duration": "所要時間",
     "taskDialog.unit": "単位",
-    "taskDialog.color": "色",
     "taskEdit.name": "タスク名",
     "taskEdit.goal": "どの目標の一歩？",
     "taskEdit.duration": "時間",
     "taskEdit.unit": "単位",
-    "taskEdit.color": "色",
     "taskEdit.updated": "保存タスクを更新しました。",
     "taskEdit.confirmDelete": "「{title}」を削除しますか？",
     "taskEdit.confirmDeleteWithRelated":
@@ -454,23 +453,23 @@ const translations = {
     "introStory.start": "Start",
     "introStory.replay": "i",
     "introStory.page": "{current} / {total}",
-    "introStory.0.label": "Intuitive",
+    "introStory.0.label": "",
     "introStory.0.title": "See the next action.",
     "introStory.0.body":
       "GoalFlow breaks goals into small tasks, places them on a calendar, and leaves only what to do today.",
-    "introStory.1.label": "Backcast",
+    "introStory.1.label": "",
     "introStory.1.title": "Work backward.",
     "introStory.1.body":
       "Large goals become weekly and daily actions. You do not rely on motivation; you build the order of progress.",
-    "introStory.2.label": "Save",
+    "introStory.2.label": "",
     "introStory.2.title": "Save each step.",
     "introStory.2.body":
       "Reusable actions become saved tasks, ready to place when you need them.",
-    "introStory.3.label": "Schedule",
+    "introStory.3.label": "",
     "introStory.3.title": "Place it on a date.",
     "introStory.3.body":
       "A saved task on a date turns a goal from a wish into today’s action.",
-    "introStory.4.label": "Momentum",
+    "introStory.4.label": "",
     "introStory.4.title": "Keep the progress.",
     "introStory.4.body":
       "Every completed step becomes a record, so you can see how far you have moved and want to come back.",
@@ -663,6 +662,7 @@ const translations = {
     "goalDialog.deleteCategory":
       "Long-press to remove {category} from suggestions",
     "goalDialog.categoryDeleted": "Removed {category} from suggestions.",
+    "goalDialog.color": "Goal color",
     "goalDialog.deadline": "Deadline",
     "goalDialog.startDate": "Start date",
     "goalDialog.note": "Goal note",
@@ -676,12 +676,10 @@ const translations = {
     "taskDialog.goal": "Which goal is this for?",
     "taskDialog.duration": "Duration",
     "taskDialog.unit": "Unit",
-    "taskDialog.color": "Color",
     "taskEdit.name": "Task name",
     "taskEdit.goal": "Which goal is this for?",
     "taskEdit.duration": "Time",
     "taskEdit.unit": "Unit",
-    "taskEdit.color": "Color",
     "taskEdit.updated": "Saved task updated.",
     "taskEdit.confirmDelete": "Delete “{title}”?",
     "taskEdit.confirmDeleteWithRelated":
@@ -1013,6 +1011,7 @@ function normalizeGoal(goal) {
     ...goal,
     category: goal.category || "未分類",
     createdAt: goal.createdAt || toISO(today),
+    color: normalizeGoalColor(goal.color, goal.id ?? goal.name),
   };
 }
 
@@ -1072,14 +1071,25 @@ function normalizeTaskColor(color, seed = "") {
   return taskColors[hashString(seed) % taskColors.length];
 }
 
+function normalizeGoalColor(color, seed = "") {
+  return normalizeTaskColor(color, seed);
+}
+
+function goalDisplayColor(goalOrId) {
+  const goal =
+    typeof goalOrId === "string" ? findGoal(goalOrId) : (goalOrId ?? null);
+  return normalizeGoalColor(goal?.color, goal?.id ?? goal?.name ?? "");
+}
+
 function taskDisplayColor(item) {
   const task = item?.taskId
     ? state.tasks.find((candidate) => candidate.id === item.taskId)
     : item;
-  return normalizeTaskColor(
-    item?.color ?? task?.color,
-    item?.taskId ?? item?.id ?? item?.goalId ?? item?.title,
-  );
+  const goalId = item?.goalId ?? task?.goalId;
+  const goal = findGoal(goalId);
+  return goal
+    ? goalDisplayColor(goal)
+    : normalizeTaskColor(item?.color ?? task?.color, item?.id ?? item?.title);
 }
 
 function hexToRgba(color, alpha) {
@@ -1229,6 +1239,7 @@ function renderGoals() {
         : t("goals.deadlinePassed", { days: Math.abs(daysLeft) });
     const card = document.createElement("article");
     card.className = `goal-card ${goal.id === selectedGoalId ? "active" : ""}`;
+    card.setAttribute("style", taskColorStyle(goal));
     card.innerHTML = `
       <div class="goal-card-head">
         <button type="button" class="goal-select">
@@ -1243,13 +1254,6 @@ function renderGoals() {
       <div class="progress-track"><div class="progress-fill" style="width: ${percent}%"></div></div>
     `;
     card.querySelector(".goal-select").addEventListener("click", () => {
-      window.clearTimeout(goalSelectTimer);
-      goalSelectTimer = window.setTimeout(() => {
-        selectedGoalId = goal.id;
-        render();
-      }, 220);
-    });
-    bindDoubleActivate(card.querySelector(".goal-select"), () => {
       window.clearTimeout(goalSelectTimer);
       selectedGoalId = goal.id;
       if (els.goalDialog.open && editingGoalId === goal.id) {
@@ -1291,10 +1295,6 @@ function renderTaskBank() {
         <span class="task-drag-handle" data-drag-handle draggable="true" role="button" tabindex="0" aria-label="${escapeHtml(t("tasks.dragAria"))}"></span>
         <div class="bank-task-copy">${taskMarkup(task, goal)}</div>
       </div>
-      <label class="task-goal-link">
-        <span>${escapeHtml(t("tasks.goalLabel"))}</span>
-        <select data-action="task-goal">${taskGoalOptions(task.goalId)}</select>
-      </label>
       ${
         editingTaskId === task.id
           ? `
@@ -1304,7 +1304,6 @@ function renderTaskBank() {
               <div class="field-row">
                 <label>${escapeHtml(t("taskEdit.duration"))}<input name="durationValue" type="number" min="1" max="240" step="1" value="${escapeHtml(task.durationValue ?? task.minutes ?? 30)}" /></label>
                 <label>${escapeHtml(t("taskEdit.unit"))}<select name="durationUnit">${durationUnitOptions(task.durationUnit ?? "minutes")}</select></label>
-                <label class="color-field">${escapeHtml(t("taskEdit.color"))}<input name="color" type="color" value="${escapeHtml(taskDisplayColor(task))}" /></label>
               </div>
               <div class="task-edit-actions">
                 <button class="mini-button danger-button" type="button" data-action="delete-task">${escapeHtml(t("actions.delete"))}</button>
@@ -1315,9 +1314,6 @@ function renderTaskBank() {
           `
           : ""
       }
-      <div class="bank-task-actions">
-        <button class="mini-button pick-date-button" type="button" data-action="pick-date">${escapeHtml(pendingScheduleTaskId === task.id ? t("tasks.pickingDate") : t("tasks.pickDate"))}</button>
-      </div>
     `;
     const dragHandle = item.querySelector("[data-drag-handle]");
     const beginBankDrag = (event) => {
@@ -1385,14 +1381,6 @@ function renderTaskBank() {
     item.addEventListener("contextmenu", (event) => {
       if (isCompactScheduleLayout()) event.preventDefault();
     });
-    item
-      .querySelector('[data-action="pick-date"]')
-      .addEventListener("click", () => setPendingScheduleTask(task.id));
-    item
-      .querySelector('[data-action="task-goal"]')
-      .addEventListener("change", (event) => {
-        updateTaskGoal(task, event.target.value);
-      });
     bindDoubleActivate(item.querySelector(".bank-task-copy"), () => {
       editingTaskId = editingTaskId === task.id ? "" : task.id;
       renderTaskBank();
@@ -1528,7 +1516,6 @@ function scheduledEditForm(item) {
       <div class="field-row">
         <label>${escapeHtml(t("taskEdit.duration"))}<input name="durationValue" type="number" min="1" max="240" step="1" value="${escapeHtml(item.durationValue ?? item.minutes ?? 30)}" /></label>
         <label>${escapeHtml(t("taskEdit.unit"))}<select name="durationUnit">${durationUnitOptions(item.durationUnit ?? "minutes")}</select></label>
-        <label class="color-field">${escapeHtml(t("taskEdit.color"))}<input name="color" type="color" value="${escapeHtml(taskDisplayColor(item))}" /></label>
       </div>
       <div class="task-edit-actions">
         <button class="mini-button danger-button" type="button" data-action="delete-scheduled-edit">${escapeHtml(t("actions.delete"))}</button>
@@ -2276,7 +2263,11 @@ function renderIntroStory() {
                 total: slides.length,
               }),
             )}</span>
-            <p class="intro-story-label">${escapeHtml(slide.label)}</p>
+            ${
+              slide.label
+                ? `<p class="intro-story-label">${escapeHtml(slide.label)}</p>`
+                : ""
+            }
             <h2>${escapeHtml(slide.title)}</h2>
             <p>${escapeHtml(slide.body)}</p>
           </div>
@@ -3188,7 +3179,6 @@ function saveTaskEdit(event, task) {
   task.durationValue = durationValue;
   task.durationUnit = durationUnit;
   task.minutes = durationUnit === "hours" ? durationValue * 60 : durationValue;
-  task.color = normalizeTaskColor(data.get("color"), task.id);
   state.scheduled.forEach((item) => {
     if (item.taskId !== task.id) return;
     item.title = task.title;
@@ -3196,7 +3186,6 @@ function saveTaskEdit(event, task) {
     item.minutes = task.minutes;
     item.durationValue = task.durationValue;
     item.durationUnit = task.durationUnit;
-    item.color = task.color;
   });
   selectedGoalId = task.goalId;
   editingTaskId = "";
@@ -3216,7 +3205,6 @@ function saveScheduledEdit(event, item) {
   item.durationValue = durationValue;
   item.durationUnit = durationUnit;
   item.minutes = durationUnit === "hours" ? durationValue * 60 : durationValue;
-  item.color = normalizeTaskColor(data.get("color"), item.id);
   selectedGoalId = item.goalId;
   editingScheduledId = "";
   activeScheduleControlId = item.id;
@@ -4064,6 +4052,9 @@ function openGoalDialog(goal = null) {
     : t("goalDialog.createTitle");
   els.goalForm.elements.namedItem("name").value = goal?.name ?? "";
   els.goalForm.elements.namedItem("category").value = goal?.category ?? "";
+  els.goalForm.elements.namedItem("color").value = goal
+    ? goalDisplayColor(goal)
+    : normalizeGoalColor(null, `new-goal-${state.goals.length}`);
   els.goalForm.elements.namedItem("createdAt").value =
     goal?.createdAt ?? toISO(today);
   els.goalForm.elements.namedItem("deadline").value =
@@ -4087,6 +4078,7 @@ els.goalForm.addEventListener("submit", (event) => {
   Object.assign(goal, {
     name: data.get("name").trim(),
     category,
+    color: normalizeGoalColor(data.get("color"), goal.id),
     createdAt: data.get("createdAt"),
     deadline: data.get("deadline"),
     note: data.get("note").trim(),
@@ -4136,7 +4128,6 @@ els.taskForm.addEventListener("submit", (event) => {
     minutes: durationUnit === "hours" ? durationValue * 60 : durationValue,
     durationValue,
     durationUnit,
-    color: normalizeTaskColor(data.get("color"), data.get("title").trim()),
   });
   selectedGoalId = data.get("goalId");
   els.taskDialog.close();
@@ -4490,7 +4481,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260528-clean-schedule")
+      .register("./sw.js?v=20260528-goal-colors")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

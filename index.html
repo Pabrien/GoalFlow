@@ -19,7 +19,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260528-clean-schedule" />
+    <link rel="stylesheet" href="./styles.css?v=20260528-goal-colors" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -628,6 +628,10 @@
             aria-label="カテゴリ候補"
           ></div>
         </label>
+        <label class="color-field">
+          <span data-i18n="goalDialog.color">目標カラー</span>
+          <input name="color" type="color" value="#2563eb" />
+        </label>
         <label>
           <span data-i18n="goalDialog.deadline">期限</span>
           <input name="deadline" type="date" required />
@@ -709,10 +713,6 @@
               <option value="minutes" data-i18n="unit.minutes">分</option>
               <option value="hours" data-i18n="unit.hours">時間</option>
             </select>
-          </label>
-          <label class="color-field">
-            <span data-i18n="taskDialog.color">色</span>
-            <input name="color" type="color" value="#2563eb" />
           </label>
         </div>
         <button class="primary-button" type="submit" data-i18n="actions.save">
@@ -799,6 +799,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260528-clean-schedule"></script>
+    <script defer src="./app.js?v=20260528-goal-colors"></script>
   </body>
 </html>

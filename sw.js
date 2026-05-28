@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v55-20260528-clean-schedule";
+const cacheName = "goalflow-v56-20260528-goal-colors";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260528-clean-schedule",
-  "./app.js?v=20260528-clean-schedule",
+  "./styles.css?v=20260528-goal-colors",
+  "./app.js?v=20260528-goal-colors",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",

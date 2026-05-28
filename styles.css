@@ -1902,11 +1902,18 @@ body[data-active-screen="today"] .insights {
 
 .goal-card {
   padding: 12px;
+  --task-color: var(--accent);
+  --task-soft: rgba(20, 108, 99, 0.1);
+  border-left: 5px solid var(--task-color);
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 56%), #fbfcfa;
 }
 
 .goal-card.active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--task-color) 42%, var(--line));
+  border-left-color: var(--task-color);
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 52%), #ffffff;
 }
 
 .goal-card .goal-select {
@@ -1986,33 +1993,6 @@ body[data-active-screen="today"] .insights {
   font-size: 12px;
   font-weight: 750;
   line-height: 1.45;
-}
-
-.task-goal-link {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px;
-  align-items: center;
-  margin-top: 10px;
-  padding: 8px;
-  border: 1px solid color-mix(in srgb, var(--task-color) 24%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--task-color) 8%, transparent);
-}
-
-.task-goal-link span {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.task-goal-link select {
-  min-height: 34px;
-  padding: 0 28px 0 10px;
-  border-color: color-mix(in srgb, var(--task-color) 26%, var(--line));
-  background-color: rgba(255, 255, 255, 0.74);
-  font-size: 12px;
-  font-weight: 850;
 }
 
 .bank-task {
@@ -2176,19 +2156,6 @@ body[data-active-screen="schedule"] .bank-task:focus-visible {
   outline-offset: 2px;
 }
 
-.bank-task-actions {
-  display: flex;
-  gap: 6px;
-  justify-content: flex-end;
-  margin-top: 10px;
-}
-
-.bank-task-actions .mini-button {
-  border-color: rgba(20, 108, 99, 0.18);
-  background: rgba(20, 108, 99, 0.06);
-  color: var(--accent-strong);
-}
-
 body[data-view-mode="month"] .bank-task {
   padding: 8px;
 }
@@ -2252,12 +2219,6 @@ body.is-scheduling .day-column {
   border: 1px solid rgba(37, 99, 235, 0.2);
   border-radius: 8px;
   pointer-events: none;
-}
-
-.bank-task.picking .pick-date-button {
-  border-color: rgba(37, 99, 235, 0.34);
-  background: rgba(37, 99, 235, 0.1);
-  color: #1d4ed8;
 }
 
 body.is-returning-scheduled .task-bank {
@@ -3576,13 +3537,6 @@ textarea:focus {
     display: grid;
   }
 
-  .bank-task-actions .mini-button {
-    width: 100%;
-    min-height: 42px;
-    border-radius: 12px;
-    font-size: 13px;
-  }
-
   .calendar-grid {
     grid-template-columns: 1fr;
     min-width: 0;
@@ -3633,10 +3587,6 @@ textarea:focus {
     white-space: nowrap;
     font-size: 10px;
     line-height: 1.25;
-  }
-
-  .bank-task-actions {
-    margin-top: 7px;
   }
 
   .bank-task .mini-button,
@@ -4041,8 +3991,10 @@ body[data-tab-direction="-1"] .home-dashboard {
 }
 
 .goal-card.active {
-  border-color: rgba(37, 99, 235, 0.28);
-  background: #eff6ff;
+  border-color: color-mix(in srgb, var(--task-color) 34%, #e8ebf0);
+  border-left-color: var(--task-color);
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 52%), #ffffff;
 }
 
 .bank-task,
@@ -4374,11 +4326,6 @@ dialog {
     line-height: 1.2;
   }
 
-  body[data-active-screen="schedule"][data-view-mode="month"]
-    .bank-task-actions {
-    display: flex;
-  }
-
   body[data-active-screen="schedule"] .bank-task .task-title {
     font-size: 11px;
   }
@@ -4388,10 +4335,6 @@ dialog {
     margin-top: 4px;
     font-size: 10px;
     line-height: 1.25;
-  }
-
-  body[data-active-screen="schedule"] .bank-task-actions {
-    margin-top: 5px;
   }
 
   body[data-active-screen="schedule"] .bank-task .mini-button,
@@ -5072,8 +5015,7 @@ body[data-theme="dark"] .product-line {
 
 body[data-theme="dark"] .hero-points span,
 body[data-theme="dark"] .flow-map span,
-body[data-theme="dark"] .tutorial-progress,
-body[data-theme="dark"] .bank-task-actions .mini-button {
+body[data-theme="dark"] .tutorial-progress {
   border-color: rgba(79, 214, 154, 0.28);
   background: rgba(79, 214, 154, 0.1);
   color: var(--accent-strong);
@@ -5200,11 +5142,6 @@ body[data-theme="dark"] .task-picker-guide {
   color: var(--muted);
 }
 
-body[data-theme="dark"] .task-goal-link {
-  border-color: rgba(100, 116, 139, 0.28);
-  background: rgba(15, 23, 42, 0.7);
-}
-
 body[data-theme="dark"] .goal-card,
 body[data-theme="dark"] .bank-task,
 body[data-theme="dark"] .today-task,
@@ -5220,12 +5157,6 @@ body[data-theme="dark"] .theme-toggle,
 body[data-theme="dark"] .language-toggle {
   border-color: var(--line);
   background: rgba(7, 11, 20, 0.92);
-  color: var(--ink);
-}
-
-body[data-theme="dark"] .task-goal-link select {
-  border-color: rgba(100, 116, 139, 0.34);
-  background-color: rgba(8, 13, 24, 0.84);
   color: var(--ink);
 }
 
@@ -5247,8 +5178,10 @@ body[data-theme="dark"] #todayPeriod:hover {
 body[data-theme="dark"] .goal-card.active,
 body[data-theme="dark"] .bank-task.editing,
 body[data-theme="dark"] .day-column.drop-target {
-  border-color: rgba(94, 224, 168, 0.42);
-  background: rgba(94, 224, 168, 0.12);
+  border-color: color-mix(in srgb, var(--task-color) 42%, var(--line));
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 58%),
+    rgba(8, 13, 24, 0.96);
 }
 
 body[data-theme="dark"][data-active-screen="schedule"] .bank-task {
@@ -5276,12 +5209,6 @@ body[data-theme="dark"] .bank-task.picking {
   box-shadow:
     inset 0 0 0 1px rgba(114, 167, 255, 0.14),
     0 14px 32px rgba(0, 0, 0, 0.26);
-}
-
-body[data-theme="dark"] .bank-task.picking .pick-date-button {
-  border-color: rgba(114, 167, 255, 0.46);
-  background: rgba(114, 167, 255, 0.16);
-  color: #bfdbfe;
 }
 
 body[data-theme="dark"] .tag,
@@ -5556,10 +5483,12 @@ body[data-theme="dark"] .today-task {
 }
 
 body[data-theme="dark"] .goal-card.active {
-  border-color: rgba(79, 214, 154, 0.5);
-  background: #0b141c;
+  border-color: color-mix(in srgb, var(--task-color) 48%, var(--line));
+  border-left-color: var(--task-color);
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 58%), #0b141c;
   box-shadow:
-    inset 0 0 0 1px rgba(79, 214, 154, 0.08),
+    inset 0 0 0 1px color-mix(in srgb, var(--task-color) 14%, transparent),
     0 16px 34px rgba(0, 0, 0, 0.28);
 }
 
