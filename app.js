@@ -154,12 +154,12 @@ const translations = {
     "focus.defaultButton": "始める",
     "daily.aria": "今日の流れ",
     "daily.todayKicker": "Today",
-    "daily.todayTitle": "今日",
+    "daily.todayTitle": "",
     "daily.suggestKicker": "Next",
-    "daily.suggestTitle": "今日に入れる",
+    "daily.suggestTitle": "",
     "daily.emptyToday": "まだありません。",
     "daily.emptySuggestions": "保存タスクを作ると出ます。",
-    "daily.addToday": "今日",
+    "daily.addToday": "＋",
     "daily.done": "完了",
     "daily.undo": "戻す",
     "buddy.kicker": "ひとこと",
@@ -263,7 +263,7 @@ const translations = {
     "tasks.dragAria": "カレンダーへドラッグ",
     "tasks.pickDate": "日付",
     "tasks.pickingDate": "追加する日付を選択中",
-    "tasks.addToday": "今日",
+    "tasks.addToday": "＋",
     "tasks.noGoal": "未設定",
     "schedule.kicker": "ドラッグで予定化",
     "schedule.week": "週",
@@ -282,7 +282,7 @@ const translations = {
     "schedule.moved": "予定を移動しました。",
     "schedule.pickDateHint": "カレンダーの日付をタップすると予定に入ります。",
     "schedule.pickDateCancelled": "日付選択を解除しました。",
-    "today.title": "今日やること",
+    "today.title": "今日",
     "today.empty": "今日やることはまだありません。",
     "today.completedToast":
       "完了を記録しました。今日の流れが少し前に進みました。",
@@ -514,12 +514,12 @@ const translations = {
     "focus.defaultButton": "Start",
     "daily.aria": "Today flow",
     "daily.todayKicker": "Today",
-    "daily.todayTitle": "Today",
+    "daily.todayTitle": "",
     "daily.suggestKicker": "Next",
-    "daily.suggestTitle": "Put on today",
+    "daily.suggestTitle": "",
     "daily.emptyToday": "Nothing yet.",
     "daily.emptySuggestions": "Saved tasks will appear here.",
-    "daily.addToday": "Today",
+    "daily.addToday": "+",
     "daily.done": "Done",
     "daily.undo": "Undo",
     "buddy.kicker": "Note",
@@ -623,7 +623,7 @@ const translations = {
     "tasks.dragAria": "Drag to calendar",
     "tasks.pickDate": "Date",
     "tasks.pickingDate": "Picking a date",
-    "tasks.addToday": "Today",
+    "tasks.addToday": "+",
     "tasks.noGoal": "No goal",
     "schedule.kicker": "Drag to schedule",
     "schedule.week": "Week",
@@ -642,7 +642,7 @@ const translations = {
     "schedule.moved": "Moved schedule item.",
     "schedule.pickDateHint": "Tap a calendar date to schedule it.",
     "schedule.pickDateCancelled": "Date picking cancelled.",
-    "today.title": "Today’s tasks",
+    "today.title": "Today",
     "today.empty": "No tasks for today yet.",
     "today.completedToast": "Completed. Today’s flow moved forward a little.",
     "actions.save": "Save",
@@ -1319,7 +1319,6 @@ function renderTaskBank() {
       }
       <div class="bank-task-actions">
         <button class="mini-button pick-date-button" type="button" data-action="pick-date">${escapeHtml(pendingScheduleTaskId === task.id ? t("tasks.pickingDate") : t("tasks.pickDate"))}</button>
-        <button class="mini-button" type="button" data-action="today">${escapeHtml(t("tasks.addToday"))}</button>
       </div>
     `;
     const dragHandle = item.querySelector("[data-drag-handle]");
@@ -1376,23 +1375,13 @@ function renderTaskBank() {
     );
     item.addEventListener("click", (event) => {
       if (
-        activeScreen !== "schedule" ||
         event.target.closest("button, input, textarea, select, form") ||
         event.target.closest("[data-drag-handle]") ||
         nativeDragging
       )
         return;
-      setPendingScheduleTask(task.id);
-    });
-    item.addEventListener("keydown", (event) => {
-      if (
-        activeScreen !== "schedule" ||
-        (event.key !== "Enter" && event.key !== " ") ||
-        event.target.closest("button, input, textarea, select")
-      )
-        return;
-      event.preventDefault();
-      setPendingScheduleTask(task.id);
+      editingTaskId = editingTaskId === task.id ? "" : task.id;
+      renderTaskBank();
     });
     item.addEventListener("selectstart", (event) => event.preventDefault());
     item.addEventListener("contextmenu", (event) => {
@@ -1401,14 +1390,6 @@ function renderTaskBank() {
     item
       .querySelector('[data-action="pick-date"]')
       .addEventListener("click", () => setPendingScheduleTask(task.id));
-    item
-      .querySelector('[data-action="today"]')
-      .addEventListener("click", () => {
-        pendingScheduleTaskId = "";
-        scheduleTask(task.id, toISO(today));
-        activeScreen = "today";
-        render();
-      });
     item
       .querySelector('[data-action="task-goal"]')
       .addEventListener("change", (event) => {
@@ -4492,7 +4473,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260526-dailyflow")
+      .register("./sw.js?v=20260528-directui")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

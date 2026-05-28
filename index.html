@@ -19,7 +19,7 @@
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260526-dailyflow" />
+    <link rel="stylesheet" href="./styles.css?v=20260528-directui" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
@@ -82,35 +82,6 @@
           <p class="hero-copy" data-i18n="app.heroCopy">
             GoalFlowは、目標を小さなタスクに分けて、今日やることだけを見せるアプリです。
           </p>
-          <div class="hero-actions" aria-label="はじめる">
-            <button
-              class="primary-button"
-              id="heroStartGoal"
-              type="button"
-              data-i18n="app.heroPrimary"
-            >
-              はじめる
-            </button>
-            <button
-              class="ghost-button"
-              id="heroWatchGuide"
-              type="button"
-              data-i18n="app.heroSecondary"
-            >
-              使い方を見る
-            </button>
-          </div>
-          <div
-            class="hero-points"
-            aria-label="GoalFlowの特徴"
-            data-i18n-aria="app.pointsAria"
-          >
-            <span><b>01</b><em data-i18n="app.point1">目標＝向かう先</em></span>
-            <span
-              ><b>02</b><em data-i18n="app.point2">タスク＝今日の一歩</em></span
-            >
-            <span><b>03</b><em data-i18n="app.point3">今日に入れる</em></span>
-          </div>
         </div>
         <div class="topbar-actions">
           <button
@@ -122,16 +93,6 @@
             data-i18n-title="introStory.aria"
           >
             i
-          </button>
-          <button
-            class="icon-button topbar-icon help-button"
-            id="openTutorial"
-            type="button"
-            data-i18n="tutorial.open"
-            data-i18n-aria="tutorial.aria"
-            data-i18n-title="tutorial.openTitle"
-          >
-            ?
           </button>
           <button
             class="language-toggle"
@@ -486,7 +447,7 @@
             <div class="panel-heading">
               <h2 data-i18n="goals.title">目標</h2>
               <div class="panel-actions">
-                <span id="goalCount">0</span>
+                <span id="goalCount" hidden>0</span>
                 <button
                   class="icon-button add-button"
                   id="openGoalDialog"
@@ -618,7 +579,7 @@
         <aside class="insights" aria-label="可視化と今日の予定">
           <section class="panel" data-view-panel="today">
             <div class="panel-heading">
-              <h2 data-i18n="today.title">今日やること</h2>
+              <h2 data-i18n="today.title">今日</h2>
               <span id="todayDate"></span>
             </div>
             <div class="today-list" id="todayList"></div>
@@ -844,6 +805,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260526-dailyflow"></script>
+    <script defer src="./app.js?v=20260528-directui"></script>
   </body>
 </html>

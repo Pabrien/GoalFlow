@@ -495,6 +495,14 @@ textarea:focus-visible,
   line-height: 1.65;
 }
 
+.hero-copy,
+.hero-actions,
+.hero-points,
+.flow-focus,
+.flow-map {
+  display: none !important;
+}
+
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
@@ -918,6 +926,10 @@ textarea:focus-visible,
   background: rgba(255, 255, 255, 0.82);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(14px);
+}
+
+.daily-panel .panel-heading div {
+  display: none;
 }
 
 .daily-count {
