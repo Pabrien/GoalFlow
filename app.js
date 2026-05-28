@@ -96,24 +96,34 @@ const translations = {
     "introStory.start": "始める",
     "introStory.replay": "i",
     "introStory.page": "{current} / {total}",
-    "introStory.0.label": "問題",
-    "introStory.0.title": "目標はある。でも、今日なにすればいいか分からない。",
+    "introStory.0.label": "直感操作",
+    "introStory.0.title": "今日の一手が見える。",
     "introStory.0.body":
-      "GoalFlowは、その迷いを「今日やる一歩」に変えるアプリです。",
-    "introStory.1.label": "1",
-    "introStory.1.title": "目標を作る。",
+      "GoalFlowは、目標を小さなタスクに分け、カレンダーへ置いて、今日やることだけに絞るアプリです。",
+    "introStory.1.label": "逆算",
+    "introStory.1.title": "期限から逆算する。",
     "introStory.1.body":
-      "勉強、受験、資格、作品づくり。進めたいことを1つ置きます。",
-    "introStory.2.label": "2",
-    "introStory.2.title": "タスクに分ける。",
-    "introStory.2.body": "大きな目標を、今日できる小さな行動にします。",
-    "introStory.3.label": "3",
-    "introStory.3.title": "今日に入れる。",
-    "introStory.3.body": "今日やることだけを見れば、迷わず始められます。",
-    "introStory.4.label": "記録",
-    "introStory.4.title": "完了が進捗になる。",
+      "大きな目標を、週ごと・1日ごとの小さな行動へ分けます。気合いではなく、進む順番を作ります。",
+    "introStory.2.label": "保存",
+    "introStory.2.title": "一歩を保存する。",
+    "introStory.2.body":
+      "何度も使う行動は保存タスクに。迷った日でも、次に置くべき行動をすぐ選べます。",
+    "introStory.3.label": "予定化",
+    "introStory.3.title": "日付に置く。",
+    "introStory.3.body":
+      "保存タスクを日付へ置くと、目標がただの願望ではなく、今日動かす予定に変わります。",
+    "introStory.4.label": "継続",
+    "introStory.4.title": "進捗が残る。",
     "introStory.4.body":
-      "終わったタスクは、達成率・グラフ・目標別レポートに残ります。",
+      "完了した一歩は記録になります。自分がどれだけ前へ進んだかが見えるから、戻ってきたくなります。",
+    "introVisual.goal": "目標",
+    "introVisual.deadline": "期限",
+    "introVisual.savedTask": "保存タスク",
+    "introVisual.today": "今日",
+    "introVisual.progress": "進捗",
+    "introVisual.done": "完了",
+    "introVisual.week": "週ごと",
+    "introVisual.day": "1日",
     "tabs.aria": "画面切替",
     "tabs.home": "ホーム",
     "tabs.progress": "進捗",
@@ -452,26 +462,34 @@ const translations = {
     "introStory.start": "Start",
     "introStory.replay": "i",
     "introStory.page": "{current} / {total}",
-    "introStory.0.label": "Problem",
-    "introStory.0.title": "You have goals. But today is unclear.",
+    "introStory.0.label": "Intuitive",
+    "introStory.0.title": "See the next action.",
     "introStory.0.body":
-      "GoalFlow turns that confusion into one clear action for today.",
-    "introStory.1.label": "1",
-    "introStory.1.title": "Create a goal.",
+      "GoalFlow breaks goals into small tasks, places them on a calendar, and leaves only what to do today.",
+    "introStory.1.label": "Backcast",
+    "introStory.1.title": "Work backward.",
     "introStory.1.body":
-      "Study, exams, certifications, creative work. Put down one thing you want to move forward.",
-    "introStory.2.label": "2",
-    "introStory.2.title": "Break it into tasks.",
+      "Large goals become weekly and daily actions. You do not rely on motivation; you build the order of progress.",
+    "introStory.2.label": "Save",
+    "introStory.2.title": "Save each step.",
     "introStory.2.body":
-      "Turn the big goal into actions small enough for today.",
-    "introStory.3.label": "3",
-    "introStory.3.title": "Put it on today.",
+      "Reusable actions become saved tasks, ready to place when you need them.",
+    "introStory.3.label": "Schedule",
+    "introStory.3.title": "Place it on a date.",
     "introStory.3.body":
-      "See only today’s tasks, then start without overthinking.",
-    "introStory.4.label": "Record",
-    "introStory.4.title": "Completion becomes progress.",
+      "A saved task on a date turns a goal from a wish into today’s action.",
+    "introStory.4.label": "Momentum",
+    "introStory.4.title": "Keep the progress.",
     "introStory.4.body":
-      "Finished tasks stay visible in rates, charts, and goal reports.",
+      "Every completed step becomes a record, so you can see how far you have moved and want to come back.",
+    "introVisual.goal": "Goal",
+    "introVisual.deadline": "Deadline",
+    "introVisual.savedTask": "Saved task",
+    "introVisual.today": "Today",
+    "introVisual.progress": "Progress",
+    "introVisual.done": "Done",
+    "introVisual.week": "Weekly",
+    "introVisual.day": "Daily",
     "tabs.aria": "Screens",
     "tabs.home": "Home",
     "tabs.progress": "Progress",
@@ -2227,45 +2245,58 @@ function introStorySlides() {
 }
 
 function introStoryVisual(index) {
+  const label = (key, className = "") =>
+    `<span class="intro-visual-label ${className}">${escapeHtml(t(key))}</span>`;
   const frames = [
     `
       <div class="intro-visual-scene problem">
-        <span class="intro-phone-line"></span>
-        <span class="intro-phone-line short"></span>
-        <span class="intro-floating-task one"></span>
-        <span class="intro-floating-task two"></span>
-        <span class="intro-focus-dot"></span>
+        ${label("introVisual.goal", "top")}
+        <span class="intro-flow-goal"></span>
+        <span class="intro-flow-path"></span>
+        <span class="intro-flow-chip one"></span>
+        <span class="intro-flow-chip two"></span>
+        <span class="intro-flow-today"></span>
+        ${label("introVisual.today", "bottom")}
       </div>
     `,
     `
       <div class="intro-visual-scene goal">
+        ${label("introVisual.goal", "top")}
         <span class="intro-goal-card primary"></span>
         <span class="intro-goal-card secondary"></span>
         <span class="intro-goal-date start"></span>
         <span class="intro-goal-date end"></span>
+        ${label("introVisual.week", "left")}
+        ${label("introVisual.deadline", "right")}
       </div>
     `,
     `
       <div class="intro-visual-scene task">
+        ${label("introVisual.goal", "top")}
         <span class="intro-big-goal"></span>
         <span class="intro-task-chip one"></span>
         <span class="intro-task-chip two"></span>
         <span class="intro-task-chip three"></span>
+        ${label("introVisual.savedTask", "bottom")}
       </div>
     `,
     `
       <div class="intro-visual-scene today">
+        ${label("introVisual.savedTask", "top")}
         <span class="intro-saved-task"></span>
         <span class="intro-arrow"></span>
         <span class="intro-today-slot"></span>
+        ${label("introVisual.today", "bottom")}
       </div>
     `,
     `
       <div class="intro-visual-scene progress">
+        ${label("introVisual.done", "top")}
         <span class="intro-check-ring"></span>
         <span class="intro-bar one"></span>
         <span class="intro-bar two"></span>
         <span class="intro-bar three"></span>
+        ${label("introVisual.progress", "bottom")}
       </div>
     `,
   ];
@@ -4524,7 +4555,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260528-animatedguide")
+      .register("./sw.js?v=20260528-guideclarity")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
