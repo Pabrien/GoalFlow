@@ -116,14 +116,6 @@ const translations = {
     "introStory.4.title": "進捗が残る。",
     "introStory.4.body":
       "完了した一歩は記録になります。自分がどれだけ前へ進んだかが見えるから、戻ってきたくなります。",
-    "introVisual.goal": "目標",
-    "introVisual.deadline": "期限",
-    "introVisual.savedTask": "保存タスク",
-    "introVisual.today": "今日",
-    "introVisual.progress": "進捗",
-    "introVisual.done": "完了",
-    "introVisual.week": "週ごと",
-    "introVisual.day": "1日",
     "tabs.aria": "画面切替",
     "tabs.home": "ホーム",
     "tabs.progress": "進捗",
@@ -482,14 +474,6 @@ const translations = {
     "introStory.4.title": "Keep the progress.",
     "introStory.4.body":
       "Every completed step becomes a record, so you can see how far you have moved and want to come back.",
-    "introVisual.goal": "Goal",
-    "introVisual.deadline": "Deadline",
-    "introVisual.savedTask": "Saved task",
-    "introVisual.today": "Today",
-    "introVisual.progress": "Progress",
-    "introVisual.done": "Done",
-    "introVisual.week": "Weekly",
-    "introVisual.day": "Daily",
     "tabs.aria": "Screens",
     "tabs.home": "Home",
     "tabs.progress": "Progress",
@@ -828,7 +812,6 @@ const els = {
   completionPie: document.querySelector("#completionPie"),
   goalReport: document.querySelector("#goalReport"),
   weekTitle: document.querySelector("#weekTitle"),
-  calendarRange: document.querySelector("#calendarRange"),
   todayDate: document.querySelector("#todayDate"),
   summaryTodayRate: document.querySelector("#summaryTodayRate"),
   summaryWeekRate: document.querySelector("#summaryWeekRate"),
@@ -1679,7 +1662,6 @@ function renderCalendar() {
     viewMode === "month"
       ? formatMonthTitle(monthCursor)
       : `${formatDate(days[0])} - ${formatDate(days[6])}`;
-  renderCalendarRange();
   els.calendarGrid.className = `calendar-grid ${viewMode === "month" ? "month-mode" : "week-mode"} ${compactMonth ? "compact-month-mode" : ""}`;
   els.calendarGrid.innerHTML = "";
   days.forEach((date) => {
@@ -1751,40 +1733,6 @@ function renderCalendar() {
     }
     els.calendarGrid.append(column);
   });
-}
-
-function renderCalendarRange() {
-  if (!els.calendarRange) return;
-  const goals = state.goals.filter((goal) => {
-    return goal.createdAt && goal.deadline;
-  });
-  if (!goals.length) {
-    els.calendarRange.innerHTML = `<span class="calendar-range-empty">${escapeHtml(t("calendar.rangeEmpty"))}</span>`;
-    return;
-  }
-  const chips = goals
-    .slice(0, 3)
-    .map(
-      (goal) =>
-        `<span class="calendar-range-chip">${escapeHtml(
-          t("calendar.rangeChip", {
-            goal: goal.name,
-            start: formatDate(goal.createdAt),
-            deadline: formatDate(goal.deadline),
-          }),
-        )}</span>`,
-    )
-    .join("");
-  const overflow =
-    goals.length > 3
-      ? `<span class="calendar-range-more">${escapeHtml(
-          t("calendar.rangeOverflow", { count: goals.length - 3 }),
-        )}</span>`
-      : "";
-  els.calendarRange.innerHTML = `
-    <span class="calendar-range-label">${escapeHtml(t("calendar.rangeLabel"))}</span>
-    <div class="calendar-range-chips">${chips}${overflow}</div>
-  `;
 }
 
 function calendarGoalMarkers(iso) {
@@ -2245,58 +2193,45 @@ function introStorySlides() {
 }
 
 function introStoryVisual(index) {
-  const label = (key, className = "") =>
-    `<span class="intro-visual-label ${className}">${escapeHtml(t(key))}</span>`;
   const frames = [
     `
       <div class="intro-visual-scene problem">
-        ${label("introVisual.goal", "top")}
-        <span class="intro-flow-goal"></span>
-        <span class="intro-flow-path"></span>
-        <span class="intro-flow-chip one"></span>
-        <span class="intro-flow-chip two"></span>
-        <span class="intro-flow-today"></span>
-        ${label("introVisual.today", "bottom")}
+        <span class="intro-phone-line"></span>
+        <span class="intro-phone-line short"></span>
+        <span class="intro-floating-task one"></span>
+        <span class="intro-floating-task two"></span>
+        <span class="intro-focus-dot"></span>
       </div>
     `,
     `
       <div class="intro-visual-scene goal">
-        ${label("introVisual.goal", "top")}
         <span class="intro-goal-card primary"></span>
         <span class="intro-goal-card secondary"></span>
         <span class="intro-goal-date start"></span>
         <span class="intro-goal-date end"></span>
-        ${label("introVisual.week", "left")}
-        ${label("introVisual.deadline", "right")}
       </div>
     `,
     `
       <div class="intro-visual-scene task">
-        ${label("introVisual.goal", "top")}
         <span class="intro-big-goal"></span>
         <span class="intro-task-chip one"></span>
         <span class="intro-task-chip two"></span>
         <span class="intro-task-chip three"></span>
-        ${label("introVisual.savedTask", "bottom")}
       </div>
     `,
     `
       <div class="intro-visual-scene today">
-        ${label("introVisual.savedTask", "top")}
         <span class="intro-saved-task"></span>
         <span class="intro-arrow"></span>
         <span class="intro-today-slot"></span>
-        ${label("introVisual.today", "bottom")}
       </div>
     `,
     `
       <div class="intro-visual-scene progress">
-        ${label("introVisual.done", "top")}
         <span class="intro-check-ring"></span>
         <span class="intro-bar one"></span>
         <span class="intro-bar two"></span>
         <span class="intro-bar three"></span>
-        ${label("introVisual.progress", "bottom")}
       </div>
     `,
   ];
@@ -4555,7 +4490,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260528-guideclarity")
+      .register("./sw.js?v=20260528-clean-schedule")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
