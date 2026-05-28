@@ -329,7 +329,7 @@
             <p class="eyebrow" data-i18n="empty.kicker">GoalFlow method</p>
             <h2 data-i18n="empty.title">まず最初の目標を作りましょう</h2>
             <p data-i18n="empty.body">
-              目標を作ると、タスクを保存して、今日の予定に落とし込めます。進捗はここにグラフで残ります。
+              目標を作ると、行動に分けて、今日の予定に落とし込めます。進捗はここにグラフで残ります。
             </p>
           </div>
           <button
@@ -354,10 +354,6 @@
             </div>
             <div class="panel-controls">
               <select id="goalFilter" aria-label="表示する目標"></select>
-              <select id="chartMetric" aria-label="7日間の表示単位">
-                <option value="count" data-i18n="metric.count">個数</option>
-                <option value="time" data-i18n="metric.time">時間</option>
-              </select>
             </div>
           </div>
           <canvas
@@ -376,10 +372,6 @@
                 完了と未完了の割合です。
               </p>
             </div>
-            <select id="pieMetric" aria-label="全体の表示単位">
-              <option value="count" data-i18n="metric.count">個数</option>
-              <option value="time" data-i18n="metric.time">時間</option>
-            </select>
           </div>
           <canvas
             id="completionPie"
@@ -427,7 +419,7 @@
           <section class="panel" data-view-panel="tasks">
             <div class="panel-heading">
               <div>
-                <h2 data-i18n="tasks.title">保存タスク</h2>
+                <h2 data-i18n="tasks.title">行動リスト</h2>
               </div>
               <button
                 class="icon-button add-button"
@@ -633,7 +625,7 @@
     <dialog id="taskDialog">
       <form class="dialog-card" id="taskForm">
         <div class="dialog-head">
-          <h2 data-i18n="taskDialog.title">タスクを保存</h2>
+          <h2 data-i18n="taskDialog.title">行動を作る</h2>
           <button
             class="icon-button"
             data-close-dialog

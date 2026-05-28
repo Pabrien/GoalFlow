@@ -107,11 +107,11 @@ const translations = {
     "introStory.2.label": "",
     "introStory.2.title": "一歩を保存する。",
     "introStory.2.body":
-      "何度も使う行動は保存タスクに。迷った日でも、次に置くべき行動をすぐ選べます。",
+      "何度も使う行動は行動リストに。迷った日でも、次に置くべき行動をすぐ選べます。",
     "introStory.3.label": "",
     "introStory.3.title": "日付に置く。",
     "introStory.3.body":
-      "保存タスクを日付へ置くと、目標がただの願望ではなく、今日動かす予定に変わります。",
+      "行動リストから日付へ置くと、目標がただの願望ではなく、今日動かす予定に変わります。",
     "introStory.4.label": "",
     "introStory.4.title": "進捗が残る。",
     "introStory.4.body":
@@ -143,8 +143,7 @@ const translations = {
     "intro.goals.body": "続けたい理由、カテゴリ、期限を決める場所です。",
     "intro.schedule.kicker": "Schedule",
     "intro.schedule.title": "タスクを予定に置く",
-    "intro.schedule.body":
-      "保存タスクをドラッグ、または今日に入れて行動へ変えます。",
+    "intro.schedule.body": "行動リストからドラッグして、今日の行動へ変えます。",
     "intro.today.kicker": "Today",
     "intro.today.title": "今日やることを完了する",
     "intro.today.body": "今日の予定だけを見て、終わったものを記録します。",
@@ -160,7 +159,7 @@ const translations = {
     "daily.suggestKicker": "Next",
     "daily.suggestTitle": "",
     "daily.emptyToday": "まだありません。",
-    "daily.emptySuggestions": "保存タスクを作ると出ます。",
+    "daily.emptySuggestions": "行動を作ると出ます。",
     "daily.addToday": "＋",
     "daily.done": "完了",
     "daily.undo": "戻す",
@@ -251,12 +250,12 @@ const translations = {
     "goals.scheduledFirst": "まず1件予定化",
     "goals.doneTotal": "{done}/{total} 完了",
     "goals.progress": "進み具合 {percent}%",
-    "tasks.title": "保存タスク",
-    "tasks.pickerLabel": "予定に入れるタスク",
+    "tasks.title": "行動リスト",
+    "tasks.pickerLabel": "予定に入れる行動",
     "tasks.pickerGuide":
-      "保存タスクを選択して、カレンダーの日付を押すと予定に入ります。",
+      "行動を選択して、カレンダーの日付を押すと予定に入ります。",
     "tasks.add": "＋",
-    "tasks.addAria": "保存タスクを追加",
+    "tasks.addAria": "行動を追加",
     "tasks.scopeAll": "すべて",
     "tasks.scopeGoal": "すべて",
     "tasks.goalLabel": "目標",
@@ -276,7 +275,7 @@ const translations = {
     "schedule.todayVisible": "今日を表示中",
     "schedule.zoomOut": "小さく",
     "schedule.zoomIn": "大きく",
-    "schedule.returned": "保存タスクに戻しました。",
+    "schedule.returned": "行動リストに戻しました。",
     "schedule.deleted": "予定から削除しました。",
     "schedule.updated": "予定を更新しました。",
     "schedule.addedToday": "今日に追加しました。あとは1つ完了するだけです。",
@@ -308,9 +307,9 @@ const translations = {
     "goalDialog.note": "目標メモ",
     "goalDialog.notePlaceholder": "達成条件や理由",
     "goalDialog.confirmDelete":
-      "「{name}」を削除しますか？\n紐づく保存タスクと予定も削除されます。",
+      "「{name}」を削除しますか？\n紐づく行動と予定も削除されます。",
     "goalDialog.deleted": "目標を削除しました。",
-    "taskDialog.title": "タスクを保存",
+    "taskDialog.title": "行動を作る",
     "taskDialog.name": "タスク名",
     "taskDialog.namePlaceholder": "例：英単語 30個",
     "taskDialog.goal": "どの目標の一歩？",
@@ -320,11 +319,11 @@ const translations = {
     "taskEdit.goal": "どの目標の一歩？",
     "taskEdit.duration": "時間",
     "taskEdit.unit": "単位",
-    "taskEdit.updated": "保存タスクを更新しました。",
+    "taskEdit.updated": "行動を更新しました。",
     "taskEdit.confirmDelete": "「{title}」を削除しますか？",
     "taskEdit.confirmDeleteWithRelated":
       "「{title}」を削除しますか？\nカレンダー上の同じ予定 {count}件も削除されます。",
-    "taskEdit.deleted": "保存タスクを削除しました。",
+    "taskEdit.deleted": "行動を削除しました。",
     "unit.minutes": "分",
     "unit.hours": "時間",
     "duration.minutes": "{value}分",
@@ -361,7 +360,7 @@ const translations = {
     "next.noTask.buddyMessage":
       "目標があるなら、次は今日できる形に小さくします。",
     "next.noToday.title": "今日やることを追加",
-    "next.noToday.body": "保存タスクを今日へ。",
+    "next.noToday.body": "行動を今日へ。",
     "next.noToday.button": "予定",
     "next.noToday.buddyTitle": "今日に落とす",
     "next.noToday.buddyMessage": "目標は遠くても、今日の1つなら動かせます。",
@@ -464,11 +463,11 @@ const translations = {
     "introStory.2.label": "",
     "introStory.2.title": "Save each step.",
     "introStory.2.body":
-      "Reusable actions become saved tasks, ready to place when you need them.",
+      "Reusable actions stay in the action list, ready to place when you need them.",
     "introStory.3.label": "",
     "introStory.3.title": "Place it on a date.",
     "introStory.3.body":
-      "A saved task on a date turns a goal from a wish into today’s action.",
+      "An action placed on a date turns a goal from a wish into today’s next step.",
     "introStory.4.label": "",
     "introStory.4.title": "Keep the progress.",
     "introStory.4.body":
@@ -503,7 +502,7 @@ const translations = {
     "intro.schedule.kicker": "Schedule",
     "intro.schedule.title": "Place tasks onto the calendar",
     "intro.schedule.body":
-      "Drag saved tasks or put one on today to turn it into action.",
+      "Drag an action onto the calendar to turn it into today’s next step.",
     "intro.today.kicker": "Today",
     "intro.today.title": "Complete today’s tasks",
     "intro.today.body": "See only today’s plan and record what you finished.",
@@ -519,7 +518,7 @@ const translations = {
     "daily.suggestKicker": "Next",
     "daily.suggestTitle": "",
     "daily.emptyToday": "Nothing yet.",
-    "daily.emptySuggestions": "Saved tasks will appear here.",
+    "daily.emptySuggestions": "Actions will appear here.",
     "daily.addToday": "+",
     "daily.done": "Done",
     "daily.undo": "Undo",
@@ -539,7 +538,7 @@ const translations = {
       "A large goal feels heavy when it stays large. Split it into a task that can be finished in 15 to 30 minutes. Smaller tasks are easier to place, start, and record.",
     "insight.noToday.title": "Putting it on today reduces choices",
     "insight.noToday.body":
-      "Putting a saved task on today is not about filling a calendar. It narrows the options and leaves one visible next action. Less choosing means less friction.",
+      "Putting an action on today is not about filling a calendar. It narrows the options and leaves one visible next step. Less choosing means less friction.",
     "insight.inProgress.title": "Completion creates flow",
     "insight.inProgress.body":
       "When today is in progress, finishing one task matters more than thinking about everything. One completion creates momentum and makes the next action feel closer.",
@@ -610,12 +609,12 @@ const translations = {
     "goals.scheduledFirst": "Schedule one task",
     "goals.doneTotal": "{done}/{total} done",
     "goals.progress": "Progress {percent}%",
-    "tasks.title": "Saved tasks",
-    "tasks.pickerLabel": "Tasks to schedule",
+    "tasks.title": "Action list",
+    "tasks.pickerLabel": "Actions to schedule",
     "tasks.pickerGuide":
-      "Select a saved task, then tap a calendar date to schedule it.",
+      "Select an action, then tap a calendar date to schedule it.",
     "tasks.add": "+",
-    "tasks.addAria": "Add saved task",
+    "tasks.addAria": "Add action",
     "tasks.scopeAll": "All",
     "tasks.scopeGoal": "All",
     "tasks.goalLabel": "Goal",
@@ -635,7 +634,7 @@ const translations = {
     "schedule.todayVisible": "Today is visible",
     "schedule.zoomOut": "Smaller",
     "schedule.zoomIn": "Larger",
-    "schedule.returned": "Moved back to saved tasks.",
+    "schedule.returned": "Moved back to the action list.",
     "schedule.deleted": "Removed from schedule.",
     "schedule.updated": "Schedule updated.",
     "schedule.addedToday": "Added to today. Now finish one task.",
@@ -668,9 +667,9 @@ const translations = {
     "goalDialog.note": "Goal note",
     "goalDialog.notePlaceholder": "Success condition or reason",
     "goalDialog.confirmDelete":
-      "Delete “{name}”?\nSaved tasks and scheduled items linked to it will also be deleted.",
+      "Delete “{name}”?\nActions and scheduled items linked to it will also be deleted.",
     "goalDialog.deleted": "Goal deleted.",
-    "taskDialog.title": "Save task",
+    "taskDialog.title": "Create action",
     "taskDialog.name": "Task name",
     "taskDialog.namePlaceholder": "Example: Review 30 words",
     "taskDialog.goal": "Which goal is this for?",
@@ -680,11 +679,11 @@ const translations = {
     "taskEdit.goal": "Which goal is this for?",
     "taskEdit.duration": "Time",
     "taskEdit.unit": "Unit",
-    "taskEdit.updated": "Saved task updated.",
+    "taskEdit.updated": "Action updated.",
     "taskEdit.confirmDelete": "Delete “{title}”?",
     "taskEdit.confirmDeleteWithRelated":
       "Delete “{title}”?\n{count} matching calendar items will also be deleted.",
-    "taskEdit.deleted": "Saved task deleted.",
+    "taskEdit.deleted": "Action deleted.",
     "unit.minutes": "min",
     "unit.hours": "hours",
     "duration.minutes": "{value} min",
@@ -720,7 +719,7 @@ const translations = {
     "next.noTask.buddyMessage":
       "A goal becomes easier when it turns into today’s shape.",
     "next.noToday.title": "Add a task to today",
-    "next.noToday.body": "Put one saved task on today.",
+    "next.noToday.body": "Put one action on today.",
     "next.noToday.button": "Schedule",
     "next.noToday.buddyTitle": "Bring it to today",
     "next.noToday.buddyMessage":
@@ -1275,12 +1274,11 @@ function renderTaskBank() {
     els.taskBank.append(empty(t("tasks.empty")));
     return;
   }
-  tasks.forEach((task) => {
+  tasks.forEach((task, index) => {
     const goal = findGoal(task.goalId);
+    const taskKey = `${task.id}:${index}`;
     const item = document.createElement("article");
-    item.className = `bank-task ${editingTaskId === task.id ? "editing" : ""} ${
-      pendingScheduleTaskId === task.id ? "picking" : ""
-    }`;
+    item.className = `bank-task ${editingTaskId === taskKey ? "editing" : ""} ${pendingScheduleTaskId === task.id ? "picking" : ""}`;
     item.draggable = true;
     item.tabIndex = 0;
     item.setAttribute(
@@ -1288,6 +1286,7 @@ function renderTaskBank() {
       String(pendingScheduleTaskId === task.id),
     );
     item.dataset.taskId = task.id;
+    item.dataset.taskKey = taskKey;
     item.setAttribute("style", taskColorStyle(task));
     let nativeDragging = false;
     item.innerHTML = `
@@ -1296,9 +1295,9 @@ function renderTaskBank() {
         <div class="bank-task-copy">${taskMarkup(task, goal)}</div>
       </div>
       ${
-        editingTaskId === task.id
+        editingTaskId === taskKey
           ? `
-            <form class="task-edit-form" data-task-edit="${escapeHtml(task.id)}">
+            <form class="task-edit-form" data-task-edit="${escapeHtml(taskKey)}">
               <label>${escapeHtml(t("taskEdit.name"))}<input name="title" required maxlength="28" value="${escapeHtml(task.title)}" /></label>
               <label>${escapeHtml(t("taskEdit.goal"))}<select name="goalId">${taskGoalOptions(task.goalId)}</select></label>
               <div class="field-row">
@@ -1381,7 +1380,7 @@ function renderTaskBank() {
       if (isCompactScheduleLayout()) event.preventDefault();
     });
     bindDoubleActivate(item.querySelector(".bank-task-copy"), () => {
-      editingTaskId = editingTaskId === task.id ? "" : task.id;
+      editingTaskId = editingTaskId === taskKey ? "" : taskKey;
       renderTaskBank();
     });
     item
@@ -1979,6 +1978,8 @@ function toggleScheduledDone(item) {
 }
 
 function renderSelectors() {
+  chartMetric = "count";
+  pieMetric = "count";
   const options = state.goals
     .map(
       (goal) => `<option value="${goal.id}">${escapeHtml(goal.name)}</option>`,
@@ -1988,12 +1989,10 @@ function renderSelectors() {
   els.goalFilter.innerHTML = `<option value="">${escapeHtml(currentLanguage() === "en" ? "All goals" : "すべて")}</option>${options}`;
   els.taskGoalSelect.value = selectedGoalId || state.goals[0]?.id || "";
   els.goalFilter.value = selectedGoalId;
-  els.chartMetric.value = chartMetric;
-  els.pieMetric.value = pieMetric;
-  els.chartMetricNote.textContent =
-    chartMetric === "time" ? t("chart.note.time") : t("chart.note.count");
-  els.pieMetricNote.textContent =
-    pieMetric === "time" ? t("pie.note.time") : t("pie.note.count");
+  if (els.chartMetric) els.chartMetric.value = chartMetric;
+  if (els.pieMetric) els.pieMetric.value = pieMetric;
+  els.chartMetricNote.textContent = t("chart.note.count");
+  els.pieMetricNote.textContent = t("pie.note.count");
   els.weekView.classList.toggle("active", viewMode === "week");
   els.monthView.classList.toggle("active", viewMode === "month");
   els.weekView.setAttribute("aria-pressed", String(viewMode === "week"));
@@ -4334,12 +4333,12 @@ els.goalFilter.addEventListener("change", (event) => {
   render();
 });
 
-els.chartMetric.addEventListener("change", (event) => {
+els.chartMetric?.addEventListener("change", (event) => {
   chartMetric = event.target.value;
   render();
 });
 
-els.pieMetric.addEventListener("change", (event) => {
+els.pieMetric?.addEventListener("change", (event) => {
   pieMetric = event.target.value;
   render();
 });
@@ -4492,7 +4491,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260529-dialog-flow")
+      .register("./sw.js?v=20260529-home-action-list")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v59-20260529-dialog-flow";
+const cacheName = "goalflow-v60-20260529-home-action-list";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260529-dialog-flow",
-  "./app.js?v=20260529-dialog-flow",
+  "./styles.css?v=20260529-home-action-list",
+  "./app.js?v=20260529-home-action-list",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",

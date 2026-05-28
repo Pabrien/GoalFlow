@@ -5566,7 +5566,7 @@ body[data-theme="dark"] .today-task.done {
   }
 }
 
-/* Home owns scheduling: saved tasks + calendar in one place. */
+/* Home owns scheduling: action list + calendar in one place. */
 body[data-active-screen="home"] .daily-flow {
   display: none;
 }
@@ -5969,4 +5969,23 @@ body[data-theme="dark"][data-active-screen="home"] .bank-task:focus-visible {
 body[data-theme="dark"][data-active-screen="home"] .bank-task .task-title,
 body[data-theme="dark"][data-active-screen="home"] .bank-task .task-meta {
   color: var(--ink);
+}
+
+body:not([data-active-screen="home"]) .topbar > div:first-child {
+  display: none;
+}
+
+body:not([data-active-screen="home"]) .topbar {
+  justify-content: flex-end;
+  min-height: auto;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body:not([data-active-screen="home"]) .topbar-actions {
+  justify-content: flex-end;
 }
