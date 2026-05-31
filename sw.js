@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v61-20260531-schedule-touch-dark";
+const cacheName = "goalflow-v64-20260531-motion-polish";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260531-schedule-touch-dark",
-  "./app.js?v=20260531-schedule-touch-dark",
+  "./styles.css?v=20260531-motion-polish",
+  "./app.js?v=20260531-motion-polish",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",

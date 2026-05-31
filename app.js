@@ -1528,6 +1528,7 @@ function scheduledEditForm(item) {
 function createDragPreview(task, goal) {
   const preview = document.createElement("div");
   preview.className = "drag-preview";
+  preview.setAttribute("style", taskColorStyle(task));
   preview.innerHTML = `
     <strong>${escapeHtml(task.title)}</strong>
     <span>${escapeHtml(goal?.category ?? t("tasks.title"))}・${escapeHtml(formatDuration(task))}</span>
@@ -1809,6 +1810,132 @@ function getScheduleColumnFromPoint(clientX, clientY) {
   return document.elementFromPoint(clientX, clientY)?.closest(".day-column");
 }
 
+function getTaskBankFromPoint(clientX, clientY) {
+  return document.elementFromPoint(clientX, clientY)?.closest("#taskBank");
+}
+
+function startTouchScheduledDrag(event, item, task, goal, node) {
+  if (
+    event.pointerType === "mouse" ||
+    event.target.closest("button, input, textarea, select, form")
+  )
+    return;
+  const startX = event.clientX;
+  const startY = event.clientY;
+  let didStart = false;
+  let currentTarget = null;
+  let currentClientY = event.clientY;
+  let preview = null;
+  let holdTimer = null;
+
+  const movePreview = (clientX, clientY) => {
+    if (!preview) return;
+    preview.style.transform = `translate3d(${clientX + 14}px, ${clientY + 14}px, 0)`;
+  };
+  const startDrag = (clientX = startX, clientY = startY) => {
+    if (didStart) return;
+    didStart = true;
+    try {
+      node.setPointerCapture?.(event.pointerId);
+    } catch {
+      // Pointer capture can fail if the browser has already promoted the gesture.
+    }
+    activeScheduleControlId = "";
+    document.body.classList.add("is-scheduling", "is-returning-scheduled");
+    node.classList.add("dragging");
+    node.dataset.suppressClick = "true";
+    pulseElement(node, 0.992);
+    vibrate(10);
+    preview = createDragPreview(
+      { ...task, title: item.title, minutes: item.minutes },
+      goal,
+    );
+    preview.classList.add("touch-drag-preview");
+    document.body.append(preview);
+    movePreview(clientX, clientY);
+  };
+  const setTarget = (target) => {
+    if (target === currentTarget) return;
+    if (currentTarget) clearDropTargets(currentTarget);
+    currentTarget = target;
+    if (currentTarget) {
+      setColumnDropTarget(currentTarget, currentClientY);
+      vibrate(6);
+    }
+  };
+  const cleanup = () => {
+    window.clearTimeout(holdTimer);
+    if (currentTarget) clearDropTargets(currentTarget);
+    if (didStart) {
+      document.body.classList.remove("is-scheduling", "is-returning-scheduled");
+      node.classList.remove("dragging");
+      els.taskBank.classList.remove("return-target");
+      window.setTimeout(() => {
+        delete node.dataset.suppressClick;
+      }, 220);
+    } else {
+      delete node.dataset.suppressClick;
+    }
+    preview?.remove();
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onUp);
+    document.removeEventListener("pointercancel", onCancel);
+  };
+  const onMove = (moveEvent) => {
+    const deltaX = moveEvent.clientX - startX;
+    const deltaY = moveEvent.clientY - startY;
+    if (!didStart && Math.hypot(deltaX, deltaY) > 12) {
+      cleanup();
+      return;
+    }
+    if (!didStart) return;
+    moveEvent.preventDefault();
+    currentClientY = moveEvent.clientY;
+    movePreview(moveEvent.clientX, moveEvent.clientY);
+    preview.hidden = true;
+    const target = getScheduleColumnFromPoint(
+      moveEvent.clientX,
+      moveEvent.clientY,
+    );
+    const taskBankTarget = getTaskBankFromPoint(
+      moveEvent.clientX,
+      moveEvent.clientY,
+    );
+    preview.hidden = false;
+    els.taskBank.classList.toggle("return-target", Boolean(taskBankTarget));
+    if (target === currentTarget && currentTarget) {
+      setColumnDropTarget(currentTarget, currentClientY);
+    } else {
+      setTarget(target);
+    }
+  };
+  const onUp = (upEvent) => {
+    window.clearTimeout(holdTimer);
+    if (!didStart) {
+      cleanup();
+      return;
+    }
+    onMove(upEvent);
+    const landingTarget =
+      currentTarget ??
+      getScheduleColumnFromPoint(upEvent.clientX, upEvent.clientY);
+    const returnTarget = getTaskBankFromPoint(upEvent.clientX, upEvent.clientY);
+    const date = landingTarget?.dataset.date;
+    cleanup();
+    if (returnTarget) {
+      deleteScheduledItem(item, t("schedule.returned"));
+      return;
+    }
+    if (date && date !== item.date) moveScheduledTask(item.id, date);
+  };
+  const onCancel = () => cleanup();
+
+  holdTimer = window.setTimeout(() => startDrag(startX, startY), 1000);
+  document.addEventListener("pointermove", onMove);
+  document.addEventListener("pointerup", onUp);
+  document.addEventListener("pointercancel", onCancel);
+}
+
 function isCompactScheduleLayout() {
   return window.matchMedia("(max-width: 640px)").matches;
 }
@@ -1843,6 +1970,11 @@ function scheduledElement(item, isCompact = false) {
     ${isEditing ? scheduledEditForm(item) : ""}
   `;
   node.addEventListener("click", (event) => {
+    if (node.dataset.suppressClick === "true") {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (event.target.closest("button, input, textarea, select")) return;
     window.clearTimeout(scheduleControlTimer);
     scheduleControlTimer = window.setTimeout(() => {
@@ -1879,6 +2011,9 @@ function scheduledElement(item, isCompact = false) {
     event.dataTransfer.setDragImage(preview, 18, 18);
     requestAnimationFrame(() => preview.remove());
   });
+  node.addEventListener("pointerdown", (event) =>
+    startTouchScheduledDrag(event, item, task, goal, node),
+  );
   node.addEventListener("dragend", () => {
     document.body.classList.remove("is-scheduling", "is-returning-scheduled");
     els.taskBank.classList.remove("return-target");
@@ -3495,7 +3630,7 @@ function pulseElement(node, scale = 1.015) {
   gsap.fromTo(
     node,
     { scale },
-    { scale: 1, duration: 0.34, ease: "power3.out", overwrite: "auto" },
+    { scale: 1, duration: 0.24, ease: "power2.out", overwrite: "auto" },
   );
 }
 
@@ -3519,10 +3654,10 @@ function playRenderMotion() {
     lastAnimatedScreen = activeScreen;
     gsap.from(".topbar, .screen-tabs, [data-view-panel='home']:not([hidden])", {
       autoAlpha: 0,
-      y: 10,
-      filter: "blur(6px)",
-      duration: 0.58,
-      ease: "expo.out",
+      y: 6,
+      filter: "blur(3px)",
+      duration: 0.42,
+      ease: "power2.out",
       stagger: 0.035,
       clearProps: "filter",
     });
@@ -3535,13 +3670,13 @@ function playRenderMotion() {
   ].filter((node) => !node.hidden && node.offsetParent !== null);
   gsap.fromTo(
     visiblePanels,
-    { autoAlpha: 0, y: 8, filter: "blur(5px)" },
+    { autoAlpha: 0, y: 5, filter: "blur(3px)" },
     {
       autoAlpha: 1,
       y: 0,
       filter: "blur(0px)",
-      duration: 0.36,
-      ease: "expo.out",
+      duration: 0.28,
+      ease: "power2.out",
       stagger: 0.025,
       overwrite: "auto",
       clearProps: "filter",
@@ -3557,18 +3692,18 @@ function playScheduleLandingMotion(date) {
   if (!gsap || !column) return;
   gsap.fromTo(
     column,
-    { scale: 0.992, boxShadow: "0 0 0 rgba(79, 214, 154, 0)" },
+    { scale: 0.996, boxShadow: "0 0 0 rgba(79, 214, 154, 0)" },
     {
       scale: 1,
-      boxShadow: "0 18px 42px rgba(79, 214, 154, 0.22)",
-      duration: 0.42,
-      ease: "power3.out",
+      boxShadow: "0 12px 28px rgba(79, 214, 154, 0.14)",
+      duration: 0.28,
+      ease: "power2.out",
     },
   );
   gsap.to(column, {
     boxShadow: "",
-    delay: 0.46,
-    duration: 0.28,
+    delay: 0.28,
+    duration: 0.24,
     ease: "power2.out",
   });
 }
@@ -3589,21 +3724,21 @@ function playCompletionMotion(itemId) {
     timeline
       .fromTo(
         item,
-        { y: 4, scale: 0.988, filter: "brightness(1.08)" },
+        { y: 2, scale: 0.996, filter: "brightness(1.04)" },
         {
           y: 0,
           scale: 1,
           filter: "brightness(1)",
-          duration: 0.48,
-          ease: "expo.out",
+          duration: 0.32,
+          ease: "power2.out",
           clearProps: "filter",
         },
         0,
       )
       .fromTo(
         burst.querySelector(".completion-orb"),
-        { autoAlpha: 0, scale: 0.68, y: 3 },
-        { autoAlpha: 1, scale: 1, y: 0, duration: 0.28, ease: "back.out(1.4)" },
+        { autoAlpha: 0, scale: 0.86, y: 2 },
+        { autoAlpha: 1, scale: 1, y: 0, duration: 0.22, ease: "power2.out" },
         0.03,
       )
       .fromTo(
@@ -3628,7 +3763,7 @@ function playCompletionMotion(itemId) {
         burst.querySelectorAll(".completion-spark"),
         { autoAlpha: 0, scaleX: 0.2 },
         {
-          autoAlpha: 0.85,
+          autoAlpha: 0.58,
           scaleX: 1,
           stagger: 0.035,
           duration: 0.18,
@@ -3661,12 +3796,12 @@ function playCompletionMotion(itemId) {
   }
   gsap.fromTo(
     ".today-summary",
-    { scale: 1.018, filter: "brightness(1.06)" },
+    { scale: 1.008, filter: "brightness(1.03)" },
     {
       scale: 1,
       filter: "brightness(1)",
-      duration: 0.55,
-      ease: "expo.out",
+      duration: 0.34,
+      ease: "power2.out",
       overwrite: "auto",
       clearProps: "filter",
     },
@@ -4105,24 +4240,44 @@ els.deleteGoalFromDialog.addEventListener("click", () => {
   if (deleteGoal(goal)) els.goalDialog.close();
 });
 
-els.goalDialog.addEventListener("pointerdown", (event) => {
-  if (event.target !== els.goalDialog) return;
-  editingGoalId = "";
-  els.goalDialog.close();
-});
-
-[els.taskDialog, els.dayDialog, els.insightDialog].forEach((dialog) => {
-  dialog?.addEventListener("pointerdown", (event) => {
+function bindBackdropClose(dialog, onClose = () => {}) {
+  if (!dialog) return;
+  let backdropPointerId = null;
+  dialog.addEventListener("pointerdown", (event) => {
     if (event.target !== dialog) return;
-    if (dialog === els.dayDialog) editingScheduledId = "";
+    backdropPointerId = event.pointerId;
+    event.preventDefault();
+    event.stopPropagation();
+  });
+  dialog.addEventListener("pointerup", (event) => {
+    if (event.target !== dialog || event.pointerId !== backdropPointerId) {
+      backdropPointerId = null;
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    backdropPointerId = null;
+    onClose();
     dialog.close();
   });
+  dialog.addEventListener("click", (event) => {
+    if (event.target !== dialog) return;
+    event.preventDefault();
+    event.stopPropagation();
+  });
+}
+
+bindBackdropClose(els.goalDialog, () => {
+  editingGoalId = "";
 });
 
-els.insightDialog?.addEventListener("pointerdown", (event) => {
-  if (event.target !== els.insightDialog) return;
-  els.insightDialog.close();
+bindBackdropClose(els.taskDialog);
+
+bindBackdropClose(els.dayDialog, () => {
+  editingScheduledId = "";
 });
+
+bindBackdropClose(els.insightDialog);
 
 els.goalDialog.addEventListener("close", () => {
   editingGoalId = "";
@@ -4494,7 +4649,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260531-schedule-touch-dark")
+      .register("./sw.js?v=20260531-motion-polish")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

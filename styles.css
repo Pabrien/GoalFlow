@@ -2370,23 +2370,29 @@ body.is-returning-scheduled .task-bank {
   z-index: 9999;
   display: grid;
   gap: 2px;
-  width: 152px;
-  padding: 8px 10px;
-  border: 1px solid var(--accent);
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), #1d7f5f);
-  color: #fff;
-  box-shadow: 0 18px 36px rgba(20, 108, 99, 0.28);
-  transform: rotate(-1.5deg);
+  width: 156px;
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--task-color) 36%, transparent);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 58%),
+    rgba(255, 255, 255, 0.92);
+  color: #18211d;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.58),
+    0 20px 50px rgba(15, 23, 42, 0.18);
+  transform: translate3d(-200px, -200px, 0);
+  backdrop-filter: blur(14px) saturate(1.18);
   pointer-events: none;
 }
 
 .touch-drag-preview {
   top: 0;
   left: 0;
-  width: 138px;
-  transform: translate(-200px, -200px);
-  transition: transform 0.055s linear;
+  width: 144px;
+  transform: translate3d(-200px, -200px, 0);
+  transition: none;
+  will-change: transform;
 }
 
 .drag-preview strong {
@@ -2401,7 +2407,7 @@ body.is-returning-scheduled .task-bank {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(47, 58, 50, 0.68);
   font-size: 10px;
   line-height: 1.2;
 }
@@ -2741,6 +2747,10 @@ body.is-picking-schedule-date .day-column.pick-target:hover {
   overflow: hidden;
   --task-color: var(--accent);
   --task-soft: rgba(20, 108, 99, 0.1);
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .today-task {
@@ -5976,14 +5986,7 @@ body:not([data-active-screen="home"]) .topbar > div:first-child {
 }
 
 body:not([data-active-screen="home"]) .topbar {
-  justify-content: flex-end;
-  min-height: auto;
-  margin-bottom: 10px;
-  padding: 10px 12px;
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
+  display: none;
 }
 
 body:not([data-active-screen="home"]) .topbar-actions {
@@ -6018,4 +6021,222 @@ body[data-theme="dark"] .bank-task textarea {
   border-color: rgba(148, 163, 184, 0.28);
   background: rgba(4, 8, 15, 0.9);
   color: var(--ink);
+}
+
+body[data-theme="dark"] .scheduled-task,
+body[data-theme="dark"] .scheduled-task.active,
+body[data-theme="dark"] .scheduled-task.dragging,
+body[data-theme="dark"] .scheduled-task.just-completed,
+body[data-theme="dark"] .month-mode .scheduled-task,
+body[data-theme="dark"] .calendar-grid.week-mode .scheduled-task,
+body[data-theme="dark"][data-active-screen="home"]
+  .calendar-grid.week-mode
+  .scheduled-task,
+body[data-theme="dark"][data-active-screen="home"]
+  .calendar-grid.month-mode
+  .scheduled-task {
+  border-color: color-mix(in srgb, var(--task-color) 42%, var(--line));
+  border-left-color: var(--task-color);
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 56%),
+    rgba(8, 13, 24, 0.96);
+  color: var(--ink);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+body[data-theme="dark"] .scheduled-task .task-title,
+body[data-theme="dark"] .scheduled-task .task-meta,
+body[data-theme="dark"][data-active-screen="home"] .scheduled-task .task-title,
+body[data-theme="dark"][data-active-screen="home"] .scheduled-task .task-meta {
+  color: var(--ink);
+}
+
+.scheduled-task.dragging,
+.bank-task.dragging {
+  border-radius: 16px;
+  opacity: 0.72;
+  transform: translate3d(0, -2px, 0) scale(0.992);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--task-color) 14%, transparent),
+    0 18px 42px rgba(15, 23, 42, 0.14);
+}
+
+.day-column.drop-target {
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent) 9%, transparent),
+      transparent 58%
+    ),
+    #f7fbf6;
+  box-shadow:
+    inset 0 0 0 1px rgba(29, 127, 95, 0.18),
+    0 12px 28px rgba(20, 108, 99, 0.09);
+}
+
+.day-column.schedule-confirm {
+  border-radius: 18px;
+}
+
+body[data-theme="dark"] .drag-preview {
+  border-color: color-mix(in srgb, var(--task-color) 46%, var(--line));
+  background:
+    linear-gradient(135deg, var(--task-soft), transparent 58%),
+    rgba(8, 13, 24, 0.92);
+  color: var(--ink);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 22px 54px rgba(0, 0, 0, 0.32);
+}
+
+body[data-theme="dark"] .drag-preview span {
+  color: var(--muted);
+}
+
+body[data-theme="dark"] .day-column.drop-target {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent) 16%, transparent),
+      transparent 58%
+    ),
+    rgba(8, 13, 24, 0.9);
+  box-shadow:
+    inset 0 0 0 1px rgba(79, 214, 154, 0.14),
+    0 14px 34px rgba(0, 0, 0, 0.24);
+}
+
+/* Unified motion polish: soft, rounded, and quiet across task movement. */
+.goal-card,
+.bank-task,
+.scheduled-task,
+.today-task,
+.day-column,
+.dialog-card,
+.toast,
+.screen-tab,
+.switch-button,
+.icon-button,
+.mini-button,
+.primary-button,
+.ghost-button {
+  transition-duration: 0.22s;
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.scheduled-task,
+.today-task,
+.bank-task,
+.drag-preview,
+.day-dialog-item {
+  border-radius: 16px;
+}
+
+.month-mode .scheduled-task,
+body[data-active-screen="home"] .calendar-grid.week-mode .scheduled-task {
+  border-radius: 14px;
+}
+
+.scheduled-task.just-completed,
+.today-task.just-completed {
+  animation: complete-settle-soft 0.46s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--task-color) 18%, transparent),
+    0 12px 32px rgba(15, 23, 42, 0.1);
+}
+
+.scheduled-task.just-completed::after,
+.today-task.just-completed::after {
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.42) 44%,
+    color-mix(in srgb, var(--task-color) 20%, transparent) 52%,
+    transparent 64%
+  );
+  animation: complete-sheen-soft 0.52s ease-out;
+}
+
+.day-column.schedule-confirm {
+  animation: schedule-land-soft 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+dialog.dialog-pop .dialog-card {
+  animation: dialog-rise-soft 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.completion-orb {
+  border-radius: 999px;
+}
+
+.completion-core {
+  border-radius: 999px;
+}
+
+.completion-spark {
+  opacity: 0.68;
+}
+
+body[data-tab-direction="1"] .workspace,
+body[data-tab-direction="1"] .screen-intro,
+body[data-tab-direction="1"] .summary-strip,
+body[data-tab-direction="1"] .flow-focus,
+body[data-tab-direction="1"] .flow-map,
+body[data-tab-direction="1"] .home-dashboard,
+body[data-tab-direction="-1"] .workspace,
+body[data-tab-direction="-1"] .screen-intro,
+body[data-tab-direction="-1"] .summary-strip,
+body[data-tab-direction="-1"] .flow-focus,
+body[data-tab-direction="-1"] .flow-map,
+body[data-tab-direction="-1"] .home-dashboard {
+  animation-duration: 0.18s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes complete-settle-soft {
+  0% {
+    transform: translateY(1px) scale(0.998);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes schedule-land-soft {
+  0% {
+    transform: translateY(2px) scale(0.998);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes complete-sheen-soft {
+  0% {
+    opacity: 0;
+    transform: translateX(-28%);
+  }
+  34% {
+    opacity: 0.48;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(28%);
+  }
+}
+
+@keyframes dialog-rise-soft {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
