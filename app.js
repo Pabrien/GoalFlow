@@ -42,7 +42,12 @@ let pieMetric = "count";
 let chartAnimationFrame = null;
 let pieAnimationFrame = null;
 let taskBankReturnDropBound = false;
-let calendarSize = normalizeCalendarSize(state.meta?.calendarSize);
+let calendarSizeWeek = normalizeCalendarSize(
+  state.meta?.calendarSizeWeek ?? state.meta?.calendarSize,
+);
+let calendarSizeMonth = normalizeCalendarSize(
+  state.meta?.calendarSizeMonth ?? state.meta?.calendarSize,
+);
 let hasPlayedInitialMotion = false;
 let lastAnimatedScreen = "";
 let completionSound = null;
@@ -888,6 +893,8 @@ function createEmptyState() {
       theme: "light",
       language: "ja",
       calendarSize: "normal",
+      calendarSizeWeek: "normal",
+      calendarSizeMonth: "normal",
       customCategories: [],
       hiddenCategories: [],
       tutorialActive: true,
@@ -987,6 +994,12 @@ function loadState() {
         theme: parsed.meta?.theme === "dark" ? "dark" : "light",
         language: parsed.meta?.language === "en" ? "en" : "ja",
         calendarSize: normalizeCalendarSize(parsed.meta?.calendarSize),
+        calendarSizeWeek: normalizeCalendarSize(
+          parsed.meta?.calendarSizeWeek ?? parsed.meta?.calendarSize,
+        ),
+        calendarSizeMonth: normalizeCalendarSize(
+          parsed.meta?.calendarSizeMonth ?? parsed.meta?.calendarSize,
+        ),
         customCategories: Array.isArray(parsed.meta?.customCategories)
           ? parsed.meta.customCategories.filter(Boolean)
           : [],
@@ -1054,6 +1067,18 @@ function normalizeCalendarSize(size) {
   if (size === "compact") return "size-2";
   if (size === "large") return "size-6";
   return "size-4";
+}
+
+function currentCalendarSize() {
+  return viewMode === "month" ? calendarSizeMonth : calendarSizeWeek;
+}
+
+function setCurrentCalendarSize(size) {
+  if (viewMode === "month") {
+    calendarSizeMonth = normalizeCalendarSize(size);
+  } else {
+    calendarSizeWeek = normalizeCalendarSize(size);
+  }
 }
 
 function currentLanguage() {
@@ -1154,8 +1179,10 @@ function render() {
   renderTheme();
   renderFileWarning();
   document.body.dataset.viewMode = viewMode;
-  document.body.dataset.calendarSize = calendarSize;
-  state.meta.calendarSize = calendarSize;
+  document.body.dataset.calendarSize = currentCalendarSize();
+  state.meta.calendarSize = currentCalendarSize();
+  state.meta.calendarSizeWeek = calendarSizeWeek;
+  state.meta.calendarSizeMonth = calendarSizeMonth;
   document.body.dataset.activeScreen = activeScreen;
   document.body.dataset.hasGoals = String(state.goals.length > 0);
   if (
@@ -1845,11 +1872,6 @@ function scheduledElement(item, isCompact = false) {
     ${isEditing ? scheduledEditForm(item) : ""}
   `;
   node.addEventListener("click", (event) => {
-    if (node.dataset.suppressClick === "true") {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
     if (event.target.closest("button, input, textarea, select")) return;
     window.clearTimeout(scheduleControlTimer);
     scheduleControlTimer = window.setTimeout(() => {
@@ -1974,7 +1996,7 @@ function toggleScheduledDone(item) {
         highlightedCompletionId = "";
         render();
       }
-    }, 900);
+    }, 1500);
     return;
   }
   render();
@@ -2010,6 +2032,7 @@ function renderSelectors() {
   els.todayPeriod.title = todayIsVisible
     ? t("schedule.todayVisible")
     : t("schedule.todayButton");
+  const calendarSize = currentCalendarSize();
   els.calendarZoomOut.disabled = calendarSize === calendarSizes[0];
   els.calendarZoomIn.disabled = calendarSize === calendarSizes.at(-1);
 }
@@ -3658,12 +3681,12 @@ function playCompletionMotion(itemId) {
         burst,
         {
           autoAlpha: 0,
-          y: -5,
-          scale: 0.98,
-          duration: 0.28,
-          ease: "power2.inOut",
+          y: -3,
+          scale: 0.99,
+          duration: 0.46,
+          ease: "power2.out",
         },
-        0.72,
+        0.84,
       );
   }
   gsap.fromTo(
@@ -4222,21 +4245,23 @@ els.monthView.addEventListener("click", () => {
 });
 
 els.calendarZoomOut.addEventListener("click", () => {
-  calendarSize =
-    calendarSizes[Math.max(0, calendarSizes.indexOf(calendarSize) - 1)];
-  state.meta.calendarSize = calendarSize;
+  const calendarSize = currentCalendarSize();
+  setCurrentCalendarSize(
+    calendarSizes[Math.max(0, calendarSizes.indexOf(calendarSize) - 1)],
+  );
   render();
 });
 
 els.calendarZoomIn.addEventListener("click", () => {
-  calendarSize =
+  const calendarSize = currentCalendarSize();
+  setCurrentCalendarSize(
     calendarSizes[
       Math.min(
         calendarSizes.length - 1,
         calendarSizes.indexOf(calendarSize) + 1,
       )
-    ];
-  state.meta.calendarSize = calendarSize;
+    ],
+  );
   render();
 });
 
@@ -4521,7 +4546,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260531-intro-copy")
+      .register("./sw.js?v=20260531-calendar-motion-cleanup")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

@@ -1234,7 +1234,8 @@ textarea:focus-visible,
 }
 
 .today-summary::after {
-  content: "今やる";
+  content: none;
+  display: none;
   position: absolute;
   top: 12px;
   right: 14px;
@@ -2748,9 +2749,22 @@ body.is-picking-schedule-date .day-column.pick-target:hover {
   --task-color: var(--accent);
   --task-soft: rgba(20, 108, 99, 0.1);
   -webkit-touch-callout: none;
-  -webkit-user-drag: none;
   -webkit-user-select: none;
   user-select: none;
+}
+
+.scheduled-task {
+  cursor: grab;
+  -webkit-user-drag: element;
+  touch-action: none;
+}
+
+.scheduled-task:active {
+  cursor: grabbing;
+}
+
+.today-task {
+  -webkit-user-drag: none;
 }
 
 .today-task {
@@ -3888,8 +3902,8 @@ body[data-tab-direction="-1"] .home-dashboard {
 }
 
 .today-summary::after {
-  content: "NOW";
-  background: #16181d;
+  content: none;
+  display: none;
 }
 
 .summary-strip span {
@@ -6238,6 +6252,58 @@ body[data-tab-direction="-1"] .home-dashboard {
     opacity: 1;
     transform: translateY(0) scale(1);
     filter: blur(0);
+  }
+}
+
+/* Final motion cleanup: quieter completion with a longer fade. */
+.scheduled-task.just-completed,
+.today-task.just-completed {
+  animation: complete-breathe-out 1.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.scheduled-task.just-completed::after,
+.today-task.just-completed::after {
+  animation: complete-glow-fade 1.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+body.today-complete .today-summary::after {
+  content: "達成";
+  display: inline-flex;
+}
+
+body[data-lang="en"].today-complete .today-summary::after {
+  content: "Done";
+}
+
+@keyframes complete-breathe-out {
+  0% {
+    transform: translateY(1px) scale(0.998);
+    filter: brightness(1.035);
+  }
+  40% {
+    transform: translateY(0) scale(1);
+    filter: brightness(1.018);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes complete-glow-fade {
+  0% {
+    opacity: 0;
+    transform: translateX(-18%);
+  }
+  22% {
+    opacity: 0.46;
+  }
+  72% {
+    opacity: 0.18;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(18%);
   }
 }
 
