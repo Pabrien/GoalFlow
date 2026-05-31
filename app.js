@@ -179,7 +179,7 @@ const translations = {
       "大きな目標はそのままだと重く感じます。15分から30分で終わるタスクに分けると、始める時の負担が下がります。小さくしたタスクは、予定にも置きやすく、記録にも残しやすくなります。",
     "insight.noToday.title": "今日に置くと、選択肢が減る",
     "insight.noToday.body":
-      "保存したタスクを今日に入れる意味は、予定を埋めることではありません。今やる候補を減らして、次に動く一手を見える場所に置くことです。迷いが減るほど、行動は軽くなります。",
+      "行動リストから今日に入れる意味は、予定を埋めることではありません。今やる候補を減らして、次に動く一手を見える場所に置くことです。迷いが減るほど、行動は軽くなります。",
     "insight.inProgress.title": "完了は、やる気ではなく流れを作る",
     "insight.inProgress.body":
       "途中の状態では、全部終わらせようと考えるより、まず1つ完了する方が効果的です。1つの完了が今日の流れを作り、次のタスクに入る心理的な距離を短くします。",
@@ -809,6 +809,7 @@ const els = {
   completionPie: document.querySelector("#completionPie"),
   goalReport: document.querySelector("#goalReport"),
   weekTitle: document.querySelector("#weekTitle"),
+  todayTitle: document.querySelector("#todayTitle"),
   todayDate: document.querySelector("#todayDate"),
   summaryTodayRate: document.querySelector("#summaryTodayRate"),
   summaryWeekRate: document.querySelector("#summaryWeekRate"),
@@ -1848,7 +1849,7 @@ function scheduledElement(item, isCompact = false) {
       activeScheduleControlId =
         activeScheduleControlId === item.id ? "" : item.id;
       render();
-    }, 180);
+    }, 80);
   });
   bindDoubleActivate(node, () => {
     window.clearTimeout(scheduleControlTimer);
@@ -1905,7 +1906,9 @@ function scheduledElement(item, isCompact = false) {
 }
 
 function renderToday() {
-  els.todayDate.textContent = formatDate(toISO(today));
+  const todayLabel = formatDate(toISO(today));
+  if (els.todayTitle) els.todayTitle.textContent = todayLabel;
+  els.todayDate.textContent = "";
   els.todayList.innerHTML = "";
   const items = state.scheduled.filter((item) => item.date === toISO(today));
   if (!items.length) {
@@ -4491,7 +4494,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260529-home-action-list")
+      .register("./sw.js?v=20260531-schedule-touch-dark")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
