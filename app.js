@@ -89,33 +89,33 @@ const translations = {
     "onboarding.primaryAria": "最初の目標を作る",
     "onboarding.secondary": "あとで見る",
     "introStory.aria": "GoalFlowの初回説明",
-    "introStory.kicker": "GoalFlow guide",
-    "introStory.skip": "スキップ",
+    "introStory.kicker": "はじめてのGoalFlow",
+    "introStory.skip": "あとで見る",
     "introStory.prev": "戻る",
     "introStory.next": "次へ",
-    "introStory.start": "始める",
+    "introStory.begin": "はじめる",
+    "introStory.start": "GoalFlowを始める",
     "introStory.replay": "i",
     "introStory.page": "{current} / {total}",
     "introStory.0.label": "",
-    "introStory.0.title": "今日の一手が見える。",
+    "introStory.0.title": "GoalFlowへようこそ",
     "introStory.0.body":
-      "GoalFlowは、目標を小さなタスクに分け、カレンダーへ置いて、今日やることだけに絞るアプリです。",
+      "目標を、今日やる一歩へ。GoalFlowは、目標を小さな行動に分けて、今日やることだけを見せるアプリです。",
     "introStory.1.label": "",
-    "introStory.1.title": "期限から逆算する。",
+    "introStory.1.title": "目標を作る",
     "introStory.1.body":
-      "大きな目標を、週ごと・1日ごとの小さな行動へ分けます。気合いではなく、進む順番を作ります。",
+      "まずは向かう先を決めます。勉強、資格、筋トレ、作品づくりなど。",
     "introStory.2.label": "",
-    "introStory.2.title": "一歩を保存する。",
-    "introStory.2.body":
-      "何度も使う行動は行動リストに。迷った日でも、次に置くべき行動をすぐ選べます。",
+    "introStory.2.title": "行動に分ける",
+    "introStory.2.body": "大きな目標を、今日できる小さなタスクに分けます。",
     "introStory.3.label": "",
-    "introStory.3.title": "日付に置く。",
+    "introStory.3.title": "今日に入れる",
     "introStory.3.body":
-      "行動リストから日付へ置くと、目標がただの願望ではなく、今日動かす予定に変わります。",
+      "今日やることだけを見れば、迷わず進めます。まずは1つ完了を残しましょう。",
     "introStory.4.label": "",
-    "introStory.4.title": "進捗が残る。",
+    "introStory.4.title": "進捗を見る",
     "introStory.4.body":
-      "完了した一歩は記録になります。自分がどれだけ前へ進んだかが見えるから、戻ってきたくなります。",
+      "完了した分は記録されます。小さな一歩を、積み上げていきましょう。",
     "tabs.aria": "画面切替",
     "tabs.home": "ホーム",
     "tabs.progress": "進捗",
@@ -445,33 +445,34 @@ const translations = {
     "onboarding.primaryAria": "Create first goal",
     "onboarding.secondary": "Later",
     "introStory.aria": "GoalFlow introduction",
-    "introStory.kicker": "GoalFlow guide",
-    "introStory.skip": "Skip",
+    "introStory.kicker": "First time with GoalFlow",
+    "introStory.skip": "Watch later",
     "introStory.prev": "Back",
     "introStory.next": "Next",
-    "introStory.start": "Start",
+    "introStory.begin": "Start",
+    "introStory.start": "Start GoalFlow",
     "introStory.replay": "i",
     "introStory.page": "{current} / {total}",
     "introStory.0.label": "",
-    "introStory.0.title": "See the next action.",
+    "introStory.0.title": "Welcome to GoalFlow",
     "introStory.0.body":
-      "GoalFlow breaks goals into small tasks, places them on a calendar, and leaves only what to do today.",
+      "Turn goals into one step for today. GoalFlow breaks goals into small actions and shows only what to do today.",
     "introStory.1.label": "",
-    "introStory.1.title": "Work backward.",
+    "introStory.1.title": "Create a goal",
     "introStory.1.body":
-      "Large goals become weekly and daily actions. You do not rely on motivation; you build the order of progress.",
+      "Start by choosing where you are going: study, exams, training, creative work, and more.",
     "introStory.2.label": "",
-    "introStory.2.title": "Save each step.",
+    "introStory.2.title": "Split it into actions",
     "introStory.2.body":
-      "Reusable actions stay in the action list, ready to place when you need them.",
+      "Break a large goal into small tasks you can do today.",
     "introStory.3.label": "",
-    "introStory.3.title": "Place it on a date.",
+    "introStory.3.title": "Put it on today",
     "introStory.3.body":
-      "An action placed on a date turns a goal from a wish into today’s next step.",
+      "When you only see what to do today, you can move without overthinking. Start by completing one thing.",
     "introStory.4.label": "",
-    "introStory.4.title": "Keep the progress.",
+    "introStory.4.title": "See your progress",
     "introStory.4.body":
-      "Every completed step becomes a record, so you can see how far you have moved and want to come back.",
+      "Every completed action is recorded. Keep stacking small steps.",
     "tabs.aria": "Screens",
     "tabs.home": "Home",
     "tabs.progress": "Progress",
@@ -2290,9 +2291,11 @@ function renderIntroStory() {
     .join("");
   els.introStoryPrev.disabled = introStoryIndex === 0;
   els.introStoryNext.textContent =
-    introStoryIndex === slides.length - 1
-      ? t("introStory.start")
-      : t("introStory.next");
+    introStoryIndex === 0
+      ? t("introStory.begin")
+      : introStoryIndex === slides.length - 1
+        ? t("introStory.start")
+        : t("introStory.next");
   els.introStoryProgress
     .querySelectorAll("[data-intro-dot]")
     .forEach((button) => {
@@ -4518,7 +4521,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260531-default-drag-guide")
+      .register("./sw.js?v=20260531-intro-copy")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
