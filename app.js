@@ -105,22 +105,22 @@ const translations = {
     "introStory.0.label": "",
     "introStory.0.title": "GoalFlowへようこそ",
     "introStory.0.body":
-      "目標を、今日やる一歩へ。GoalFlowは、目標を小さな行動に分けて、今日やることだけを見せるアプリです。",
+      "GoalFlowは、目標から逆算して\n今日やることを決めるアプリです。",
     "introStory.1.label": "",
-    "introStory.1.title": "目標を作る",
+    "introStory.1.title": "ゴールを決める",
     "introStory.1.body":
-      "まずは向かう先を決めます。勉強、資格、筋トレ、作品づくりなど。",
+      "まずは、達成したい目標を作ります。\n勉強、筋トレ、制作、資格など。",
     "introStory.2.label": "",
-    "introStory.2.title": "行動に分ける",
-    "introStory.2.body": "大きな目標を、今日できる小さなタスクに分けます。",
+    "introStory.2.title": "逆算する",
+    "introStory.2.body": "ゴールに必要な行動を、\n小さなタスクに分けます。",
     "introStory.3.label": "",
-    "introStory.3.title": "今日に入れる",
+    "introStory.3.title": "予定に入れる",
     "introStory.3.body":
-      "今日やることだけを見れば、迷わず進めます。まずは1つ完了を残しましょう。",
+      "タスクを今日の予定に入れると、\n今やることがはっきりします。",
     "introStory.4.label": "",
     "introStory.4.title": "進捗を見る",
     "introStory.4.body":
-      "完了した分は記録されます。小さな一歩を、積み上げていきましょう。",
+      "完了した分は記録されます。\nゴールまでの進み具合を確認できます。",
     "tabs.aria": "画面切替",
     "tabs.home": "ホーム",
     "tabs.progress": "進捗",
@@ -461,23 +461,22 @@ const translations = {
     "introStory.0.label": "",
     "introStory.0.title": "Welcome to GoalFlow",
     "introStory.0.body":
-      "Turn goals into one step for today. GoalFlow breaks goals into small actions and shows only what to do today.",
+      "GoalFlow helps you work backward from a goal and decide what to do today.",
     "introStory.1.label": "",
-    "introStory.1.title": "Create a goal",
+    "introStory.1.title": "Choose a goal",
     "introStory.1.body":
-      "Start by choosing where you are going: study, exams, training, creative work, and more.",
+      "Start with what you want to achieve: study, training, making things, exams, and more.",
     "introStory.2.label": "",
-    "introStory.2.title": "Split it into actions",
-    "introStory.2.body":
-      "Break a large goal into small tasks you can do today.",
+    "introStory.2.title": "Work backward",
+    "introStory.2.body": "Break the actions your goal needs into small tasks.",
     "introStory.3.label": "",
-    "introStory.3.title": "Put it on today",
+    "introStory.3.title": "Plan it",
     "introStory.3.body":
-      "When you only see what to do today, you can move without overthinking. Start by completing one thing.",
+      "Put a task into today's plan so your next action is clear.",
     "introStory.4.label": "",
     "introStory.4.title": "See your progress",
     "introStory.4.body":
-      "Every completed action is recorded. Keep stacking small steps.",
+      "Completed tasks are recorded, so you can see how far you have moved toward the goal.",
     "tabs.aria": "Screens",
     "tabs.home": "Home",
     "tabs.progress": "Progress",
@@ -1742,9 +1741,7 @@ function renderCalendar() {
     });
     const list = column.querySelector(".day-tasks");
     if (scheduled.length) {
-      scheduled.forEach((item) =>
-        list.append(scheduledElement(item, viewMode === "month")),
-      );
+      scheduled.forEach((item) => list.append(scheduledElement(item, true)));
     }
     els.calendarGrid.append(column);
   });
@@ -3152,10 +3149,11 @@ function drawEmptyCanvas(ctx, width, height, text) {
 function taskMarkup(task, goal, isCompact = false) {
   const duration = formatDuration(task);
   const goalName = goal?.name ?? t("tasks.noGoal");
-  const meta = isCompact ? `${goalName}` : `${goalName}・${duration}`;
+  const meta = isCompact ? "" : `${goalName}・${duration}`;
+  const metaMarkup = meta ? `<p class="task-meta">${escapeHtml(meta)}</p>` : "";
   return `
     <div class="task-title"><span><i class="task-color-dot" aria-hidden="true"></i>${escapeHtml(task.title)}</span></div>
-    <p class="task-meta">${escapeHtml(meta)}</p>
+    ${metaMarkup}
   `;
 }
 
@@ -4546,7 +4544,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260531-calendar-motion-cleanup")
+      .register("./sw.js?v=20260531-calendar-task-copy")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
