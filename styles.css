@@ -1892,6 +1892,49 @@ body[data-active-screen="today"] .insights {
   margin-top: 14px;
 }
 
+.task-bank {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20, 108, 99, 0.34) transparent;
+}
+
+.task-bank::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.task-bank::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.task-bank::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(20, 108, 99, 0.28);
+  background-clip: padding-box;
+}
+
+.task-bank::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 108, 99, 0.42);
+  background-clip: padding-box;
+}
+
+body[data-active-screen="tasks"] [data-view-panel="tasks"],
+body[data-active-screen="schedule"] [data-view-panel="tasks"] {
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+body[data-active-screen="tasks"] .task-bank,
+body[data-active-screen="schedule"] .task-bank {
+  min-height: 0;
+  max-height: min(560px, calc(100vh - 310px));
+  padding-right: 4px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
 .goal-card,
 .bank-task,
 .today-task,

@@ -4544,7 +4544,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260531-calendar-task-copy")
+      .register("./sw.js?v=20260531-task-bank-scroll")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
