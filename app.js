@@ -1810,132 +1810,6 @@ function getScheduleColumnFromPoint(clientX, clientY) {
   return document.elementFromPoint(clientX, clientY)?.closest(".day-column");
 }
 
-function getTaskBankFromPoint(clientX, clientY) {
-  return document.elementFromPoint(clientX, clientY)?.closest("#taskBank");
-}
-
-function startTouchScheduledDrag(event, item, task, goal, node) {
-  if (
-    event.pointerType === "mouse" ||
-    event.target.closest("button, input, textarea, select, form")
-  )
-    return;
-  const startX = event.clientX;
-  const startY = event.clientY;
-  let didStart = false;
-  let currentTarget = null;
-  let currentClientY = event.clientY;
-  let preview = null;
-  let holdTimer = null;
-
-  const movePreview = (clientX, clientY) => {
-    if (!preview) return;
-    preview.style.transform = `translate3d(${clientX + 14}px, ${clientY + 14}px, 0)`;
-  };
-  const startDrag = (clientX = startX, clientY = startY) => {
-    if (didStart) return;
-    didStart = true;
-    try {
-      node.setPointerCapture?.(event.pointerId);
-    } catch {
-      // Pointer capture can fail if the browser has already promoted the gesture.
-    }
-    activeScheduleControlId = "";
-    document.body.classList.add("is-scheduling", "is-returning-scheduled");
-    node.classList.add("dragging");
-    node.dataset.suppressClick = "true";
-    pulseElement(node, 0.992);
-    vibrate(10);
-    preview = createDragPreview(
-      { ...task, title: item.title, minutes: item.minutes },
-      goal,
-    );
-    preview.classList.add("touch-drag-preview");
-    document.body.append(preview);
-    movePreview(clientX, clientY);
-  };
-  const setTarget = (target) => {
-    if (target === currentTarget) return;
-    if (currentTarget) clearDropTargets(currentTarget);
-    currentTarget = target;
-    if (currentTarget) {
-      setColumnDropTarget(currentTarget, currentClientY);
-      vibrate(6);
-    }
-  };
-  const cleanup = () => {
-    window.clearTimeout(holdTimer);
-    if (currentTarget) clearDropTargets(currentTarget);
-    if (didStart) {
-      document.body.classList.remove("is-scheduling", "is-returning-scheduled");
-      node.classList.remove("dragging");
-      els.taskBank.classList.remove("return-target");
-      window.setTimeout(() => {
-        delete node.dataset.suppressClick;
-      }, 220);
-    } else {
-      delete node.dataset.suppressClick;
-    }
-    preview?.remove();
-    document.removeEventListener("pointermove", onMove);
-    document.removeEventListener("pointerup", onUp);
-    document.removeEventListener("pointercancel", onCancel);
-  };
-  const onMove = (moveEvent) => {
-    const deltaX = moveEvent.clientX - startX;
-    const deltaY = moveEvent.clientY - startY;
-    if (!didStart && Math.hypot(deltaX, deltaY) > 12) {
-      cleanup();
-      return;
-    }
-    if (!didStart) return;
-    moveEvent.preventDefault();
-    currentClientY = moveEvent.clientY;
-    movePreview(moveEvent.clientX, moveEvent.clientY);
-    preview.hidden = true;
-    const target = getScheduleColumnFromPoint(
-      moveEvent.clientX,
-      moveEvent.clientY,
-    );
-    const taskBankTarget = getTaskBankFromPoint(
-      moveEvent.clientX,
-      moveEvent.clientY,
-    );
-    preview.hidden = false;
-    els.taskBank.classList.toggle("return-target", Boolean(taskBankTarget));
-    if (target === currentTarget && currentTarget) {
-      setColumnDropTarget(currentTarget, currentClientY);
-    } else {
-      setTarget(target);
-    }
-  };
-  const onUp = (upEvent) => {
-    window.clearTimeout(holdTimer);
-    if (!didStart) {
-      cleanup();
-      return;
-    }
-    onMove(upEvent);
-    const landingTarget =
-      currentTarget ??
-      getScheduleColumnFromPoint(upEvent.clientX, upEvent.clientY);
-    const returnTarget = getTaskBankFromPoint(upEvent.clientX, upEvent.clientY);
-    const date = landingTarget?.dataset.date;
-    cleanup();
-    if (returnTarget) {
-      deleteScheduledItem(item, t("schedule.returned"));
-      return;
-    }
-    if (date && date !== item.date) moveScheduledTask(item.id, date);
-  };
-  const onCancel = () => cleanup();
-
-  holdTimer = window.setTimeout(() => startDrag(startX, startY), 1000);
-  document.addEventListener("pointermove", onMove);
-  document.addEventListener("pointerup", onUp);
-  document.addEventListener("pointercancel", onCancel);
-}
-
 function isCompactScheduleLayout() {
   return window.matchMedia("(max-width: 640px)").matches;
 }
@@ -2003,17 +1877,7 @@ function scheduledElement(item, isCompact = false) {
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("application/x-goalflow-scheduled", item.id);
     event.dataTransfer.setData("text/plain", item.taskId);
-    const preview = createDragPreview(
-      { ...task, title: item.title, minutes: item.minutes },
-      goal,
-    );
-    document.body.append(preview);
-    event.dataTransfer.setDragImage(preview, 18, 18);
-    requestAnimationFrame(() => preview.remove());
   });
-  node.addEventListener("pointerdown", (event) =>
-    startTouchScheduledDrag(event, item, task, goal, node),
-  );
   node.addEventListener("dragend", () => {
     document.body.classList.remove("is-scheduling", "is-returning-scheduled");
     els.taskBank.classList.remove("return-target");
@@ -2448,10 +2312,15 @@ function moveIntroStory(direction) {
   renderIntroStory();
 }
 
-function completeIntroStory() {
+function completeIntroStory(startTutorialAfter = false) {
   state.meta.introCompleted = true;
   introStoryForced = false;
   introStoryIndex = 0;
+  if (startTutorialAfter) {
+    state.meta.tutorialActive = true;
+    state.meta.tutorialCompleted = false;
+    state.meta.tutorialStep = 0;
+  }
   render();
 }
 
@@ -4514,14 +4383,14 @@ els.languageToggle.addEventListener("click", () => {
 els.introStoryNext?.addEventListener("click", () => {
   const isLast = introStoryIndex >= introStorySlides().length - 1;
   if (isLast) {
-    completeIntroStory();
+    completeIntroStory(true);
     return;
   }
   moveIntroStory(1);
 });
 
 els.introStoryPrev?.addEventListener("click", () => moveIntroStory(-1));
-els.introStorySkip?.addEventListener("click", completeIntroStory);
+els.introStorySkip?.addEventListener("click", () => completeIntroStory(false));
 els.replayIntroStory?.addEventListener("click", replayIntroStory);
 
 let introStoryTouchStartX = 0;
@@ -4649,7 +4518,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260531-motion-polish")
+      .register("./sw.js?v=20260531-default-drag-guide")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

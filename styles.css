@@ -6240,3 +6240,65 @@ body[data-tab-direction="-1"] .home-dashboard {
     filter: blur(0);
   }
 }
+
+/* Calendar controls stay in one readable row. */
+body[data-active-screen="home"] .planner-head,
+body[data-active-screen="schedule"] .planner-head {
+  align-items: center;
+}
+
+body[data-active-screen="home"] .week-controls,
+body[data-active-screen="schedule"] .week-controls {
+  display: grid;
+  grid-template-columns: auto auto auto minmax(58px, auto) auto auto auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: nowrap;
+}
+
+body[data-active-screen="home"] .view-switch,
+body[data-active-screen="home"] .calendar-zoom,
+body[data-active-screen="schedule"] .view-switch,
+body[data-active-screen="schedule"] .calendar-zoom {
+  display: contents;
+}
+
+body[data-active-screen="home"] #todayPeriod,
+body[data-active-screen="schedule"] #todayPeriod {
+  grid-column: auto;
+  min-width: 0;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
+body[data-active-screen="home"] .week-controls > *,
+body[data-active-screen="schedule"] .week-controls > * {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  body[data-active-screen="home"] .week-controls,
+  body[data-active-screen="schedule"] .week-controls {
+    gap: 4px;
+  }
+
+  body[data-active-screen="home"] .switch-button,
+  body[data-active-screen="home"] .icon-button,
+  body[data-active-screen="home"] .ghost-button,
+  body[data-active-screen="schedule"] .switch-button,
+  body[data-active-screen="schedule"] .icon-button,
+  body[data-active-screen="schedule"] .ghost-button {
+    min-width: 30px;
+    min-height: 32px;
+    padding-inline: 7px;
+    font-size: 11px;
+  }
+
+  body[data-active-screen="home"] #todayPeriod,
+  body[data-active-screen="schedule"] #todayPeriod {
+    padding-inline: 8px;
+  }
+}

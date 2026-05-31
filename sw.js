@@ -1,9 +1,9 @@
-const cacheName = "goalflow-v64-20260531-motion-polish";
+const cacheName = "goalflow-v65-20260531-default-drag-guide";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260531-motion-polish",
-  "./app.js?v=20260531-motion-polish",
+  "./styles.css?v=20260531-default-drag-guide",
+  "./app.js?v=20260531-default-drag-guide",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",
