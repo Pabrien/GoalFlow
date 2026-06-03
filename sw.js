@@ -1,9 +1,9 @@
-const cacheName = "paskra-v74-20260603-web-feature-mobile-tap";
+const cacheName = "paskra-v75-20260603-week-scale-edit-flow";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260603-web-feature-mobile-tap",
-  "./app.js?v=20260603-web-feature-mobile-tap",
+  "./styles.css?v=20260603-week-scale-edit-flow",
+  "./app.js?v=20260603-week-scale-edit-flow",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",

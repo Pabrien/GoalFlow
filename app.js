@@ -270,7 +270,6 @@ const translations = {
     "tasks.dragAria": "カレンダーへドラッグ",
     "tasks.pickDate": "日付",
     "tasks.pickingDate": "追加する日付を選択中",
-    "tasks.addToday": "今日",
     "tasks.noGoal": "未設定",
     "schedule.kicker": "ドラッグで予定化",
     "schedule.week": "週",
@@ -629,7 +628,6 @@ const translations = {
     "tasks.dragAria": "Drag to calendar",
     "tasks.pickDate": "Date",
     "tasks.pickingDate": "Picking a date",
-    "tasks.addToday": "Today",
     "tasks.noGoal": "No goal",
     "schedule.kicker": "Drag to schedule",
     "schedule.week": "Week",
@@ -1325,7 +1323,6 @@ function renderTaskBank() {
         <div class="bank-task-copy">${taskMarkup(task, goal)}</div>
       </div>
       <div class="bank-task-mobile-actions">
-        <button class="mini-button" type="button" data-action="add-today">${escapeHtml(t("tasks.addToday"))}</button>
         <button class="mini-button" type="button" data-action="pick-date">${escapeHtml(t("tasks.pickDate"))}</button>
       </div>
       ${
@@ -1401,13 +1398,6 @@ function renderTaskBank() {
       event.stopPropagation();
       setPendingScheduleTask(task.id);
     });
-    item
-      .querySelector('[data-action="add-today"]')
-      .addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        scheduleTask(task.id, toISO(today));
-      });
     item
       .querySelector('[data-action="pick-date"]')
       .addEventListener("click", (event) => {
@@ -1978,9 +1968,10 @@ function renderToday() {
         ${editingScheduledId === item.id ? scheduledEditForm(item) : ""}
       `;
       node.addEventListener("click", (event) => {
-        if (event.target.closest("button, input, textarea, select")) return;
-      });
-      bindDoubleActivate(node, () => {
+        if (
+          event.target.closest("button, input, textarea, select, form, label")
+        )
+          return;
         editingScheduledId = editingScheduledId === item.id ? "" : item.id;
         render();
       });
@@ -4569,7 +4560,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260603-web-feature-mobile-tap")
+      .register("./sw.js?v=20260603-week-scale-edit-flow")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
