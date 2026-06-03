@@ -4634,12 +4634,21 @@ dialog {
     min-height: var(--mobile-week-day-height, clamp(150px, 28vh, 220px));
   }
 
+  body[data-active-screen="schedule"] .calendar-grid.week-mode .day-tasks {
+    max-height: calc(var(--mobile-week-day-height, 176px) - 34px);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
   body[data-active-screen="schedule"] .calendar-grid.week-mode .scheduled-task {
     display: block;
     min-height: 30px;
     padding: 4px 3px;
     border-left: 3px solid var(--accent);
     background: #fbfcfa;
+    touch-action: pan-y;
   }
 
   body[data-active-screen="schedule"]

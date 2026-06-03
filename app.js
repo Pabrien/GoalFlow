@@ -4546,7 +4546,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260603-calendar-cell-scroll")
+      .register("./sw.js?v=20260603-mobile-week-task-scroll")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
