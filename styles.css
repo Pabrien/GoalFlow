@@ -2563,6 +2563,7 @@ body[data-calendar-size="size-7"] .planner {
 
 .calendar-grid {
   display: grid;
+  align-items: start;
   grid-template-columns: repeat(7, minmax(var(--day-width), 1fr));
   gap: 8px;
   margin-top: 16px;
@@ -2576,6 +2577,7 @@ body[data-calendar-size="size-7"] .planner {
 }
 
 .day-column {
+  align-self: start;
   min-height: var(--week-day-height);
   padding: 10px;
   border: 1px solid var(--line);
@@ -2777,10 +2779,37 @@ body.is-picking-schedule-date .day-column.pick-target:hover {
 .day-tasks {
   display: grid;
   gap: 8px;
+  max-height: clamp(168px, 32vh, 360px);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20, 108, 99, 0.32) transparent;
+}
+
+.day-tasks::-webkit-scrollbar {
+  width: 7px;
+}
+
+.day-tasks::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.day-tasks::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(20, 108, 99, 0.28);
+  background-clip: padding-box;
+}
+
+.day-tasks::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 108, 99, 0.42);
+  background-clip: padding-box;
 }
 
 .month-mode .day-tasks {
   gap: 5px;
+  max-height: clamp(78px, 18vh, 180px);
 }
 
 .scheduled-task,

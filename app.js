@@ -4546,7 +4546,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260603-paskra-rename")
+      .register("./sw.js?v=20260603-calendar-cell-scroll")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

@@ -1,9 +1,9 @@
-const cacheName = "paskra-v70-20260603-paskra-rename";
+const cacheName = "paskra-v71-20260603-calendar-cell-scroll";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260603-paskra-rename",
-  "./app.js?v=20260603-paskra-rename",
+  "./styles.css?v=20260603-calendar-cell-scroll",
+  "./app.js?v=20260603-calendar-cell-scroll",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",
