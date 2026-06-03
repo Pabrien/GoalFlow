@@ -5,7 +5,6 @@ struct Goal: Identifiable, Codable, Equatable {
     var id: UUID = UUID()
     var title: String
     var category: String
-    var reason: String
     var startDate: Date
     var deadline: Date
     var colorHex: String

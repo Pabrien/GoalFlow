@@ -40,17 +40,23 @@ final class GoalFlowStore: ObservableObject {
         return Double(done) / Double(scheduled.count)
     }
 
-    func addGoal(title: String, category: String, reason: String, deadline: Date) {
+    var goalColors: [String] { palette }
+
+    func addGoal(title: String, category: String, deadline: Date, colorHex: String) {
         goals.append(
             Goal(
                 title: title,
                 category: category,
-                reason: reason,
                 startDate: Date().startOfDay,
                 deadline: deadline.startOfDay,
-                colorHex: palette[goals.count % palette.count]
+                colorHex: colorHex
             )
         )
+    }
+
+    func updateGoalColor(_ goal: Goal, colorHex: String) {
+        guard let index = goals.firstIndex(where: { $0.id == goal.id }) else { return }
+        goals[index].colorHex = colorHex
     }
 
     func addCategory(_ name: String) {
@@ -192,7 +198,6 @@ final class GoalFlowStore: ObservableObject {
         let goal = Goal(
             title: "英語を毎日進める",
             category: defaultCategories[0],
-            reason: "将来の選択肢を増やすため",
             startDate: today,
             deadline: today.addingDays(45),
             colorHex: palette[0]

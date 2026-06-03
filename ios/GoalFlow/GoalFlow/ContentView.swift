@@ -30,9 +30,6 @@ struct ContentView: View {
             case .goal:
                 GoalEditor()
                     .presentationDetents([.medium, .large])
-            case .categories:
-                CategoryEditor()
-                    .presentationDetents([.medium, .large])
             case .task:
                 TaskEditor()
                     .presentationDetents([.medium, .large])
@@ -59,7 +56,6 @@ private enum AppTab {
 
 enum ActiveSheet: Identifiable {
     case goal
-    case categories
     case task
     case schedule(ActionTask)
     case scheduled(ScheduledTask)
@@ -68,7 +64,6 @@ enum ActiveSheet: Identifiable {
     var id: String {
         switch self {
         case .goal: "goal"
-        case .categories: "categories"
         case .task: "task"
         case .schedule(let task): "schedule-\(task.id)"
         case .scheduled(let item): "scheduled-\(item.id)"
@@ -125,8 +120,7 @@ struct GoalsView: View {
                 ScrollView {
                     VStack(spacing: 14) {
                         GoalActionsCard(
-                            onAddGoal: { sheet = .goal },
-                            onEditCategories: { sheet = .categories }
+                            onAddGoal: { sheet = .goal }
                         )
 
                         if store.goals.isEmpty {
@@ -150,22 +144,13 @@ struct GoalsView: View {
 
 struct GoalActionsCard: View {
     let onAddGoal: () -> Void
-    let onEditCategories: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Button(action: onAddGoal) {
-                Label("目標を作る", systemImage: "plus")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.filledPill)
-
-            Button(action: onEditCategories) {
-                Label("カテゴリ", systemImage: "tag")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.softPill)
+        Button(action: onAddGoal) {
+            Label("目標を作る", systemImage: "plus")
+                .frame(maxWidth: .infinity)
         }
+        .buttonStyle(.filledPill)
         .cardStyle()
     }
 }
@@ -215,13 +200,6 @@ struct GoalCard: View {
                     .foregroundStyle(.secondary)
             }
 
-            if !goal.reason.isEmpty {
-                Text(goal.reason)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-
             HStack(spacing: 10) {
                 ProgressLine(
                     title: "進み具合",
@@ -236,6 +214,23 @@ struct GoalCard: View {
                 }
                 .buttonStyle(.plain)
                 .background(goalColor.opacity(0.14))
+                .foregroundStyle(goalColor)
+                .clipShape(Circle())
+                Menu {
+                    ForEach(store.goalColors, id: \.self) { hex in
+                        Button {
+                            store.updateGoalColor(goal, colorHex: hex)
+                        } label: {
+                            Label(hex == goal.colorHex ? "選択中" : "色", systemImage: "circle.fill")
+                        }
+                    }
+                } label: {
+                    Image(systemName: "paintpalette")
+                        .font(.headline.weight(.bold))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .background(Color.primary.opacity(0.08))
                 .foregroundStyle(goalColor)
                 .clipShape(Circle())
             }
@@ -255,6 +250,7 @@ struct PlannerView: View {
     @State private var mode: PlannerMode = .week
     @State private var selectedTaskID: UUID?
     @State private var pulseDate: Date?
+    @State private var showsGoalDeadlines = false
 
     private var week: [Date] {
         let calendar = Calendar.current
@@ -281,6 +277,7 @@ struct PlannerView: View {
                 VStack(spacing: 12) {
                     CalendarControls(
                         mode: $mode,
+                        showsGoalDeadlines: $showsGoalDeadlines,
                         anchorDate: anchorDate,
                         previous: { movePeriod(-1) },
                         today: { moveToToday() },
@@ -314,6 +311,7 @@ struct PlannerView: View {
                         CalendarDayCard(
                             date: date,
                             items: store.tasks(for: date),
+                            goalsDue: showsGoalDeadlines ? goalsDue(on: date) : [],
                             selectedTaskID: selectedTaskID,
                             isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
                             onTapDate: { placeSelectedTask(on: date) },
@@ -331,6 +329,7 @@ struct PlannerView: View {
                 anchorDate: anchorDate,
                 selectedTaskID: selectedTaskID,
                 pulseDate: pulseDate,
+                showsGoalDeadlines: showsGoalDeadlines,
                 onTapDate: placeSelectedTask,
                 onEdit: { sheet = .scheduled($0) },
                 onDropPayload: handleDrop
@@ -397,6 +396,10 @@ struct PlannerView: View {
             }
         }
     }
+
+    private func goalsDue(on date: Date) -> [Goal] {
+        store.goals.filter { Calendar.current.isDate($0.deadline, inSameDayAs: date) }
+    }
 }
 
 enum PlannerMode: String, CaseIterable, Identifiable {
@@ -408,6 +411,7 @@ enum PlannerMode: String, CaseIterable, Identifiable {
 
 struct CalendarControls: View {
     @Binding var mode: PlannerMode
+    @Binding var showsGoalDeadlines: Bool
     let anchorDate: Date
     let previous: () -> Void
     let today: () -> Void
@@ -430,6 +434,13 @@ struct CalendarControls: View {
                 .font(.headline.monospacedDigit())
                 .frame(minWidth: 92)
             Spacer()
+            Button {
+                showsGoalDeadlines.toggle()
+                UISelectionFeedbackGenerator().selectionChanged()
+            } label: {
+                Image(systemName: showsGoalDeadlines ? "target" : "target")
+            }
+            .foregroundStyle(showsGoalDeadlines ? Color.goalAccent : Color.primary)
             Button(action: today) {
                 Image(systemName: "dot.scope")
             }
@@ -465,6 +476,7 @@ struct CalendarControls: View {
 struct CalendarDayCard: View {
     let date: Date
     let items: [ScheduledTask]
+    let goalsDue: [Goal]
     let selectedTaskID: UUID?
     let isPulsing: Bool
     let onTapDate: () -> Void
@@ -501,6 +513,9 @@ struct CalendarDayCard: View {
 
             ScrollView {
                 LazyVStack(spacing: 8) {
+                    ForEach(goalsDue) { goal in
+                        GoalDeadlinePill(goal: goal, compact: false)
+                    }
                     ForEach(items) { item in
                         CalendarTaskPill(item: item)
                             .onTapGesture {
@@ -554,6 +569,7 @@ struct MonthGrid: View {
     let anchorDate: Date
     let selectedTaskID: UUID?
     let pulseDate: Date?
+    let showsGoalDeadlines: Bool
     let onTapDate: (Date) -> Void
     let onEdit: (ScheduledTask) -> Void
     let onDropPayload: (String, Date) -> Bool
@@ -568,6 +584,7 @@ struct MonthGrid: View {
                         date: date,
                         isInMonth: Calendar.current.isDate(date, equalTo: anchorDate, toGranularity: .month),
                         items: store.tasks(for: date),
+                        goalsDue: showsGoalDeadlines ? goalsDue(on: date) : [],
                         selectedTaskID: selectedTaskID,
                         isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
                         onTapDate: { onTapDate(date) },
@@ -578,6 +595,10 @@ struct MonthGrid: View {
             }
         }
     }
+
+    private func goalsDue(on date: Date) -> [Goal] {
+        store.goals.filter { Calendar.current.isDate($0.deadline, inSameDayAs: date) }
+    }
 }
 
 struct MonthDayCell: View {
@@ -585,6 +606,7 @@ struct MonthDayCell: View {
     let date: Date
     let isInMonth: Bool
     let items: [ScheduledTask]
+    let goalsDue: [Goal]
     let selectedTaskID: UUID?
     let isPulsing: Bool
     let onTapDate: () -> Void
@@ -606,6 +628,9 @@ struct MonthDayCell: View {
                     }
                 }
                 VStack(alignment: .leading, spacing: 3) {
+                    ForEach(goalsDue.prefix(2)) { goal in
+                        GoalDeadlinePill(goal: goal, compact: true)
+                    }
                     ForEach(items.prefix(3)) { item in
                         MonthTaskDot(item: item)
                             .onTapGesture {
@@ -672,6 +697,31 @@ struct MonthTaskDot: View {
 
     private var goalColor: Color {
         Color(hex: store.goal(for: item.goalID)?.colorHex ?? "#2563EB")
+    }
+}
+
+struct GoalDeadlinePill: View {
+    let goal: Goal
+    let compact: Bool
+
+    var body: some View {
+        HStack(spacing: compact ? 3 : 6) {
+            Image(systemName: "target")
+                .font(compact ? .system(size: 7, weight: .bold) : .caption2.weight(.bold))
+            Text(compact ? goal.title : "\(goal.title) 期限")
+                .font(compact ? .system(size: 8.5, weight: .bold) : .caption.weight(.bold))
+                .lineLimit(1)
+        }
+        .padding(.horizontal, compact ? 0 : 9)
+        .padding(.vertical, compact ? 0 : 7)
+        .foregroundStyle(goalColor)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(compact ? Color.clear : goalColor.opacity(0.13))
+        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+    }
+
+    private var goalColor: Color {
+        Color(hex: goal.colorHex)
     }
 }
 
@@ -1017,23 +1067,46 @@ struct GoalEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
     @State private var category = ""
-    @State private var reason = ""
     @State private var deadline = Date().addingDays(30)
+    @State private var colorHex = ""
+    @State private var categoryDraft = ""
 
     var body: some View {
         NavigationStack {
             Form {
                 TextField("目標", text: $title)
-                Picker("カテゴリ", selection: $category) {
-                    ForEach(store.categories, id: \.self) { category in
-                        Text(category).tag(category)
+
+                Section("カテゴリ") {
+                    Picker("カテゴリ", selection: $category) {
+                        ForEach(store.categories, id: \.self) { category in
+                            Text(category).tag(category)
+                        }
+                    }
+                    HStack {
+                        TextField("追加", text: $categoryDraft)
+                        Button {
+                            store.addCategory(categoryDraft)
+                            category = categoryDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                            categoryDraft = ""
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                        }
+                        .disabled(categoryDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                    ForEach(store.categories, id: \.self) { item in
+                        InlineCategoryRow(category: item, selectedCategory: $category)
                     }
                 }
-                TextField("理由", text: $reason, axis: .vertical)
+
+                Section("色") {
+                    ColorSwatchGrid(selectedHex: $colorHex, colors: store.goalColors)
+                }
+
                 DatePicker("期限", selection: $deadline, displayedComponents: .date)
             }
             .onAppear {
                 category = category.isEmpty ? (store.categories.first ?? "その他") : category
+                colorHex = colorHex.isEmpty ? (store.goalColors.first ?? "#2563EB") : colorHex
             }
             .navigationTitle("目標")
             .toolbar {
@@ -1042,7 +1115,7 @@ struct GoalEditor: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        store.addGoal(title: title, category: category, reason: reason, deadline: deadline)
+                        store.addGoal(title: title, category: category, deadline: deadline, colorHex: colorHex)
                         dismiss()
                     }
                     .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || category.isEmpty)
@@ -1052,69 +1125,68 @@ struct GoalEditor: View {
     }
 }
 
-struct CategoryEditor: View {
-    @EnvironmentObject private var store: GoalFlowStore
-    @Environment(\.dismiss) private var dismiss
-    @State private var draft = ""
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    HStack {
-                        TextField("カテゴリ", text: $draft)
-                        Button {
-                            store.addCategory(draft)
-                            draft = ""
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                        }
-                        .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
-                }
-
-                Section {
-                    ForEach(store.categories, id: \.self) { category in
-                        CategoryRow(category: category)
-                    }
-                    .onDelete { offsets in
-                        for index in offsets {
-                            store.deleteCategory(store.categories[index])
-                        }
-                    }
-                }
-            }
-            .navigationTitle("カテゴリ")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("完了") { dismiss() }
-                }
-            }
-        }
-    }
-}
-
-struct CategoryRow: View {
+struct InlineCategoryRow: View {
     @EnvironmentObject private var store: GoalFlowStore
     let category: String
+    @Binding var selectedCategory: String
     @State private var draft = ""
 
     var body: some View {
-        HStack {
+        HStack(spacing: 10) {
             TextField(category, text: $draft)
                 .onAppear {
                     draft = category
                 }
                 .onSubmit {
+                    let old = category
                     store.renameCategory(category, to: draft)
+                    if selectedCategory == old {
+                        selectedCategory = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
                 }
             Button {
+                let old = category
                 store.renameCategory(category, to: draft)
+                if selectedCategory == old {
+                    selectedCategory = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+                }
             } label: {
                 Image(systemName: "checkmark.circle")
             }
             .buttonStyle(.plain)
             .foregroundStyle(Color.goalAccent)
+            Button(role: .destructive) {
+                store.deleteCategory(category)
+                selectedCategory = store.categories.first ?? ""
+            } label: {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.plain)
+            .disabled(store.categories.count <= 1)
+        }
+    }
+}
+
+struct ColorSwatchGrid: View {
+    @Binding var selectedHex: String
+    let colors: [String]
+
+    var body: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 6), spacing: 10) {
+            ForEach(colors, id: \.self) { hex in
+                Button {
+                    selectedHex = hex
+                } label: {
+                    Circle()
+                        .fill(Color(hex: hex))
+                        .frame(width: 30, height: 30)
+                        .overlay {
+                            Circle()
+                                .stroke(selectedHex == hex ? Color.primary : Color.clear, lineWidth: 3)
+                        }
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 }
