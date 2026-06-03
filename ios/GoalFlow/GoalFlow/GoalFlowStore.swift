@@ -72,6 +72,18 @@ final class GoalFlowStore: ObservableObject {
                 date: date.startOfDay
             )
         )
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+
+    func schedule(taskID: UUID, on date: Date) {
+        guard let task = task(id: taskID) else { return }
+        schedule(task: task, on: date)
+    }
+
+    func moveScheduled(_ item: ScheduledTask, to date: Date) {
+        guard let index = scheduled.firstIndex(where: { $0.id == item.id }) else { return }
+        scheduled[index].date = date.startOfDay
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     func toggleDone(_ item: ScheduledTask) {
@@ -96,6 +108,10 @@ final class GoalFlowStore: ObservableObject {
 
     func goal(for id: UUID) -> Goal? {
         goals.first { $0.id == id }
+    }
+
+    func task(id: UUID) -> ActionTask? {
+        tasks.first { $0.id == id }
     }
 
     func tasks(for date: Date) -> [ScheduledTask] {
