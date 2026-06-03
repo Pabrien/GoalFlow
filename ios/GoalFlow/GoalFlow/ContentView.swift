@@ -29,10 +29,10 @@ struct ContentView: View {
             switch item {
             case .goal:
                 GoalEditor()
-                    .presentationDetents([.medium, .large])
+                    .presentationDetents([.large])
             case .task:
                 TaskEditor()
-                    .presentationDetents([.medium, .large])
+                    .presentationDetents([.large])
             case .schedule(let task):
                 ScheduleEditor(task: task)
                     .presentationDetents([.medium])
@@ -179,6 +179,7 @@ struct GoalCard: View {
     @EnvironmentObject private var store: GoalFlowStore
     let goal: Goal
     let onBackcast: () -> Void
+    @State private var showsColors = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -216,13 +217,9 @@ struct GoalCard: View {
                 .background(goalColor.opacity(0.14))
                 .foregroundStyle(goalColor)
                 .clipShape(Circle())
-                Menu {
-                    ForEach(store.goalColors, id: \.self) { hex in
-                        Button {
-                            store.updateGoalColor(goal, colorHex: hex)
-                        } label: {
-                            Label(hex == goal.colorHex ? "選択中" : "色", systemImage: "circle.fill")
-                        }
+                Button {
+                    withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
+                        showsColors.toggle()
                     }
                 } label: {
                     Image(systemName: "paintpalette")
@@ -233,6 +230,17 @@ struct GoalCard: View {
                 .background(Color.primary.opacity(0.08))
                 .foregroundStyle(goalColor)
                 .clipShape(Circle())
+            }
+
+            if showsColors {
+                ColorSwatchGrid(
+                    selectedHex: Binding(
+                        get: { goal.colorHex },
+                        set: { store.updateGoalColor(goal, colorHex: $0) }
+                    ),
+                    colors: store.goalColors
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .cardStyle()
@@ -290,7 +298,8 @@ struct PlannerView: View {
 
                     TaskShelf(
                         selectedTaskID: $selectedTaskID,
-                        onAdd: { sheet = .task }
+                        onAddTask: { sheet = .task },
+                        onAddGoal: { sheet = .goal }
                     )
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
@@ -614,47 +623,50 @@ struct MonthDayCell: View {
     let onDropPayload: (String) -> Bool
 
     var body: some View {
-        Button(action: onTapDate) {
-            VStack(alignment: .leading, spacing: 5) {
-                HStack {
-                    Text(date, format: .dateTime.day())
-                        .font(.caption.weight(.bold).monospacedDigit())
-                        .foregroundStyle(isInMonth ? Color.primary : Color.secondary.opacity(0.45))
-                    Spacer()
-                    if !items.isEmpty {
-                        Text("\(items.count)")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.secondary)
-                    }
+        VStack(alignment: .leading, spacing: 5) {
+            HStack {
+                Text(date, format: .dateTime.day())
+                    .font(.caption.weight(.bold).monospacedDigit())
+                    .foregroundStyle(isInMonth ? Color.primary : Color.secondary.opacity(0.45))
+                Spacer()
+                if !items.isEmpty {
+                    Text("\(items.count)")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.secondary)
                 }
-                VStack(alignment: .leading, spacing: 3) {
-                    ForEach(goalsDue.prefix(2)) { goal in
-                        GoalDeadlinePill(goal: goal, compact: true)
-                    }
-                    ForEach(items.prefix(3)) { item in
-                        MonthTaskDot(item: item)
-                            .onTapGesture {
-                                onEdit(item)
-                            }
-                            .draggable(DragPayload.scheduled(item.id).rawValue) {
-                                DragPreview(title: item.title)
-                            }
-                    }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onTapDate)
+
+            VStack(alignment: .leading, spacing: 3) {
+                ForEach(goalsDue.prefix(2)) { goal in
+                    GoalDeadlinePill(goal: goal, compact: true)
                 }
-                Spacer(minLength: 0)
+                ForEach(items.prefix(3)) { item in
+                    MonthTaskDot(item: item)
+                        .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .onTapGesture {
+                            onEdit(item)
+                        }
+                        .draggable(DragPayload.scheduled(item.id).rawValue) {
+                            DragPreview(title: item.title)
+                        }
+                }
             }
-            .padding(7)
-            .frame(height: 48, alignment: .topLeading)
-            .frame(maxWidth: .infinity)
-            .background(background)
-            .overlay {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(borderColor, lineWidth: selectedTaskID == nil ? 1 : 1.5)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .scaleEffect(isPulsing ? 1.05 : 1)
+            Spacer(minLength: 0)
         }
-        .buttonStyle(.plain)
+        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .onTapGesture(perform: onTapDate)
+        .padding(7)
+        .frame(height: 48, alignment: .topLeading)
+        .frame(maxWidth: .infinity)
+        .background(background)
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(borderColor, lineWidth: selectedTaskID == nil ? 1 : 1.5)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .scaleEffect(isPulsing ? 1.05 : 1)
         .animation(.spring(response: 0.3, dampingFraction: 0.76), value: isPulsing)
         .dropDestination(for: String.self) { payloads, _ in
             payloads.contains { onDropPayload($0) }
@@ -728,15 +740,25 @@ struct GoalDeadlinePill: View {
 struct TaskShelf: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Binding var selectedTaskID: UUID?
-    let onAdd: () -> Void
+    let onAddTask: () -> Void
+    let onAddGoal: () -> Void
 
     var body: some View {
         VStack(spacing: 12) {
             HStack {
-                Button(action: onAdd) {
-                    Image(systemName: "plus")
+                if store.goals.isEmpty {
+                    Image(systemName: "target")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(Color.goalAccent)
+                } else {
+                    Image(systemName: "tray.full")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.secondary)
                 }
                 Spacer()
+                Button(action: store.goals.isEmpty ? onAddGoal : onAddTask) {
+                    Image(systemName: "plus")
+                }
                 if selectedTaskID != nil {
                     Image(systemName: "hand.draw.fill")
                         .font(.headline)
@@ -746,12 +768,29 @@ struct TaskShelf: View {
             }
             .buttonStyle(.quietIcon)
 
-            if store.tasks.isEmpty {
-                Button(action: onAdd) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 38, weight: .semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 22)
+            if store.goals.isEmpty {
+                Button(action: onAddGoal) {
+                    VStack(spacing: 10) {
+                        Image(systemName: "target")
+                            .font(.system(size: 32, weight: .semibold))
+                        Text("最初の目標")
+                            .font(.headline)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Color.goalAccent)
+            } else if store.tasks.isEmpty {
+                Button(action: onAddTask) {
+                    VStack(spacing: 10) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 34, weight: .semibold))
+                        Text("行動を作る")
+                            .font(.headline)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(Color.goalAccent)
@@ -781,7 +820,11 @@ struct TaskShelf: View {
             }
         }
         .padding(14)
-        .background(.regularMaterial)
+        .background(Color.cardBackground)
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+        }
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 24, y: 10)
     }
@@ -809,7 +852,10 @@ struct SavedTaskChip: View {
             Spacer(minLength: 8)
             Image(systemName: "line.3.horizontal")
                 .font(.headline.weight(.bold))
-                .foregroundStyle(.secondary.opacity(0.8))
+                .foregroundStyle(goalColor.opacity(0.82))
+                .frame(width: 34, height: 34)
+                .background(goalColor.opacity(0.12))
+                .clipShape(Circle())
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -1070,58 +1116,121 @@ struct GoalEditor: View {
     @State private var deadline = Date().addingDays(30)
     @State private var colorHex = ""
     @State private var categoryDraft = ""
+    @State private var editsCategories = false
+    @FocusState private var titleFocused: Bool
 
     var body: some View {
         NavigationStack {
-            Form {
-                TextField("目標", text: $title)
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        EditorFieldCard(title: "目標") {
+                            TextField("料理作る", text: $title)
+                                .font(.title3.weight(.bold))
+                                .submitLabel(.done)
+                                .focused($titleFocused)
+                        }
 
-                Section("カテゴリ") {
-                    Picker("カテゴリ", selection: $category) {
-                        ForEach(store.categories, id: \.self) { category in
-                            Text(category).tag(category)
+                        EditorFieldCard(title: "カテゴリ") {
+                            CategoryChipGrid(selectedCategory: $category, categories: store.categories)
+
+                            HStack(spacing: 8) {
+                                TextField("新しいカテゴリ", text: $categoryDraft)
+                                    .textInputAutocapitalization(.never)
+                                Button {
+                                    addDraftCategory()
+                                } label: {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.title3)
+                                }
+                                .disabled(categoryDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            }
+                            .padding(12)
+                            .background(Color.primary.opacity(0.06))
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                            Button {
+                                withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                    editsCategories.toggle()
+                                }
+                            } label: {
+                                HStack {
+                                    Text("カテゴリを編集")
+                                    Spacer()
+                                    Image(systemName: editsCategories ? "chevron.up" : "chevron.down")
+                                }
+                                .font(.subheadline.weight(.bold))
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.secondary)
+
+                            if editsCategories {
+                                VStack(spacing: 8) {
+                                    ForEach(store.categories, id: \.self) { item in
+                                        InlineCategoryRow(category: item, selectedCategory: $category)
+                                    }
+                                }
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                            }
+                        }
+
+                        EditorFieldCard(title: "色") {
+                            ColorSwatchGrid(selectedHex: $colorHex, colors: store.goalColors)
+                        }
+
+                        EditorFieldCard(title: "期限") {
+                            DatePicker("", selection: $deadline, displayedComponents: .date)
+                                .labelsHidden()
+                                .datePickerStyle(.compact)
                         }
                     }
-                    HStack {
-                        TextField("追加", text: $categoryDraft)
-                        Button {
-                            store.addCategory(categoryDraft)
-                            category = categoryDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-                            categoryDraft = ""
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                        }
-                        .disabled(categoryDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
-                    ForEach(store.categories, id: \.self) { item in
-                        InlineCategoryRow(category: item, selectedCategory: $category)
-                    }
+                    .padding(18)
+                    .padding(.bottom, 96)
                 }
-
-                Section("色") {
-                    ColorSwatchGrid(selectedHex: $colorHex, colors: store.goalColors)
-                }
-
-                DatePicker("期限", selection: $deadline, displayedComponents: .date)
             }
             .onAppear {
                 category = category.isEmpty ? (store.categories.first ?? "その他") : category
                 colorHex = colorHex.isEmpty ? (store.goalColors.first ?? "#2563EB") : colorHex
+                titleFocused = true
             }
             .navigationTitle("目標")
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    saveGoal()
+                } label: {
+                    Text("保存")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.filledPill)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .background(.ultraThinMaterial)
+                .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || category.isEmpty)
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") {
-                        store.addGoal(title: title, category: category, deadline: deadline, colorHex: colorHex)
-                        dismiss()
-                    }
-                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || category.isEmpty)
+                    Button("保存") { saveGoal() }
+                        .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || category.isEmpty)
                 }
             }
         }
+    }
+
+    private func addDraftCategory() {
+        let clean = categoryDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        store.addCategory(clean)
+        category = clean
+        categoryDraft = ""
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+
+    private func saveGoal() {
+        store.addGoal(title: title, category: category, deadline: deadline, colorHex: colorHex)
+        dismiss()
     }
 }
 
@@ -1167,22 +1276,45 @@ struct InlineCategoryRow: View {
     }
 }
 
-struct ColorSwatchGrid: View {
-    @Binding var selectedHex: String
-    let colors: [String]
+struct EditorFieldCard<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: Content
 
     var body: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 6), spacing: 10) {
-            ForEach(colors, id: \.self) { hex in
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+            content
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle()
+    }
+}
+
+struct CategoryChipGrid: View {
+    @Binding var selectedCategory: String
+    let categories: [String]
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 8)], alignment: .leading, spacing: 8) {
+            ForEach(categories, id: \.self) { item in
                 Button {
-                    selectedHex = hex
+                    selectedCategory = item
+                    UISelectionFeedbackGenerator().selectionChanged()
                 } label: {
-                    Circle()
-                        .fill(Color(hex: hex))
-                        .frame(width: 30, height: 30)
+                    Text(item)
+                        .font(.subheadline.weight(.bold))
+                        .lineLimit(1)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity)
+                        .background(selectedCategory == item ? Color.goalAccent.opacity(0.16) : Color.primary.opacity(0.07))
+                        .foregroundStyle(selectedCategory == item ? Color.goalAccent : Color.primary)
+                        .clipShape(Capsule())
                         .overlay {
-                            Circle()
-                                .stroke(selectedHex == hex ? Color.primary : Color.clear, lineWidth: 3)
+                            Capsule()
+                                .stroke(selectedCategory == item ? Color.goalAccent.opacity(0.8) : .clear, lineWidth: 1.5)
                         }
                 }
                 .buttonStyle(.plain)
@@ -1191,44 +1323,146 @@ struct ColorSwatchGrid: View {
     }
 }
 
+struct ColorSwatchGrid: View {
+    @Binding var selectedHex: String
+    let colors: [String]
+
+    var body: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
+            ForEach(colors, id: \.self) { hex in
+                Button {
+                    selectedHex = hex
+                    UISelectionFeedbackGenerator().selectionChanged()
+                } label: {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(Color(hex: hex).gradient)
+                            .frame(height: 48)
+                            .shadow(color: Color(hex: hex).opacity(0.28), radius: selectedHex == hex ? 10 : 0, y: 4)
+                        if selectedHex == hex {
+                            Image(systemName: "checkmark")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(selectedHex == hex ? Color.primary.opacity(0.75) : Color.white.opacity(0.22), lineWidth: selectedHex == hex ? 2.5 : 1)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+}
+
+struct GoalSelectChip: View {
+    let goal: Goal
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(Color(hex: goal.colorHex))
+                    .frame(width: 9, height: 9)
+                Text(goal.title)
+                    .font(.subheadline.weight(.bold))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+            .background(isSelected ? Color(hex: goal.colorHex).opacity(0.16) : Color.primary.opacity(0.07))
+            .foregroundStyle(isSelected ? Color(hex: goal.colorHex) : Color.primary)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(isSelected ? Color(hex: goal.colorHex).opacity(0.85) : .clear, lineWidth: 1.5)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 struct TaskEditor: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Environment(\.dismiss) private var dismiss
     @State private var goalID: UUID?
     @State private var title = ""
-    @State private var detail = ""
-    @State private var minutes = 15
+    @FocusState private var titleFocused: Bool
 
     var body: some View {
         NavigationStack {
-            Form {
-                Picker("目標", selection: $goalID) {
-                    ForEach(store.goals) { goal in
-                        Text(goal.title).tag(Optional(goal.id))
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        EditorFieldCard(title: "目標") {
+                            if store.goals.isEmpty {
+                                Text("先に目標を作ってください")
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                                    ForEach(store.goals) { goal in
+                                        GoalSelectChip(
+                                            goal: goal,
+                                            isSelected: goalID == goal.id
+                                        ) {
+                                            goalID = goal.id
+                                            UISelectionFeedbackGenerator().selectionChanged()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        EditorFieldCard(title: "行動") {
+                            TextField("卵買ってくる", text: $title)
+                                .font(.title3.weight(.bold))
+                                .submitLabel(.done)
+                                .focused($titleFocused)
+                        }
                     }
+                    .padding(18)
+                    .padding(.bottom, 96)
                 }
-                TextField("行動", text: $title)
-                TextField("メモ", text: $detail, axis: .vertical)
-                Stepper("\(minutes)分", value: $minutes, in: 5...180, step: 5)
             }
             .onAppear {
-                goalID = goalID ?? store.goals.first?.id
+                goalID = goalID ?? store.goals.last?.id
+                titleFocused = true
             }
-            .navigationTitle("保存")
+            .navigationTitle("行動")
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    saveTask()
+                } label: {
+                    Text("保存")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.filledPill)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .background(.ultraThinMaterial)
+                .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || goalID == nil)
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") {
-                        guard let goalID else { return }
-                        store.addTask(goalID: goalID, title: title, detail: detail, estimatedMinutes: minutes)
-                        dismiss()
-                    }
-                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || goalID == nil)
+                    Button("保存") { saveTask() }
+                        .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || goalID == nil)
                 }
             }
         }
+    }
+
+    private func saveTask() {
+        guard let goalID else { return }
+        store.addTask(goalID: goalID, title: title, detail: "", estimatedMinutes: 15)
+        dismiss()
     }
 }
 
@@ -1240,12 +1474,25 @@ struct ScheduleEditor: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Text(task.title)
-                    .font(.headline)
-                DatePicker("日付", selection: $date, displayedComponents: .date)
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        EditorFieldCard(title: "行動") {
+                            Text(task.title)
+                                .font(.title3.weight(.bold))
+                        }
+                        EditorFieldCard(title: "日付") {
+                            DatePicker("", selection: $date, displayedComponents: .date)
+                                .labelsHidden()
+                                .datePickerStyle(.compact)
+                        }
+                    }
+                    .padding(18)
+                }
             }
             .navigationTitle("予定")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }
@@ -1276,17 +1523,33 @@ struct ScheduledEditor: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                TextField("タスク", text: $title)
-                DatePicker("日付", selection: $date, displayedComponents: .date)
-                Button(role: .destructive) {
-                    store.deleteScheduled(item)
-                    dismiss()
-                } label: {
-                    Text("削除")
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        EditorFieldCard(title: "行動") {
+                            TextField("タスク", text: $title)
+                                .font(.title3.weight(.bold))
+                        }
+                        EditorFieldCard(title: "日付") {
+                            DatePicker("", selection: $date, displayedComponents: .date)
+                                .labelsHidden()
+                                .datePickerStyle(.compact)
+                        }
+                        Button(role: .destructive) {
+                            store.deleteScheduled(item)
+                            dismiss()
+                        } label: {
+                            Label("削除", systemImage: "trash")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.softPill)
+                    }
+                    .padding(18)
                 }
             }
             .navigationTitle("編集")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }

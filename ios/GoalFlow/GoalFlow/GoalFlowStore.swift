@@ -15,9 +15,6 @@ final class GoalFlowStore: ObservableObject {
         let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         self.storageURL = storageURL ?? directory!.appendingPathComponent("goalflow-state.json")
         load()
-        if goals.isEmpty {
-            seed()
-        }
     }
 
     var today: Date { Date().startOfDay }
@@ -193,27 +190,6 @@ final class GoalFlowStore: ObservableObject {
         scheduled = snapshot.scheduled
         categories = snapshot.categories ?? defaultCategories
     }
-
-    private func seed() {
-        let goal = Goal(
-            title: "英語を毎日進める",
-            category: defaultCategories[0],
-            startDate: today,
-            deadline: today.addingDays(45),
-            colorHex: palette[0]
-        )
-        goals = [goal]
-        let task = ActionTask(
-            goalID: goal.id,
-            title: "単語を30個復習",
-            detail: "短くても毎日残す",
-            estimatedMinutes: 15
-        )
-        tasks = [task]
-        scheduled = [
-            ScheduledTask(taskID: task.id, goalID: goal.id, title: task.title, date: today)
-        ]
-    }
 }
 
 struct BackcastStep: Identifiable, Equatable {
@@ -232,7 +208,7 @@ private struct Snapshot: Codable {
 private let defaultCategories = ["勉強", "筋トレ", "制作", "資格", "生活", "その他"]
 
 private let palette = [
-    "#2563EB", "#0F766E", "#7C3AED", "#C2410C", "#BE123C", "#047857"
+    "#0F766E", "#2563EB", "#7C3AED", "#DB2777", "#EA580C", "#16A34A", "#0891B2", "#4F46E5"
 ]
 
 private extension JSONEncoder {
