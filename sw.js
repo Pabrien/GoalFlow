@@ -1,15 +1,15 @@
-const cacheName = "paskra-v76-20260603-week-day-scroll-limits";
+const cacheName = "goalflow-v77-20260603-goalflow-unified";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260603-week-day-scroll-limits",
-  "./app.js?v=20260603-week-day-scroll-limits",
+  "./styles.css?v=20260603-goalflow-unified",
+  "./app.js?v=20260603-goalflow-unified",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",
   "./manifest.webmanifest",
-  "./icons/paskra-icon-512.png",
-  "./icons/paskra-icon.svg",
+  "./icons/goalflow-icon-512.png",
+  "./icons/goalflow-icon.svg",
 ];
 
 self.addEventListener("install", (event) => {

@@ -3,16 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Paskra</title>
+    <title>GoalFlow</title>
     <meta name="theme-color" content="#146c63" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Paskra" />
+    <meta name="apple-mobile-web-app-title" content="GoalFlow" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <script>
       try {
         const saved = JSON.parse(
-          localStorage.getItem("paskra-state-v1") ||
-            localStorage.getItem("goalflow-state-v1") ||
+          localStorage.getItem("goalflow-state-v1") ||
+            localStorage.getItem("paskra-state-v1") ||
             "{}",
         );
         if (saved.meta?.theme === "dark")
@@ -20,27 +20,26 @@
       } catch {}
     </script>
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="./icons/paskra-icon-512.png" />
-    <link
-      rel="stylesheet"
-      href="./styles.css?v=20260603-week-day-scroll-limits"
-    />
+    <link rel="apple-touch-icon" href="./icons/goalflow-icon-512.png" />
+    <link rel="stylesheet" href="./styles.css?v=20260603-goalflow-unified" />
   </head>
   <body>
     <div class="launch-screen" id="launchScreen" aria-hidden="true">
-      <div class="launch-logo">Paskra</div>
+      <div class="launch-logo">GoalFlow</div>
     </div>
     <section
       class="intro-story"
       id="introStory"
-      aria-label="Paskraの説明"
+      aria-label="GoalFlowの説明"
       data-i18n-aria="introStory.aria"
       tabindex="-1"
       hidden
     >
       <div class="intro-story-card">
         <div class="intro-story-top">
-          <p class="eyebrow" data-i18n="introStory.kicker">はじめてのPaskra</p>
+          <p class="eyebrow" data-i18n="introStory.kicker">
+            はじめてのGoalFlow
+          </p>
           <button
             class="ghost-button intro-story-skip"
             id="introStorySkip"
@@ -80,10 +79,10 @@
       <header class="topbar">
         <div>
           <p class="eyebrow" data-i18n="app.kicker">Goal planner</p>
-          <h1>Paskra</h1>
+          <h1>GoalFlow</h1>
           <p class="product-line" data-i18n="app.tagline"></p>
           <p class="hero-copy" data-i18n="app.heroCopy">
-            Paskraは、目標を小さなタスクに分けて、今日やることだけを見せるアプリです。
+            GoalFlowは、目標を小さなタスクに分けて、今日やることだけを見せるアプリです。
           </p>
         </div>
         <div class="topbar-actions">
@@ -262,7 +261,7 @@
           >
           <h2 id="nextActionTitle">次の一手</h2>
           <p id="nextActionBody">
-            Paskraが、目標から今日やることまでの流れを案内します。
+            GoalFlowが、目標から今日やることまでの流れを案内します。
           </p>
           <div class="next-action-buttons">
             <button class="primary-button" id="nextActionButton" type="button">
@@ -282,7 +281,7 @@
         class="flow-map"
         id="flowMap"
         data-view-panel="home"
-        aria-label="Paskraの流れ"
+        aria-label="GoalFlowの流れ"
         data-i18n-aria="flow.aria"
       >
         <article class="flow-card">
@@ -331,7 +330,7 @@
       >
         <section class="empty-start" id="emptyStart">
           <div>
-            <p class="eyebrow" data-i18n="empty.kicker">Paskra method</p>
+            <p class="eyebrow" data-i18n="empty.kicker">GoalFlow method</p>
             <h2 data-i18n="empty.title">まず最初の目標を作りましょう</h2>
             <p data-i18n="empty.body">
               目標を作ると、行動に分けて、今日の予定に落とし込めます。進捗はここにグラフで残ります。
@@ -712,7 +711,7 @@
       >
         <div class="dialog-head">
           <div>
-            <p class="eyebrow" id="insightDialogKicker">Paskra</p>
+            <p class="eyebrow" id="insightDialogKicker">GoalFlow</p>
             <h2 id="insightDialogTitle">理由</h2>
           </div>
           <button
@@ -742,7 +741,7 @@
         ×
       </button>
       <div class="tutorial-progress" id="tutorialProgress">1 / 5</div>
-      <h2 id="tutorialTitle">Paskraの流れを試す</h2>
+      <h2 id="tutorialTitle">GoalFlowの流れを試す</h2>
       <p id="tutorialBody">
         実際に操作しながら、目標を今日の行動に変える流れを覚えます。
       </p>
@@ -759,6 +758,6 @@
     <script defer src="./vendor/gsap.min.js"></script>
     <script defer src="./vendor/lottie.min.js"></script>
     <script defer src="./vendor/howler.min.js"></script>
-    <script defer src="./app.js?v=20260603-week-day-scroll-limits"></script>
+    <script defer src="./app.js?v=20260603-goalflow-unified"></script>
   </body>
 </html>

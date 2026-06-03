@@ -1,6 +1,6 @@
-# Paskra
+# GoalFlow
 
-Paskra is a goal-based planner that turns long-term goals into today’s next action.
+GoalFlow is a goal-based planner that turns long-term goals into today’s next action.
 
 ## Features
 
@@ -8,7 +8,7 @@ Paskra is a goal-based planner that turns long-term goals into today’s next ac
 - Add and remove custom category suggestions
 - Save reusable tasks
 - Drag saved tasks into weekly or monthly calendar views
-- Tap a saved task to put it on today when drag is awkward on mobile
+- Tap a saved task's date action to schedule it when drag is awkward on mobile
 - Track today's, weekly, and overall completion rates
 - View progress with bar charts, a completion pie chart, and a goal report table
 - Data is saved in the browser with `localStorage`

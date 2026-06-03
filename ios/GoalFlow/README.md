@@ -31,4 +31,4 @@ xcodebuild -project ios/GoalFlow/GoalFlow.xcodeproj -scheme GoalFlow -destinatio
 - iCloud同期
 - 完了音と触覚フィードバックの調整
 - ウィジェット
-- Paskraへ名称統一する場合のBundle ID/表示名変更
+- App Store配布に向けたBundle ID/表示名の最終調整

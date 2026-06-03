@@ -2,7 +2,7 @@
 
 ## Problem
 
-Many to-do apps focus on reminders only. Paskra is designed around goals first, so users can understand why each task matters and keep motivation high.
+Many to-do apps focus on reminders only. GoalFlow is designed around goals first, so users can understand why each task matters and keep motivation high.
 
 ## Differentiators
 
