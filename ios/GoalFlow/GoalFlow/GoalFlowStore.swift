@@ -63,6 +63,32 @@ final class GoalFlowStore: ObservableObject {
         )
     }
 
+    func addBackcastPlan(goalID: UUID, steps: [BackcastStep]) {
+        guard let goal = goal(for: goalID) else { return }
+        let cleanSteps = steps
+            .map { BackcastStep(title: $0.title.trimmingCharacters(in: .whitespacesAndNewlines), date: $0.date.startOfDay) }
+            .filter { !$0.title.isEmpty }
+
+        for step in cleanSteps {
+            let task = ActionTask(
+                goalID: goalID,
+                title: step.title,
+                detail: "逆算: \(goal.title)",
+                estimatedMinutes: 25
+            )
+            tasks.append(task)
+            scheduled.append(
+                ScheduledTask(
+                    taskID: task.id,
+                    goalID: goalID,
+                    title: task.title,
+                    date: step.date
+                )
+            )
+        }
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
     func schedule(task: ActionTask, on date: Date) {
         scheduled.append(
             ScheduledTask(
@@ -157,6 +183,12 @@ final class GoalFlowStore: ObservableObject {
             ScheduledTask(taskID: task.id, goalID: goal.id, title: task.title, date: today)
         ]
     }
+}
+
+struct BackcastStep: Identifiable, Equatable {
+    var id = UUID()
+    var title: String
+    var date: Date
 }
 
 private struct Snapshot: Codable {

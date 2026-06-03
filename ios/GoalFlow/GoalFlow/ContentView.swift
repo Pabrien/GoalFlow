@@ -35,6 +35,9 @@ struct ContentView: View {
             case .scheduled(let item):
                 ScheduledEditor(item: item)
                     .presentationDetents([.medium])
+            case .backcast(let goal):
+                BackcastEditor(goal: goal)
+                    .presentationDetents([.large])
             }
         }
     }
@@ -51,6 +54,7 @@ enum ActiveSheet: Identifiable {
     case task
     case schedule(ActionTask)
     case scheduled(ScheduledTask)
+    case backcast(Goal)
 
     var id: String {
         switch self {
@@ -58,6 +62,7 @@ enum ActiveSheet: Identifiable {
         case .task: "task"
         case .schedule(let task): "schedule-\(task.id)"
         case .scheduled(let item): "scheduled-\(item.id)"
+        case .backcast(let goal): "backcast-\(goal.id)"
         }
     }
 }
@@ -119,16 +124,27 @@ struct TodayView: View {
 struct PlannerView: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Binding var sheet: ActiveSheet?
-    @State private var weekAnchor = Date().startOfDay
+    @State private var anchorDate = Date().startOfDay
+    @State private var mode: PlannerMode = .week
     @State private var selectedTaskID: UUID?
     @State private var pulseDate: Date?
 
     private var week: [Date] {
         let calendar = Calendar.current
-        let weekday = calendar.component(.weekday, from: weekAnchor)
+        let weekday = calendar.component(.weekday, from: anchorDate)
         let mondayOffset = weekday == 1 ? -6 : 2 - weekday
-        let start = calendar.date(byAdding: .day, value: mondayOffset, to: weekAnchor) ?? weekAnchor
+        let start = calendar.date(byAdding: .day, value: mondayOffset, to: anchorDate) ?? anchorDate
         return (0..<7).map { start.addingDays($0) }
+    }
+
+    private var month: [Date] {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month], from: anchorDate)
+        let first = calendar.date(from: components) ?? anchorDate
+        let weekday = calendar.component(.weekday, from: first)
+        let mondayOffset = weekday == 1 ? -6 : 2 - weekday
+        let start = calendar.date(byAdding: .day, value: mondayOffset, to: first) ?? first
+        return (0..<42).map { start.addingDays($0) }
     }
 
     var body: some View {
@@ -136,37 +152,23 @@ struct PlannerView: View {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
                 VStack(spacing: 12) {
-                    WeekControls(
-                        weekStart: week.first ?? weekAnchor,
-                        previous: { moveWeek(-7) },
+                    CalendarControls(
+                        mode: $mode,
+                        anchorDate: anchorDate,
+                        previous: { movePeriod(-1) },
                         today: { moveToToday() },
-                        next: { moveWeek(7) }
+                        next: { movePeriod(1) }
                     )
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(alignment: .top, spacing: 12) {
-                            ForEach(week, id: \.self) { date in
-                                CalendarDayCard(
-                                    date: date,
-                                    items: store.tasks(for: date),
-                                    selectedTaskID: selectedTaskID,
-                                    isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
-                                    onTapDate: { placeSelectedTask(on: date) },
-                                    onEdit: { sheet = .scheduled($0) },
-                                    onDropPayload: { payload in handleDrop(payload, on: date) }
-                                )
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                    }
+                    calendarBody
 
                     TaskShelf(
                         selectedTaskID: $selectedTaskID,
                         onAdd: { sheet = .task },
                         onGoal: { sheet = .goal },
+                        onBackcast: { sheet = .backcast($0) },
                         onSchedule: { sheet = .schedule($0) }
                     )
                     .padding(.horizontal, 16)
@@ -178,16 +180,57 @@ struct PlannerView: View {
         }
     }
 
-    private func moveWeek(_ days: Int) {
+    @ViewBuilder
+    private var calendarBody: some View {
+        switch mode {
+        case .week:
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .top, spacing: 12) {
+                    ForEach(week, id: \.self) { date in
+                        CalendarDayCard(
+                            date: date,
+                            items: store.tasks(for: date),
+                            selectedTaskID: selectedTaskID,
+                            isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
+                            onTapDate: { placeSelectedTask(on: date) },
+                            onEdit: { sheet = .scheduled($0) },
+                            onDropPayload: { payload in handleDrop(payload, on: date) }
+                        )
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            }
+        case .month:
+            MonthGrid(
+                dates: month,
+                anchorDate: anchorDate,
+                selectedTaskID: selectedTaskID,
+                pulseDate: pulseDate,
+                onTapDate: placeSelectedTask,
+                onEdit: { sheet = .scheduled($0) },
+                onDropPayload: handleDrop
+            )
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+        }
+    }
+
+    private func movePeriod(_ direction: Int) {
         withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-            weekAnchor = weekAnchor.addingDays(days)
+            switch mode {
+            case .week:
+                anchorDate = anchorDate.addingDays(direction * 7)
+            case .month:
+                anchorDate = Calendar.current.date(byAdding: .month, value: direction, to: anchorDate) ?? anchorDate
+            }
         }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     private func moveToToday() {
         withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-            weekAnchor = Date().startOfDay
+            anchorDate = Date().startOfDay
         }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
@@ -232,8 +275,16 @@ struct PlannerView: View {
     }
 }
 
-struct WeekControls: View {
-    let weekStart: Date
+enum PlannerMode: String, CaseIterable, Identifiable {
+    case week = "週"
+    case month = "月"
+
+    var id: String { rawValue }
+}
+
+struct CalendarControls: View {
+    @Binding var mode: PlannerMode
+    let anchorDate: Date
     let previous: () -> Void
     let today: () -> Void
     let next: () -> Void
@@ -244,13 +295,16 @@ struct WeekControls: View {
                 Image(systemName: "chevron.left")
             }
             Spacer()
-            Text(weekStart, format: .dateTime.month().day())
+            Picker("", selection: $mode) {
+                ForEach(PlannerMode.allCases) { mode in
+                    Text(mode.rawValue).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 112)
+            Text(label)
                 .font(.headline.monospacedDigit())
-            Image(systemName: "arrow.right")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.secondary)
-            Text(weekStart.addingDays(6), format: .dateTime.month().day())
-                .font(.headline.monospacedDigit())
+                .frame(minWidth: 92)
             Spacer()
             Button(action: today) {
                 Image(systemName: "dot.scope")
@@ -263,6 +317,24 @@ struct WeekControls: View {
         .padding(8)
         .background(.ultraThinMaterial)
         .clipShape(Capsule())
+    }
+
+    private var label: String {
+        switch mode {
+        case .week:
+            let weekStart = weekStart(for: anchorDate)
+            let end = weekStart.addingDays(6)
+            return "\(weekStart.formatted(.dateTime.month().day()))-\(end.formatted(.dateTime.day()))"
+        case .month:
+            return anchorDate.formatted(.dateTime.year().month())
+        }
+    }
+
+    private func weekStart(for date: Date) -> Date {
+        let calendar = Calendar.current
+        let weekday = calendar.component(.weekday, from: date)
+        let mondayOffset = weekday == 1 ? -6 : 2 - weekday
+        return calendar.date(byAdding: .day, value: mondayOffset, to: date) ?? date
     }
 }
 
@@ -352,11 +424,139 @@ struct CalendarDayCard: View {
     }
 }
 
+struct MonthGrid: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    let dates: [Date]
+    let anchorDate: Date
+    let selectedTaskID: UUID?
+    let pulseDate: Date?
+    let onTapDate: (Date) -> Void
+    let onEdit: (ScheduledTask) -> Void
+    let onDropPayload: (String, Date) -> Bool
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 7), count: 7)
+
+    var body: some View {
+        VStack(spacing: 7) {
+            LazyVGrid(columns: columns, spacing: 7) {
+                ForEach(dates, id: \.self) { date in
+                    MonthDayCell(
+                        date: date,
+                        isInMonth: Calendar.current.isDate(date, equalTo: anchorDate, toGranularity: .month),
+                        items: store.tasks(for: date),
+                        selectedTaskID: selectedTaskID,
+                        isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
+                        onTapDate: { onTapDate(date) },
+                        onEdit: onEdit,
+                        onDropPayload: { onDropPayload($0, date) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+struct MonthDayCell: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    let date: Date
+    let isInMonth: Bool
+    let items: [ScheduledTask]
+    let selectedTaskID: UUID?
+    let isPulsing: Bool
+    let onTapDate: () -> Void
+    let onEdit: (ScheduledTask) -> Void
+    let onDropPayload: (String) -> Bool
+
+    var body: some View {
+        Button(action: onTapDate) {
+            VStack(alignment: .leading, spacing: 5) {
+                HStack {
+                    Text(date, format: .dateTime.day())
+                        .font(.caption.weight(.bold).monospacedDigit())
+                        .foregroundStyle(isInMonth ? Color.primary : Color.secondary.opacity(0.45))
+                    Spacer()
+                    if !items.isEmpty {
+                        Text("\(items.count)")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(items.prefix(3)) { item in
+                        MonthTaskDot(item: item)
+                            .onTapGesture {
+                                onEdit(item)
+                            }
+                            .draggable(DragPayload.scheduled(item.id).rawValue) {
+                                DragPreview(title: item.title)
+                            }
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(7)
+            .frame(height: 72, alignment: .topLeading)
+            .frame(maxWidth: .infinity)
+            .background(background)
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(borderColor, lineWidth: selectedTaskID == nil ? 1 : 1.5)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .scaleEffect(isPulsing ? 1.05 : 1)
+        }
+        .buttonStyle(.plain)
+        .animation(.spring(response: 0.3, dampingFraction: 0.76), value: isPulsing)
+        .dropDestination(for: String.self) { payloads, _ in
+            payloads.contains { onDropPayload($0) }
+        } isTargeted: { active in
+            if active {
+                UISelectionFeedbackGenerator().selectionChanged()
+            }
+        }
+    }
+
+    private var background: some ShapeStyle {
+        if Calendar.current.isDateInToday(date) {
+            return AnyShapeStyle(Color.goalAccent.opacity(0.15))
+        }
+        return AnyShapeStyle(Color.cardBackground.opacity(isInMonth ? 0.96 : 0.48))
+    }
+
+    private var borderColor: Color {
+        if selectedTaskID != nil { return .goalAccent.opacity(0.55) }
+        if Calendar.current.isDateInToday(date) { return .goalAccent.opacity(0.45) }
+        return .primary.opacity(0.06)
+    }
+}
+
+struct MonthTaskDot: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    let item: ScheduledTask
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Capsule()
+                .fill(goalColor)
+                .frame(width: 12, height: 4)
+            Text(item.title)
+                .font(.system(size: 8.5, weight: .semibold))
+                .lineLimit(1)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var goalColor: Color {
+        Color(hex: store.goal(for: item.goalID)?.colorHex ?? "#2563EB")
+    }
+}
+
 struct TaskShelf: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Binding var selectedTaskID: UUID?
     let onAdd: () -> Void
     let onGoal: () -> Void
+    let onBackcast: (Goal) -> Void
     let onSchedule: (ActionTask) -> Void
 
     var body: some View {
@@ -367,6 +567,13 @@ struct TaskShelf: View {
                 }
                 Button(action: onAdd) {
                     Image(systemName: "plus")
+                }
+                if let firstGoal = store.goals.first {
+                    Button {
+                        onBackcast(firstGoal)
+                    } label: {
+                        Image(systemName: "wand.and.stars")
+                    }
                 }
                 Spacer()
                 if selectedTaskID != nil {
@@ -841,6 +1048,113 @@ struct ScheduledEditor: View {
                 }
             }
         }
+    }
+}
+
+struct BackcastEditor: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    @Environment(\.dismiss) private var dismiss
+    let goal: Goal
+    @State private var steps: [BackcastStep]
+
+    init(goal: Goal) {
+        self.goal = goal
+        _steps = State(initialValue: BackcastEditor.defaultSteps(for: goal))
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+                ScrollView {
+                    VStack(spacing: 14) {
+                        GoalBackcastHeader(goal: goal)
+
+                        ForEach($steps) { $step in
+                            HStack(spacing: 12) {
+                                DatePicker("", selection: $step.date, displayedComponents: .date)
+                                    .labelsHidden()
+                                TextField("行動", text: $step.title)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            .padding(12)
+                            .background(Color.cardBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        }
+                    }
+                    .padding(18)
+                }
+            }
+            .navigationTitle("逆算")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("閉じる") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("作成") {
+                        store.addBackcastPlan(goalID: goal.id, steps: steps)
+                        dismiss()
+                    }
+                    .disabled(steps.allSatisfy { $0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty })
+                }
+            }
+        }
+    }
+
+    private static func defaultSteps(for goal: Goal) -> [BackcastStep] {
+        let today = Date().startOfDay
+        let deadline = maxDate(today, goal.deadline.startOfDay)
+        let totalDays = max(1, Calendar.current.dateComponents([.day], from: today, to: deadline).day ?? 1)
+        let dates = [
+            today,
+            today.addingDays(max(1, totalDays / 3)),
+            today.addingDays(max(2, totalDays * 2 / 3)),
+            deadline
+        ]
+        return [
+            BackcastStep(title: "最初の一手", date: dates[0]),
+            BackcastStep(title: "土台を作る", date: minDate(dates[1], deadline)),
+            BackcastStep(title: "仕上げ前の確認", date: minDate(dates[2], deadline)),
+            BackcastStep(title: "達成ラインに届かせる", date: deadline)
+        ]
+    }
+
+    private static func minDate(_ lhs: Date, _ rhs: Date) -> Date {
+        lhs <= rhs ? lhs : rhs
+    }
+
+    private static func maxDate(_ lhs: Date, _ rhs: Date) -> Date {
+        lhs >= rhs ? lhs : rhs
+    }
+}
+
+struct GoalBackcastHeader: View {
+    let goal: Goal
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Circle()
+                    .fill(Color(hex: goal.colorHex))
+                    .frame(width: 12, height: 12)
+                Text(goal.title)
+                    .font(.title3.weight(.bold))
+                    .lineLimit(1)
+                Spacer()
+                Text(goal.deadline, format: .dateTime.month().day())
+                    .font(.headline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            HStack(spacing: 8) {
+                Image(systemName: "target")
+                Image(systemName: "arrow.backward")
+                Image(systemName: "calendar")
+            }
+            .font(.title3.weight(.bold))
+            .foregroundStyle(Color(hex: goal.colorHex))
+        }
+        .cardStyle()
     }
 }
 
