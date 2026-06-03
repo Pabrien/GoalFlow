@@ -1859,7 +1859,7 @@ function scheduledElement(item, isCompact = false) {
   node.className = `scheduled-task ${item.done ? "done" : ""} ${item.id === highlightedCompletionId ? "just-completed" : ""} ${
     item.id === activeScheduleControlId || isEditing ? "active" : ""
   }`;
-  node.draggable = true;
+  node.draggable = !isCompactScheduleLayout();
   node.tabIndex = 0;
   node.dataset.scheduledId = item.id;
   node.setAttribute("style", taskColorStyle(item));
@@ -4546,7 +4546,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260603-mobile-week-task-scroll")
+      .register("./sw.js?v=20260603-mobile-calendar-scroll-priority")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

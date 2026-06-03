@@ -4648,7 +4648,9 @@ dialog {
     padding: 4px 3px;
     border-left: 3px solid var(--accent);
     background: #fbfcfa;
-    touch-action: pan-y;
+    cursor: default;
+    -webkit-user-drag: none;
+    touch-action: pan-x pan-y;
   }
 
   body[data-active-screen="schedule"]
@@ -5960,6 +5962,14 @@ body[data-active-screen="home"] .bank-task:focus-visible {
     min-height: var(--mobile-week-day-height, clamp(150px, 28vh, 220px));
   }
 
+  body[data-active-screen="home"] .calendar-grid.week-mode .day-tasks {
+    max-height: calc(var(--mobile-week-day-height, 176px) - 34px);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
   body[data-active-screen="home"] .calendar-grid.month-mode .day-column {
     position: relative;
     display: grid;
@@ -6026,6 +6036,9 @@ body[data-active-screen="home"] .bank-task:focus-visible {
     padding: 4px 3px;
     border-left: 3px solid var(--accent);
     background: #fbfcfa;
+    cursor: default;
+    -webkit-user-drag: none;
+    touch-action: pan-x pan-y;
   }
 
   body[data-active-screen="home"] .calendar-grid.month-mode .scheduled-task {

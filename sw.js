@@ -1,9 +1,9 @@
-const cacheName = "paskra-v72-20260603-mobile-week-task-scroll";
+const cacheName = "paskra-v73-20260603-mobile-calendar-scroll-priority";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260603-mobile-week-task-scroll",
-  "./app.js?v=20260603-mobile-week-task-scroll",
+  "./styles.css?v=20260603-mobile-calendar-scroll-priority",
+  "./app.js?v=20260603-mobile-calendar-scroll-priority",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",
