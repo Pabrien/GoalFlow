@@ -7,6 +7,7 @@ final class GoalFlowStore: ObservableObject {
     @Published var goals: [Goal] = [] { didSet { save() } }
     @Published var tasks: [ActionTask] = [] { didSet { save() } }
     @Published var scheduled: [ScheduledTask] = [] { didSet { save() } }
+    @Published var categories: [String] = defaultCategories { didSet { save() } }
 
     private let storageURL: URL
 
@@ -39,7 +40,7 @@ final class GoalFlowStore: ObservableObject {
         return Double(done) / Double(scheduled.count)
     }
 
-    func addGoal(title: String, category: GoalCategory, reason: String, deadline: Date) {
+    func addGoal(title: String, category: String, reason: String, deadline: Date) {
         goals.append(
             Goal(
                 title: title,
@@ -50,6 +51,30 @@ final class GoalFlowStore: ObservableObject {
                 colorHex: palette[goals.count % palette.count]
             )
         )
+    }
+
+    func addCategory(_ name: String) {
+        let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty, !categories.contains(clean) else { return }
+        categories.append(clean)
+    }
+
+    func renameCategory(_ oldName: String, to newName: String) {
+        let clean = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty, let index = categories.firstIndex(of: oldName) else { return }
+        categories[index] = clean
+        for goalIndex in goals.indices where goals[goalIndex].category == oldName {
+            goals[goalIndex].category = clean
+        }
+    }
+
+    func deleteCategory(_ name: String) {
+        guard categories.count > 1 else { return }
+        categories.removeAll { $0 == name }
+        let fallback = categories.first ?? defaultCategories[0]
+        for goalIndex in goals.indices where goals[goalIndex].category == name {
+            goals[goalIndex].category = fallback
+        }
     }
 
     func addTask(goalID: UUID, title: String, detail: String, estimatedMinutes: Int) {
@@ -147,7 +172,7 @@ final class GoalFlowStore: ObservableObject {
     }
 
     private func save() {
-        let snapshot = Snapshot(goals: goals, tasks: tasks, scheduled: scheduled)
+        let snapshot = Snapshot(goals: goals, tasks: tasks, scheduled: scheduled, categories: categories)
         guard let data = try? JSONEncoder.goalFlow.encode(snapshot) else { return }
         try? data.write(to: storageURL, options: .atomic)
     }
@@ -160,12 +185,13 @@ final class GoalFlowStore: ObservableObject {
         goals = snapshot.goals
         tasks = snapshot.tasks
         scheduled = snapshot.scheduled
+        categories = snapshot.categories ?? defaultCategories
     }
 
     private func seed() {
         let goal = Goal(
             title: "英語を毎日進める",
-            category: .study,
+            category: defaultCategories[0],
             reason: "将来の選択肢を増やすため",
             startDate: today,
             deadline: today.addingDays(45),
@@ -195,7 +221,10 @@ private struct Snapshot: Codable {
     var goals: [Goal]
     var tasks: [ActionTask]
     var scheduled: [ScheduledTask]
+    var categories: [String]?
 }
+
+private let defaultCategories = ["勉強", "筋トレ", "制作", "資格", "生活", "その他"]
 
 private let palette = [
     "#2563EB", "#0F766E", "#7C3AED", "#C2410C", "#BE123C", "#047857"

@@ -1,21 +1,10 @@
 import Foundation
 import SwiftUI
 
-enum GoalCategory: String, CaseIterable, Codable, Identifiable {
-    case study = "勉強"
-    case training = "筋トレ"
-    case creation = "制作"
-    case exam = "資格"
-    case life = "生活"
-    case other = "その他"
-
-    var id: String { rawValue }
-}
-
 struct Goal: Identifiable, Codable, Equatable {
     var id: UUID = UUID()
     var title: String
-    var category: GoalCategory
+    var category: String
     var reason: String
     var startDate: Date
     var deadline: Date

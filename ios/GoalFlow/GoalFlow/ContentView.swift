@@ -12,6 +12,10 @@ struct ContentView: View {
                 .tabItem { Label("今日", systemImage: "checkmark.circle") }
                 .tag(AppTab.today)
 
+            GoalsView(sheet: $sheet)
+                .tabItem { Label("目標", systemImage: "target") }
+                .tag(AppTab.goals)
+
             PlannerView(sheet: $sheet)
                 .tabItem { Label("予定", systemImage: "calendar") }
                 .tag(AppTab.plan)
@@ -25,6 +29,9 @@ struct ContentView: View {
             switch item {
             case .goal:
                 GoalEditor()
+                    .presentationDetents([.medium, .large])
+            case .categories:
+                CategoryEditor()
                     .presentationDetents([.medium, .large])
             case .task:
                 TaskEditor()
@@ -45,12 +52,14 @@ struct ContentView: View {
 
 private enum AppTab {
     case today
+    case goals
     case plan
     case progress
 }
 
 enum ActiveSheet: Identifiable {
     case goal
+    case categories
     case task
     case schedule(ActionTask)
     case scheduled(ScheduledTask)
@@ -59,6 +68,7 @@ enum ActiveSheet: Identifiable {
     var id: String {
         switch self {
         case .goal: "goal"
+        case .categories: "categories"
         case .task: "task"
         case .schedule(let task): "schedule-\(task.id)"
         case .scheduled(let item): "scheduled-\(item.id)"
@@ -100,24 +110,141 @@ struct TodayView: View {
                 }
             }
             .navigationTitle("GoalFlow")
-            .toolbar {
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button {
-                        sheet = .goal
-                    } label: {
-                        Image(systemName: "target")
-                    }
-                    .accessibilityLabel("目標")
+        }
+    }
+}
 
-                    Button {
-                        sheet = .task
-                    } label: {
-                        Image(systemName: "plus")
+struct GoalsView: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    @Binding var sheet: ActiveSheet?
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+                ScrollView {
+                    VStack(spacing: 14) {
+                        GoalActionsCard(
+                            onAddGoal: { sheet = .goal },
+                            onEditCategories: { sheet = .categories }
+                        )
+
+                        if store.goals.isEmpty {
+                            EmptyGoalCard(onAddGoal: { sheet = .goal })
+                        } else {
+                            ForEach(store.goals) { goal in
+                                GoalCard(goal: goal) {
+                                    sheet = .backcast(goal)
+                                }
+                            }
+                        }
                     }
-                    .accessibilityLabel("行動を保存")
+                    .padding(18)
+                    .padding(.bottom, 32)
                 }
             }
+            .navigationTitle("目標")
         }
+    }
+}
+
+struct GoalActionsCard: View {
+    let onAddGoal: () -> Void
+    let onEditCategories: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Button(action: onAddGoal) {
+                Label("目標を作る", systemImage: "plus")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.filledPill)
+
+            Button(action: onEditCategories) {
+                Label("カテゴリ", systemImage: "tag")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.softPill)
+        }
+        .cardStyle()
+    }
+}
+
+struct EmptyGoalCard: View {
+    let onAddGoal: () -> Void
+
+    var body: some View {
+        Button(action: onAddGoal) {
+            VStack(spacing: 12) {
+                Image(systemName: "target")
+                    .font(.system(size: 34, weight: .semibold))
+                Text("最初の目標")
+                    .font(.headline)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 24)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Color.goalAccent)
+        .cardStyle()
+    }
+}
+
+struct GoalCard: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    let goal: Goal
+    let onBackcast: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 12) {
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(goalColor)
+                    .frame(width: 7, height: 50)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(goal.title)
+                        .font(.title3.weight(.bold))
+                        .lineLimit(2)
+                    Text(goal.category)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(goalColor)
+                }
+                Spacer()
+                Text(goal.deadline, format: .dateTime.month().day())
+                    .font(.headline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            if !goal.reason.isEmpty {
+                Text(goal.reason)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+
+            HStack(spacing: 10) {
+                ProgressLine(
+                    title: "進み具合",
+                    done: store.scheduled.filter { $0.goalID == goal.id && $0.isDone }.count,
+                    total: store.scheduled.filter { $0.goalID == goal.id }.count,
+                    color: goalColor
+                )
+                Button(action: onBackcast) {
+                    Image(systemName: "wand.and.stars")
+                        .font(.headline.weight(.bold))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .background(goalColor.opacity(0.14))
+                .foregroundStyle(goalColor)
+                .clipShape(Circle())
+            }
+        }
+        .cardStyle()
+    }
+
+    private var goalColor: Color {
+        Color(hex: goal.colorHex)
     }
 }
 
@@ -166,9 +293,7 @@ struct PlannerView: View {
 
                     TaskShelf(
                         selectedTaskID: $selectedTaskID,
-                        onAdd: { sheet = .task },
-                        onGoal: { sheet = .goal },
-                        onBackcast: { sheet = .backcast($0) }
+                        onAdd: { sheet = .task }
                     )
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
@@ -554,24 +679,12 @@ struct TaskShelf: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Binding var selectedTaskID: UUID?
     let onAdd: () -> Void
-    let onGoal: () -> Void
-    let onBackcast: (Goal) -> Void
 
     var body: some View {
         VStack(spacing: 12) {
             HStack {
-                Button(action: onGoal) {
-                    Image(systemName: "target")
-                }
                 Button(action: onAdd) {
                     Image(systemName: "plus")
-                }
-                if let firstGoal = store.goals.first {
-                    Button {
-                        onBackcast(firstGoal)
-                    } label: {
-                        Image(systemName: "wand.and.stars")
-                    }
                 }
                 Spacer()
                 if selectedTaskID != nil {
@@ -903,7 +1016,7 @@ struct GoalEditor: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
-    @State private var category: GoalCategory = .study
+    @State private var category = ""
     @State private var reason = ""
     @State private var deadline = Date().addingDays(30)
 
@@ -912,12 +1025,15 @@ struct GoalEditor: View {
             Form {
                 TextField("目標", text: $title)
                 Picker("カテゴリ", selection: $category) {
-                    ForEach(GoalCategory.allCases) { category in
-                        Text(category.rawValue).tag(category)
+                    ForEach(store.categories, id: \.self) { category in
+                        Text(category).tag(category)
                     }
                 }
                 TextField("理由", text: $reason, axis: .vertical)
                 DatePicker("期限", selection: $deadline, displayedComponents: .date)
+            }
+            .onAppear {
+                category = category.isEmpty ? (store.categories.first ?? "その他") : category
             }
             .navigationTitle("目標")
             .toolbar {
@@ -929,9 +1045,76 @@ struct GoalEditor: View {
                         store.addGoal(title: title, category: category, reason: reason, deadline: deadline)
                         dismiss()
                     }
-                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || category.isEmpty)
                 }
             }
+        }
+    }
+}
+
+struct CategoryEditor: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    @Environment(\.dismiss) private var dismiss
+    @State private var draft = ""
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    HStack {
+                        TextField("カテゴリ", text: $draft)
+                        Button {
+                            store.addCategory(draft)
+                            draft = ""
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                        }
+                        .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                }
+
+                Section {
+                    ForEach(store.categories, id: \.self) { category in
+                        CategoryRow(category: category)
+                    }
+                    .onDelete { offsets in
+                        for index in offsets {
+                            store.deleteCategory(store.categories[index])
+                        }
+                    }
+                }
+            }
+            .navigationTitle("カテゴリ")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完了") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+struct CategoryRow: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    let category: String
+    @State private var draft = ""
+
+    var body: some View {
+        HStack {
+            TextField(category, text: $draft)
+                .onAppear {
+                    draft = category
+                }
+                .onSubmit {
+                    store.renameCategory(category, to: draft)
+                }
+            Button {
+                store.renameCategory(category, to: draft)
+            } label: {
+                Image(systemName: "checkmark.circle")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.goalAccent)
         }
     }
 }
@@ -1208,8 +1391,44 @@ private struct QuietIconButtonStyle: ButtonStyle {
     }
 }
 
+private struct FilledPillButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline.weight(.bold))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(Color.goalAccent.opacity(configuration.isPressed ? 0.78 : 1))
+            .foregroundStyle(.white)
+            .clipShape(Capsule())
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.spring(response: 0.2, dampingFraction: 0.76), value: configuration.isPressed)
+    }
+}
+
+private struct SoftPillButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline.weight(.bold))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(Color.primary.opacity(configuration.isPressed ? 0.14 : 0.08))
+            .foregroundStyle(Color.primary)
+            .clipShape(Capsule())
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.spring(response: 0.2, dampingFraction: 0.76), value: configuration.isPressed)
+    }
+}
+
 private extension ButtonStyle where Self == QuietIconButtonStyle {
     static var quietIcon: QuietIconButtonStyle { QuietIconButtonStyle() }
+}
+
+private extension ButtonStyle where Self == FilledPillButtonStyle {
+    static var filledPill: FilledPillButtonStyle { FilledPillButtonStyle() }
+}
+
+private extension ButtonStyle where Self == SoftPillButtonStyle {
+    static var softPill: SoftPillButtonStyle { SoftPillButtonStyle() }
 }
 
 private extension View {
