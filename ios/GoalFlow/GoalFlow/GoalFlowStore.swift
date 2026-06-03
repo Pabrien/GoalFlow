@@ -7,6 +7,7 @@ final class GoalFlowStore: ObservableObject {
     @Published var goals: [Goal] = [] { didSet { save() } }
     @Published var tasks: [ActionTask] = [] { didSet { save() } }
     @Published var scheduled: [ScheduledTask] = [] { didSet { save() } }
+    @Published var backcastItems: [BackcastItem] = [] { didSet { save() } }
     @Published var categories: [String] = defaultCategories { didSet { save() } }
 
     private let storageURL: URL
@@ -91,7 +92,53 @@ final class GoalFlowStore: ObservableObject {
         )
     }
 
+    func replaceBackcastPlan(goalID: UUID, steps: [BackcastStep]) {
+        let cleanSteps = steps
+            .map { BackcastStep(title: $0.title.trimmingCharacters(in: .whitespacesAndNewlines), date: $0.date.startOfDay) }
+            .filter { !$0.title.isEmpty }
+
+        backcastItems.removeAll { $0.goalID == goalID }
+        backcastItems.append(
+            contentsOf: cleanSteps.map { step in
+                BackcastItem(
+                    goalID: goalID,
+                    title: step.title,
+                    date: step.date
+                )
+            }
+        )
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
     func addBackcastPlan(goalID: UUID, steps: [BackcastStep]) {
+        replaceBackcastPlan(goalID: goalID, steps: steps)
+    }
+
+    func backcastPlan(for goalID: UUID) -> [BackcastItem] {
+        backcastItems
+            .filter { $0.goalID == goalID }
+            .sorted { $0.date < $1.date }
+    }
+
+    func importLegacyBackcastTasksIfNeeded() {
+        var legacyTaskIDs: Set<UUID> = []
+        for task in tasks where task.detail.hasPrefix("逆算:") {
+            legacyTaskIDs.insert(task.id)
+            guard !backcastItems.contains(where: { $0.goalID == task.goalID && $0.title == task.title }) else { continue }
+            backcastItems.append(
+                BackcastItem(
+                    goalID: task.goalID,
+                    title: task.title,
+                    date: scheduled.first(where: { $0.taskID == task.id })?.date ?? today
+                )
+            )
+        }
+        guard !legacyTaskIDs.isEmpty else { return }
+        tasks.removeAll { legacyTaskIDs.contains($0.id) }
+        scheduled.removeAll { legacyTaskIDs.contains($0.taskID) }
+    }
+
+    func addLegacyBackcastTasks(goalID: UUID, steps: [BackcastStep]) {
         guard let goal = goal(for: goalID) else { return }
         let cleanSteps = steps
             .map { BackcastStep(title: $0.title.trimmingCharacters(in: .whitespacesAndNewlines), date: $0.date.startOfDay) }
@@ -175,7 +222,13 @@ final class GoalFlowStore: ObservableObject {
     }
 
     private func save() {
-        let snapshot = Snapshot(goals: goals, tasks: tasks, scheduled: scheduled, categories: categories)
+        let snapshot = Snapshot(
+            goals: goals,
+            tasks: tasks,
+            scheduled: scheduled,
+            backcastItems: backcastItems,
+            categories: categories
+        )
         guard let data = try? JSONEncoder.goalFlow.encode(snapshot) else { return }
         try? data.write(to: storageURL, options: .atomic)
     }
@@ -188,7 +241,9 @@ final class GoalFlowStore: ObservableObject {
         goals = snapshot.goals
         tasks = snapshot.tasks
         scheduled = snapshot.scheduled
+        backcastItems = snapshot.backcastItems ?? []
         categories = snapshot.categories ?? defaultCategories
+        importLegacyBackcastTasksIfNeeded()
     }
 }
 
@@ -202,6 +257,7 @@ private struct Snapshot: Codable {
     var goals: [Goal]
     var tasks: [ActionTask]
     var scheduled: [ScheduledTask]
+    var backcastItems: [BackcastItem]?
     var categories: [String]?
 }
 

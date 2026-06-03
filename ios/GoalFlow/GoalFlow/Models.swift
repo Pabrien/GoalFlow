@@ -27,6 +27,13 @@ struct ScheduledTask: Identifiable, Codable, Equatable {
     var isDone: Bool = false
 }
 
+struct BackcastItem: Identifiable, Codable, Equatable {
+    var id: UUID = UUID()
+    var goalID: UUID
+    var title: String
+    var date: Date
+}
+
 extension Color {
     init(hex: String) {
         let clean = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)

@@ -30,8 +30,8 @@ struct ContentView: View {
             case .goal:
                 GoalEditor()
                     .presentationDetents([.large])
-            case .task:
-                TaskEditor()
+            case .task(let goalID):
+                TaskEditor(initialGoalID: goalID)
                     .presentationDetents([.large])
             case .schedule(let task):
                 ScheduleEditor(task: task)
@@ -56,7 +56,7 @@ private enum AppTab {
 
 enum ActiveSheet: Identifiable {
     case goal
-    case task
+    case task(UUID?)
     case schedule(ActionTask)
     case scheduled(ScheduledTask)
     case backcast(Goal)
@@ -64,7 +64,7 @@ enum ActiveSheet: Identifiable {
     var id: String {
         switch self {
         case .goal: "goal"
-        case .task: "task"
+        case .task(let goalID): "task-\(goalID?.uuidString ?? "new")"
         case .schedule(let task): "schedule-\(task.id)"
         case .scheduled(let item): "scheduled-\(item.id)"
         case .backcast(let goal): "backcast-\(goal.id)"
@@ -232,6 +232,37 @@ struct GoalCard: View {
                 .clipShape(Circle())
             }
 
+            let plan = store.backcastPlan(for: goal.id)
+            if !plan.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                        Text("逆算")
+                        Spacer()
+                        Text("\(plan.count)")
+                            .font(.caption.weight(.bold).monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(goalColor)
+
+                    ForEach(plan.prefix(3)) { item in
+                        HStack(spacing: 8) {
+                            Text(item.date, format: .dateTime.month().day())
+                                .font(.caption2.weight(.bold).monospacedDigit())
+                                .foregroundStyle(.secondary)
+                            Text(item.title)
+                                .font(.caption.weight(.semibold))
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                        }
+                    }
+                }
+                .padding(12)
+                .background(goalColor.opacity(0.09))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+
             if showsColors {
                 ColorSwatchGrid(
                     selectedHex: Binding(
@@ -257,6 +288,7 @@ struct PlannerView: View {
     @State private var anchorDate = Date().startOfDay
     @State private var mode: PlannerMode = .week
     @State private var selectedTaskID: UUID?
+    @State private var selectedGoalID: UUID?
     @State private var pulseDate: Date?
     @State private var showsGoalDeadlines = false
 
@@ -297,8 +329,9 @@ struct PlannerView: View {
                     calendarBody
 
                     TaskShelf(
+                        selectedGoalID: $selectedGoalID,
                         selectedTaskID: $selectedTaskID,
-                        onAddTask: { sheet = .task },
+                        onAddTask: { sheet = .task(selectedGoalID) },
                         onAddGoal: { sheet = .goal }
                     )
                     .padding(.horizontal, 16)
@@ -307,6 +340,16 @@ struct PlannerView: View {
             }
             .navigationTitle("予定")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                if selectedGoalID == nil {
+                    selectedGoalID = store.goals.first?.id
+                }
+            }
+            .onChange(of: store.goals) { _, goals in
+                guard !goals.contains(where: { $0.id == selectedGoalID }) else { return }
+                selectedGoalID = goals.first?.id
+                selectedTaskID = nil
+            }
         }
     }
 
@@ -539,7 +582,9 @@ struct CalendarDayCard: View {
             }
             .scrollIndicators(.hidden)
         }
-        .frame(width: 156, height: 286, alignment: .topLeading)
+        .containerRelativeFrame(.horizontal, count: 2, spacing: 12)
+        .frame(minWidth: 138, maxWidth: 180)
+        .frame(height: UIScreen.main.bounds.height < 750 ? 236 : 286, alignment: .topLeading)
         .padding(14)
         .background(dayBackground)
         .overlay {
@@ -658,7 +703,7 @@ struct MonthDayCell: View {
         .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .onTapGesture(perform: onTapDate)
         .padding(7)
-        .frame(height: 48, alignment: .topLeading)
+        .frame(height: UIScreen.main.bounds.height < 750 ? 46 : 58, alignment: .topLeading)
         .frame(maxWidth: .infinity)
         .background(background)
         .overlay {
@@ -739,9 +784,20 @@ struct GoalDeadlinePill: View {
 
 struct TaskShelf: View {
     @EnvironmentObject private var store: GoalFlowStore
+    @Binding var selectedGoalID: UUID?
     @Binding var selectedTaskID: UUID?
     let onAddTask: () -> Void
     let onAddGoal: () -> Void
+
+    private var selectedGoal: Goal? {
+        guard let selectedGoalID else { return store.goals.first }
+        return store.goal(for: selectedGoalID)
+    }
+
+    private var visibleTasks: [ActionTask] {
+        guard let goalID = selectedGoal?.id else { return [] }
+        return store.tasks.filter { $0.goalID == goalID }
+    }
 
     var body: some View {
         VStack(spacing: 12) {
@@ -781,42 +837,46 @@ struct TaskShelf: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(Color.goalAccent)
-            } else if store.tasks.isEmpty {
-                Button(action: onAddTask) {
-                    VStack(spacing: 10) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 34, weight: .semibold))
-                        Text("行動を作る")
-                            .font(.headline)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 18)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(Color.goalAccent)
             } else {
-                ScrollView(.vertical, showsIndicators: false) {
-                    LazyVStack(spacing: 10) {
-                        ForEach(store.tasks) { task in
-                            SavedTaskChip(
-                                task: task,
-                                isSelected: selectedTaskID == task.id
-                            )
-                            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                            .onTapGesture {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
-                                    selectedTaskID = selectedTaskID == task.id ? nil : task.id
+                GoalTaskFilter(selectedGoalID: $selectedGoalID)
+
+                if visibleTasks.isEmpty {
+                    Button(action: onAddTask) {
+                        VStack(spacing: 10) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 34, weight: .semibold))
+                            Text("行動を作る")
+                                .font(.headline)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 18)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.goalAccent)
+                } else {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 10) {
+                            ForEach(visibleTasks) { task in
+                                SavedTaskChip(
+                                    task: task,
+                                    isSelected: selectedTaskID == task.id
+                                )
+                                .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                                .onTapGesture {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
+                                        selectedTaskID = selectedTaskID == task.id ? nil : task.id
+                                    }
+                                    UISelectionFeedbackGenerator().selectionChanged()
                                 }
-                                UISelectionFeedbackGenerator().selectionChanged()
-                            }
-                            .draggable(DragPayload.task(task.id).rawValue) {
-                                DragPreview(title: task.title)
+                                .draggable(DragPayload.task(task.id).rawValue) {
+                                    DragPreview(title: task.title)
+                                }
                             }
                         }
+                        .padding(.vertical, 2)
                     }
-                    .padding(.vertical, 2)
+                    .frame(maxHeight: UIScreen.main.bounds.height < 750 ? 104 : 150)
                 }
-                .frame(maxHeight: 126)
             }
         }
         .padding(14)
@@ -827,6 +887,41 @@ struct TaskShelf: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 24, y: 10)
+    }
+}
+
+struct GoalTaskFilter: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    @Binding var selectedGoalID: UUID?
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(store.goals) { goal in
+                    Button {
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                            selectedGoalID = goal.id
+                        }
+                        UISelectionFeedbackGenerator().selectionChanged()
+                    } label: {
+                        HStack(spacing: 7) {
+                            Circle()
+                                .fill(Color(hex: goal.colorHex))
+                                .frame(width: 8, height: 8)
+                            Text(goal.title)
+                                .font(.caption.weight(.bold))
+                                .lineLimit(1)
+                        }
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 8)
+                        .background(selectedGoalID == goal.id ? Color(hex: goal.colorHex).opacity(0.16) : Color.primary.opacity(0.07))
+                        .foregroundStyle(selectedGoalID == goal.id ? Color(hex: goal.colorHex) : Color.primary)
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 }
 
@@ -1389,9 +1484,14 @@ struct GoalSelectChip: View {
 struct TaskEditor: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Environment(\.dismiss) private var dismiss
+    let initialGoalID: UUID?
     @State private var goalID: UUID?
     @State private var title = ""
     @FocusState private var titleFocused: Bool
+
+    init(initialGoalID: UUID? = nil) {
+        self.initialGoalID = initialGoalID
+    }
 
     var body: some View {
         NavigationStack {
@@ -1430,7 +1530,7 @@ struct TaskEditor: View {
                 }
             }
             .onAppear {
-                goalID = goalID ?? store.goals.last?.id
+                goalID = goalID ?? initialGoalID ?? store.goals.last?.id
                 titleFocused = true
             }
             .navigationTitle("行動")
@@ -1570,11 +1670,10 @@ struct BackcastEditor: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Environment(\.dismiss) private var dismiss
     let goal: Goal
-    @State private var steps: [BackcastStep]
+    @State private var steps: [BackcastStep] = []
 
     init(goal: Goal) {
         self.goal = goal
-        _steps = State(initialValue: BackcastEditor.defaultSteps(for: goal))
     }
 
     var body: some View {
@@ -1585,19 +1684,36 @@ struct BackcastEditor: View {
                     VStack(spacing: 14) {
                         GoalBackcastHeader(goal: goal)
 
+                        BackcastHintCard(goal: goal)
+
                         ForEach($steps) { $step in
-                            HStack(spacing: 12) {
-                                DatePicker("", selection: $step.date, displayedComponents: .date)
-                                    .labelsHidden()
-                                TextField("行動", text: $step.title)
-                                    .textFieldStyle(.roundedBorder)
-                            }
-                            .padding(12)
-                            .background(Color.cardBackground)
-                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            BackcastStepRow(
+                                step: $step,
+                                canDelete: steps.count > 1,
+                                onDelete: {
+                                    removeStep(step)
+                                }
+                            )
                         }
+
+                        Button {
+                            addStep()
+                        } label: {
+                            Label("追加", systemImage: "plus")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.softPill)
                     }
                     .padding(18)
+                    .padding(.bottom, 28)
+                }
+            }
+            .onAppear {
+                if steps.isEmpty {
+                    let existing = store.backcastPlan(for: goal.id)
+                    steps = existing.isEmpty
+                        ? BackcastEditor.defaultSteps(for: goal)
+                        : existing.map { BackcastStep(title: $0.title, date: $0.date) }
                 }
             }
             .navigationTitle("逆算")
@@ -1607,8 +1723,8 @@ struct BackcastEditor: View {
                     Button("閉じる") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("作成") {
-                        store.addBackcastPlan(goalID: goal.id, steps: steps)
+                    Button("保存") {
+                        store.replaceBackcastPlan(goalID: goal.id, steps: steps)
                         dismiss()
                     }
                     .disabled(steps.allSatisfy { $0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty })
@@ -1617,21 +1733,34 @@ struct BackcastEditor: View {
         }
     }
 
+    private func addStep() {
+        let nextDate = steps.last?.date.addingDays(7) ?? Date().startOfDay
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+            steps.append(BackcastStep(title: "", date: Self.minDate(nextDate, goal.deadline)))
+        }
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+
+    private func removeStep(_ step: BackcastStep) {
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+            steps.removeAll { $0.id == step.id }
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
     private static func defaultSteps(for goal: Goal) -> [BackcastStep] {
         let today = Date().startOfDay
         let deadline = maxDate(today, goal.deadline.startOfDay)
         let totalDays = max(1, Calendar.current.dateComponents([.day], from: today, to: deadline).day ?? 1)
         let dates = [
             today,
-            today.addingDays(max(1, totalDays / 3)),
-            today.addingDays(max(2, totalDays * 2 / 3)),
+            today.addingDays(max(1, totalDays / 2)),
             deadline
         ]
         return [
             BackcastStep(title: "最初の一手", date: dates[0]),
-            BackcastStep(title: "土台を作る", date: minDate(dates[1], deadline)),
-            BackcastStep(title: "仕上げ前の確認", date: minDate(dates[2], deadline)),
-            BackcastStep(title: "達成ラインに届かせる", date: deadline)
+            BackcastStep(title: "途中確認", date: minDate(dates[1], deadline)),
+            BackcastStep(title: "達成ライン", date: deadline)
         ]
     }
 
@@ -1641,6 +1770,55 @@ struct BackcastEditor: View {
 
     private static func maxDate(_ lhs: Date, _ rhs: Date) -> Date {
         lhs >= rhs ? lhs : rhs
+    }
+}
+
+struct BackcastHintCard: View {
+    let goal: Goal
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.triangle.branch")
+                Text("ゴールから節目を置く")
+            }
+            .font(.headline)
+            .foregroundStyle(Color(hex: goal.colorHex))
+
+            Text("ここで作る項目は予定ではなく、目標の道筋です。必要な節目だけ残して、日々の行動は予定に置きます。")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .cardStyle()
+    }
+}
+
+struct BackcastStepRow: View {
+    @Binding var step: BackcastStep
+    let canDelete: Bool
+    let onDelete: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            DatePicker("", selection: $step.date, displayedComponents: .date)
+                .labelsHidden()
+                .datePickerStyle(.compact)
+                .frame(minWidth: 98, alignment: .leading)
+
+            TextField("節目", text: $step.title)
+                .font(.headline)
+
+            Button(role: .destructive, action: onDelete) {
+                Image(systemName: "minus.circle.fill")
+            }
+            .buttonStyle(.plain)
+            .disabled(!canDelete)
+            .opacity(canDelete ? 1 : 0.25)
+        }
+        .padding(14)
+        .background(Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }
 
