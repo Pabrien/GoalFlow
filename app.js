@@ -270,7 +270,7 @@ const translations = {
     "tasks.dragAria": "カレンダーへドラッグ",
     "tasks.pickDate": "日付",
     "tasks.pickingDate": "追加する日付を選択中",
-    "tasks.addToday": "＋",
+    "tasks.addToday": "今日",
     "tasks.noGoal": "未設定",
     "schedule.kicker": "ドラッグで予定化",
     "schedule.week": "週",
@@ -629,7 +629,7 @@ const translations = {
     "tasks.dragAria": "Drag to calendar",
     "tasks.pickDate": "Date",
     "tasks.pickingDate": "Picking a date",
-    "tasks.addToday": "+",
+    "tasks.addToday": "Today",
     "tasks.noGoal": "No goal",
     "schedule.kicker": "Drag to schedule",
     "schedule.week": "Week",
@@ -1309,7 +1309,7 @@ function renderTaskBank() {
     const taskKey = `${task.id}:${index}`;
     const item = document.createElement("article");
     item.className = `bank-task ${editingTaskId === taskKey ? "editing" : ""} ${pendingScheduleTaskId === task.id ? "picking" : ""}`;
-    item.draggable = true;
+    item.draggable = !isCompactScheduleLayout();
     item.tabIndex = 0;
     item.setAttribute(
       "aria-pressed",
@@ -1321,8 +1321,12 @@ function renderTaskBank() {
     let nativeDragging = false;
     item.innerHTML = `
       <div class="bank-task-main">
-        <span class="task-drag-handle" data-drag-handle draggable="true" role="button" tabindex="0" aria-label="${escapeHtml(t("tasks.dragAria"))}"></span>
+        <span class="task-drag-handle" data-drag-handle draggable="${!isCompactScheduleLayout()}" role="button" tabindex="0" aria-label="${escapeHtml(t("tasks.dragAria"))}"></span>
         <div class="bank-task-copy">${taskMarkup(task, goal)}</div>
+      </div>
+      <div class="bank-task-mobile-actions">
+        <button class="mini-button" type="button" data-action="add-today">${escapeHtml(t("tasks.addToday"))}</button>
+        <button class="mini-button" type="button" data-action="pick-date">${escapeHtml(t("tasks.pickDate"))}</button>
       </div>
       ${
         editingTaskId === taskKey
@@ -1359,6 +1363,10 @@ function renderTaskBank() {
       requestAnimationFrame(() => preview.remove());
     };
     item.addEventListener("dragstart", (event) => {
+      if (isCompactScheduleLayout()) {
+        event.preventDefault();
+        return;
+      }
       if (event.target.closest("button, input, textarea, select")) {
         event.preventDefault();
         return;
@@ -1393,6 +1401,20 @@ function renderTaskBank() {
       event.stopPropagation();
       setPendingScheduleTask(task.id);
     });
+    item
+      .querySelector('[data-action="add-today"]')
+      .addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        scheduleTask(task.id, toISO(today));
+      });
+    item
+      .querySelector('[data-action="pick-date"]')
+      .addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setPendingScheduleTask(task.id);
+      });
     item.addEventListener("pointerdown", (event) =>
       startTouchScheduleDrag(event, task, goal, item),
     );
@@ -1566,6 +1588,7 @@ function createDragPreview(task, goal) {
 }
 
 function startTouchScheduleDrag(event, task, goal, item) {
+  if (isCompactScheduleLayout()) return;
   if (
     event.pointerType === "mouse" ||
     !event.target.closest("[data-drag-handle]")
@@ -4546,7 +4569,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260603-mobile-calendar-scroll-priority")
+      .register("./sw.js?v=20260603-web-feature-mobile-tap")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));

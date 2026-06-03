@@ -2200,6 +2200,10 @@ body[data-active-screen="schedule"] .bank-task:focus-visible {
   outline-offset: 2px;
 }
 
+.bank-task-mobile-actions {
+  display: none;
+}
+
 body[data-view-mode="month"] .bank-task {
   padding: 8px;
 }
@@ -4397,14 +4401,35 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .bank-task-main {
-    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 7px;
   }
 
   body[data-active-screen="schedule"] .task-drag-handle {
-    width: 28px;
-    height: 36px;
-    border-radius: 7px;
+    display: none;
+  }
+
+  body[data-active-screen="home"] .bank-task-mobile-actions,
+  body[data-active-screen="schedule"] .bank-task-mobile-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  body[data-active-screen="home"] .bank-task-mobile-actions .mini-button,
+  body[data-active-screen="schedule"] .bank-task-mobile-actions .mini-button {
+    min-height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 11px;
+  }
+
+  body[data-active-screen="home"] .bank-task.editing .bank-task-mobile-actions,
+  body[data-active-screen="schedule"]
+    .bank-task.editing
+    .bank-task-mobile-actions {
+    display: none;
   }
 
   body[data-active-screen="schedule"] .bank-task * {
@@ -5779,14 +5804,14 @@ body[data-active-screen="home"] .bank-task:focus-visible {
   }
 
   body[data-active-screen="home"] .bank-task {
-    flex: 0 0 148px;
-    width: 148px;
-    min-width: 148px;
-    max-width: 148px;
+    flex: 0 0 174px;
+    width: 174px;
+    min-width: 174px;
+    max-width: 174px;
     padding: 7px;
     border-radius: 10px;
     scroll-snap-align: start;
-    touch-action: pan-y;
+    touch-action: pan-x;
     -webkit-touch-callout: none;
     -webkit-user-drag: none;
     -webkit-user-select: none;
@@ -5794,14 +5819,12 @@ body[data-active-screen="home"] .bank-task:focus-visible {
   }
 
   body[data-active-screen="home"] .bank-task-main {
-    grid-template-columns: 22px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 6px;
   }
 
   body[data-active-screen="home"] .task-drag-handle {
-    width: 22px;
-    height: 34px;
-    border-radius: 7px;
+    display: none;
   }
 
   body[data-active-screen="home"] .bank-task .task-title {
