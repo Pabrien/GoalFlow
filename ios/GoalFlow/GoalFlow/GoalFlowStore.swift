@@ -1,0 +1,170 @@
+import Foundation
+import SwiftUI
+import UIKit
+
+@MainActor
+final class GoalFlowStore: ObservableObject {
+    @Published var goals: [Goal] = [] { didSet { save() } }
+    @Published var tasks: [ActionTask] = [] { didSet { save() } }
+    @Published var scheduled: [ScheduledTask] = [] { didSet { save() } }
+
+    private let storageURL: URL
+
+    init(storageURL: URL? = nil) {
+        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        self.storageURL = storageURL ?? directory!.appendingPathComponent("goalflow-state.json")
+        load()
+        if goals.isEmpty {
+            seed()
+        }
+    }
+
+    var today: Date { Date().startOfDay }
+
+    var todayTasks: [ScheduledTask] {
+        scheduled
+            .filter { Calendar.current.isDate($0.date, inSameDayAs: today) }
+            .sorted { $0.title < $1.title }
+    }
+
+    var todayCompletionRate: Double {
+        guard !todayTasks.isEmpty else { return 0 }
+        let done = todayTasks.filter(\.isDone).count
+        return Double(done) / Double(todayTasks.count)
+    }
+
+    var overallCompletionRate: Double {
+        guard !scheduled.isEmpty else { return 0 }
+        let done = scheduled.filter(\.isDone).count
+        return Double(done) / Double(scheduled.count)
+    }
+
+    func addGoal(title: String, category: GoalCategory, reason: String, deadline: Date) {
+        goals.append(
+            Goal(
+                title: title,
+                category: category,
+                reason: reason,
+                startDate: Date().startOfDay,
+                deadline: deadline.startOfDay,
+                colorHex: palette[goals.count % palette.count]
+            )
+        )
+    }
+
+    func addTask(goalID: UUID, title: String, detail: String, estimatedMinutes: Int) {
+        tasks.append(
+            ActionTask(
+                goalID: goalID,
+                title: title,
+                detail: detail,
+                estimatedMinutes: max(1, estimatedMinutes)
+            )
+        )
+    }
+
+    func schedule(task: ActionTask, on date: Date) {
+        scheduled.append(
+            ScheduledTask(
+                taskID: task.id,
+                goalID: task.goalID,
+                title: task.title,
+                date: date.startOfDay
+            )
+        )
+    }
+
+    func toggleDone(_ item: ScheduledTask) {
+        guard let index = scheduled.firstIndex(where: { $0.id == item.id }) else { return }
+        scheduled[index].isDone.toggle()
+        if scheduled[index].isDone {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        } else {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
+    }
+
+    func updateScheduled(_ item: ScheduledTask, title: String, date: Date) {
+        guard let index = scheduled.firstIndex(where: { $0.id == item.id }) else { return }
+        scheduled[index].title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        scheduled[index].date = date.startOfDay
+    }
+
+    func deleteScheduled(_ item: ScheduledTask) {
+        scheduled.removeAll { $0.id == item.id }
+    }
+
+    func goal(for id: UUID) -> Goal? {
+        goals.first { $0.id == id }
+    }
+
+    func tasks(for date: Date) -> [ScheduledTask] {
+        scheduled
+            .filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
+            .sorted { $0.title < $1.title }
+    }
+
+    private func save() {
+        let snapshot = Snapshot(goals: goals, tasks: tasks, scheduled: scheduled)
+        guard let data = try? JSONEncoder.goalFlow.encode(snapshot) else { return }
+        try? data.write(to: storageURL, options: .atomic)
+    }
+
+    private func load() {
+        guard
+            let data = try? Data(contentsOf: storageURL),
+            let snapshot = try? JSONDecoder.goalFlow.decode(Snapshot.self, from: data)
+        else { return }
+        goals = snapshot.goals
+        tasks = snapshot.tasks
+        scheduled = snapshot.scheduled
+    }
+
+    private func seed() {
+        let goal = Goal(
+            title: "英語を毎日進める",
+            category: .study,
+            reason: "将来の選択肢を増やすため",
+            startDate: today,
+            deadline: today.addingDays(45),
+            colorHex: palette[0]
+        )
+        goals = [goal]
+        let task = ActionTask(
+            goalID: goal.id,
+            title: "単語を30個復習",
+            detail: "短くても毎日残す",
+            estimatedMinutes: 15
+        )
+        tasks = [task]
+        scheduled = [
+            ScheduledTask(taskID: task.id, goalID: goal.id, title: task.title, date: today)
+        ]
+    }
+}
+
+private struct Snapshot: Codable {
+    var goals: [Goal]
+    var tasks: [ActionTask]
+    var scheduled: [ScheduledTask]
+}
+
+private let palette = [
+    "#2563EB", "#0F766E", "#7C3AED", "#C2410C", "#BE123C", "#047857"
+]
+
+private extension JSONEncoder {
+    static var goalFlow: JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return encoder
+    }
+}
+
+private extension JSONDecoder {
+    static var goalFlow: JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }
+}

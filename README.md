@@ -48,6 +48,10 @@ todo-ui/
   app.js
   manifest.webmanifest
   sw.js
+  ios/
+    GoalFlow/
+      GoalFlow.xcodeproj
+      GoalFlow/
   icons/
   docs/
     product-notes.md
@@ -61,6 +65,12 @@ todo-ui/
 This is currently a static prototype. Data is persisted locally in the browser, so clearing browser storage will reset the app.
 
 The public app should be opened through a web server or GitHub Pages URL. The UI no longer shows local-server warnings on the page.
+
+## iOS Prototype
+
+A native SwiftUI prototype is available at `ios/GoalFlow/GoalFlow.xcodeproj`.
+
+It includes goals, actions, scheduling, today's tasks, progress, local JSON persistence, and basic haptic feedback.
 
 If the app grows, good next steps are:
 
