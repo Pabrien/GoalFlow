@@ -168,8 +168,7 @@ struct PlannerView: View {
                         selectedTaskID: $selectedTaskID,
                         onAdd: { sheet = .task },
                         onGoal: { sheet = .goal },
-                        onBackcast: { sheet = .backcast($0) },
-                        onSchedule: { sheet = .schedule($0) }
+                        onBackcast: { sheet = .backcast($0) }
                     )
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
@@ -391,7 +390,7 @@ struct CalendarDayCard: View {
             }
             .scrollIndicators(.hidden)
         }
-        .frame(width: 156, height: 430, alignment: .topLeading)
+        .frame(width: 156, height: 286, alignment: .topLeading)
         .padding(14)
         .background(dayBackground)
         .overlay {
@@ -495,7 +494,7 @@ struct MonthDayCell: View {
                 Spacer(minLength: 0)
             }
             .padding(7)
-            .frame(height: 72, alignment: .topLeading)
+            .frame(height: 48, alignment: .topLeading)
             .frame(maxWidth: .infinity)
             .background(background)
             .overlay {
@@ -557,7 +556,6 @@ struct TaskShelf: View {
     let onAdd: () -> Void
     let onGoal: () -> Void
     let onBackcast: (Goal) -> Void
-    let onSchedule: (ActionTask) -> Void
 
     var body: some View {
         VStack(spacing: 12) {
@@ -595,14 +593,14 @@ struct TaskShelf: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(Color.goalAccent)
             } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: 10) {
+                ScrollView(.vertical, showsIndicators: false) {
+                    LazyVStack(spacing: 10) {
                         ForEach(store.tasks) { task in
                             SavedTaskChip(
                                 task: task,
-                                isSelected: selectedTaskID == task.id,
-                                onSchedule: { onSchedule(task) }
+                                isSelected: selectedTaskID == task.id
                             )
+                            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                             .onTapGesture {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
                                     selectedTaskID = selectedTaskID == task.id ? nil : task.id
@@ -616,6 +614,7 @@ struct TaskShelf: View {
                     }
                     .padding(.vertical, 2)
                 }
+                .frame(maxHeight: 126)
             }
         }
         .padding(14)
@@ -629,7 +628,6 @@ struct SavedTaskChip: View {
     @EnvironmentObject private var store: GoalFlowStore
     let task: ActionTask
     let isSelected: Bool
-    let onSchedule: () -> Void
 
     var body: some View {
         HStack(spacing: 10) {
@@ -645,15 +643,14 @@ struct SavedTaskChip: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
-            Button(action: onSchedule) {
-                Image(systemName: "calendar.badge.plus")
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
+            Spacer(minLength: 8)
+            Image(systemName: "line.3.horizontal")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.secondary.opacity(0.8))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .frame(width: 210, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
         .background(isSelected ? goalColor.opacity(0.16) : Color.cardBackground)
         .overlay {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
