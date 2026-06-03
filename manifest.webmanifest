@@ -1,6 +1,6 @@
 {
-  "name": "GoalFlow",
-  "short_name": "GoalFlow",
+  "name": "Paskra",
+  "short_name": "Paskra",
   "description": "目標から逆算して、今日やることへ落とし込むタスク管理アプリ。",
   "start_url": "./index.html",
   "scope": "./",
@@ -9,13 +9,13 @@
   "theme_color": "#146c63",
   "icons": [
     {
-      "src": "./icons/goalflow-icon-512.png",
+      "src": "./icons/paskra-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "./icons/goalflow-icon.svg",
+      "src": "./icons/paskra-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

@@ -1,15 +1,15 @@
-const cacheName = "goalflow-v69-20260531-task-bank-scroll";
+const cacheName = "paskra-v70-20260603-paskra-rename";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260531-task-bank-scroll",
-  "./app.js?v=20260531-task-bank-scroll",
+  "./styles.css?v=20260603-paskra-rename",
+  "./app.js?v=20260603-paskra-rename",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",
   "./manifest.webmanifest",
-  "./icons/goalflow-icon-512.png",
-  "./icons/goalflow-icon.svg",
+  "./icons/paskra-icon-512.png",
+  "./icons/paskra-icon.svg",
 ];
 
 self.addEventListener("install", (event) => {

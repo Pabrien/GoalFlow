@@ -1,6 +1,6 @@
-# GoalFlow
+# Paskra
 
-GoalFlow is a goal-based planner that turns long-term goals into today’s next action.
+Paskra is a goal-based planner that turns long-term goals into today’s next action.
 
 ## Features
 

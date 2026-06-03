@@ -1,4 +1,5 @@
-const storageKey = "goalflow-state-v1";
+const storageKey = "paskra-state-v1";
+const legacyStorageKey = "goalflow-state-v1";
 const today = new Date();
 const calendarSizes = [
   "size-1",
@@ -68,13 +69,13 @@ const translations = {
     "app.kicker": "Goal planner",
     "app.tagline": "",
     "app.heroCopy":
-      "GoalFlowは、目標を小さなタスクに分けて、今日やることだけを見せるアプリです。",
+      "Paskraは、目標を小さなタスクに分けて、今日やることだけを見せるアプリです。",
     "app.heroPrimary": "はじめる",
     "app.heroSecondary": "使い方を見る",
     "app.point1": "目標＝向かう先",
     "app.point2": "タスク＝今日の一歩",
     "app.point3": "今日に入れる",
-    "app.pointsAria": "GoalFlowの特徴",
+    "app.pointsAria": "Paskraの特徴",
     "status.autoSave": "自動保存",
     "status.saved": "保存済み {time}",
     "theme.dark": "ダーク",
@@ -93,19 +94,19 @@ const translations = {
     "onboarding.primary": "＋",
     "onboarding.primaryAria": "最初の目標を作る",
     "onboarding.secondary": "あとで見る",
-    "introStory.aria": "GoalFlowの初回説明",
-    "introStory.kicker": "はじめてのGoalFlow",
+    "introStory.aria": "Paskraの初回説明",
+    "introStory.kicker": "はじめてのPaskra",
     "introStory.skip": "あとで見る",
     "introStory.prev": "戻る",
     "introStory.next": "次へ",
     "introStory.begin": "はじめる",
-    "introStory.start": "GoalFlowを始める",
+    "introStory.start": "Paskraを始める",
     "introStory.replay": "i",
     "introStory.page": "{current} / {total}",
     "introStory.0.label": "",
-    "introStory.0.title": "GoalFlowへようこそ",
+    "introStory.0.title": "Paskraへようこそ",
     "introStory.0.body":
-      "GoalFlowは、目標から逆算して\n今日やることを決めるアプリです。",
+      "Paskraは、目標から逆算して\n今日やることを決めるアプリです。",
     "introStory.1.label": "",
     "introStory.1.title": "ゴールを決める",
     "introStory.1.body":
@@ -172,13 +173,13 @@ const translations = {
     "buddy.defaultTitle": "今日の流れ",
     "buddy.defaultMessage": "小さく始めて、完了を1つ残しましょう。",
     "insight.readMore": "理由を読む",
-    "insight.kicker": "GoalFlowの考え方",
+    "insight.kicker": "Paskraの考え方",
     "insight.buddy.title": "小さく続けるための考え方",
     "insight.buddy.body":
-      "GoalFlowでは、やる気を大きくするより、迷う時間を小さくすることを大事にします。今日やることが1つ見えていれば、調子が悪い日でも行動に入りやすくなります。完璧な計画より、今日残せる小さな記録が次の日の自分を助けます。",
+      "Paskraでは、やる気を大きくするより、迷う時間を小さくすることを大事にします。今日やることが1つ見えていれば、調子が悪い日でも行動に入りやすくなります。完璧な計画より、今日残せる小さな記録が次の日の自分を助けます。",
     "insight.noGoal.title": "目標がない時は、理由を1つだけ残す",
     "insight.noGoal.body":
-      "最初から完璧な計画を作る必要はありません。GoalFlowでは、まず「なぜ続けたいのか」を目標に残します。理由が見えると、タスクが増えても判断の軸がぶれにくくなります。",
+      "最初から完璧な計画を作る必要はありません。Paskraでは、まず「なぜ続けたいのか」を目標に残します。理由が見えると、タスクが増えても判断の軸がぶれにくくなります。",
     "insight.noTask.title": "目標は、今日できる粒度に変える",
     "insight.noTask.body":
       "大きな目標はそのままだと重く感じます。15分から30分で終わるタスクに分けると、始める時の負担が下がります。小さくしたタスクは、予定にも置きやすく、記録にも残しやすくなります。",
@@ -196,11 +197,11 @@ const translations = {
       "目標はタスクの置き場ではなく、なぜ続けたいのかを忘れないための軸です。筋トレなら体を変えたい理由、勉強なら何に近づきたいのか。理由と期限があると、今日やる小さな行動にも意味が戻ってきます。",
     "insight.task.title": "② タスクは、今日できる大きさまで小さくする",
     "insight.task.body":
-      "続かない計画の多くは、タスクが大きすぎます。GoalFlowでは、目標をそのまま頑張るのではなく、英単語30個、腕立て10回、資料を1ページ読む、のように今日動けるサイズへ変えます。小さいほど始めやすく、記録も残しやすくなります。",
+      "続かない計画の多くは、タスクが大きすぎます。Paskraでは、目標をそのまま頑張るのではなく、英単語30個、腕立て10回、資料を1ページ読む、のように今日動けるサイズへ変えます。小さいほど始めやすく、記録も残しやすくなります。",
     "insight.today.title": "③ 今日の予定は、考えずに動き出すための場所",
     "insight.today.body":
       "今日の予定に入れる意味は、カレンダーを埋めることではありません。今やる候補を減らし、目の前の一手だけにすることです。迷いが減ると、完了までの心理的な距離も短くなります。",
-    "flow.aria": "GoalFlowの流れ",
+    "flow.aria": "Paskraの流れ",
     "flow.goal.title": "目標",
     "flow.goal.body": "向かう先",
     "flow.task.title": "タスク",
@@ -210,7 +211,7 @@ const translations = {
     "flow.progress.title": "今日の進み具合",
     "flow.progress.cta": "進捗を見る",
     "dashboard.aria": "ホームダッシュボード",
-    "empty.kicker": "GoalFlow method",
+    "empty.kicker": "Paskra method",
     "empty.title": "最初の目標",
     "empty.body": "まずは1つだけ。",
     "empty.button": "＋",
@@ -380,7 +381,7 @@ const translations = {
     "next.done.button": "明日",
     "next.done.buddyTitle": "いい継続です",
     "next.done.buddyMessage":
-      "完了が記録に変わりました。この小さい積み上げがGoalFlowの中心です。",
+      "完了が記録に変わりました。この小さい積み上げがPaskraの中心です。",
     "offline.failed": "オフライン準備に失敗しました。",
     "tutorial.open": "?",
     "tutorial.openTitle": "使い方",
@@ -393,7 +394,7 @@ const translations = {
     "tutorial.done": "完了",
     "tutorial.next": "次へ",
     "tutorial.targetLabel": "次に操作する場所",
-    "tutorial.step0.title": "GoalFlowの流れを試す",
+    "tutorial.step0.title": "Paskraの流れを試す",
     "tutorial.step0.body":
       "目標を作り、タスクに分け、今日へ置いて完了する。実際に触りながら1周だけ試します。",
     "tutorial.step0.primary": "始める",
@@ -423,13 +424,13 @@ const translations = {
     "app.kicker": "Goal planner",
     "app.tagline": "",
     "app.heroCopy":
-      "GoalFlow breaks goals into small tasks and shows only what to do today.",
+      "Paskra breaks goals into small tasks and shows only what to do today.",
     "app.heroPrimary": "Start",
     "app.heroSecondary": "See how it works",
     "app.point1": "Goal = direction",
     "app.point2": "Task = next action",
     "app.point3": "Put it on today",
-    "app.pointsAria": "GoalFlow features",
+    "app.pointsAria": "Paskra features",
     "status.autoSave": "Auto-save",
     "status.saved": "Saved {time}",
     "theme.dark": "Dark",
@@ -449,19 +450,19 @@ const translations = {
     "onboarding.primary": "+",
     "onboarding.primaryAria": "Create first goal",
     "onboarding.secondary": "Later",
-    "introStory.aria": "GoalFlow introduction",
-    "introStory.kicker": "First time with GoalFlow",
+    "introStory.aria": "Paskra introduction",
+    "introStory.kicker": "First time with Paskra",
     "introStory.skip": "Watch later",
     "introStory.prev": "Back",
     "introStory.next": "Next",
     "introStory.begin": "Start",
-    "introStory.start": "Start GoalFlow",
+    "introStory.start": "Start Paskra",
     "introStory.replay": "i",
     "introStory.page": "{current} / {total}",
     "introStory.0.label": "",
-    "introStory.0.title": "Welcome to GoalFlow",
+    "introStory.0.title": "Welcome to Paskra",
     "introStory.0.body":
-      "GoalFlow helps you work backward from a goal and decide what to do today.",
+      "Paskra helps you work backward from a goal and decide what to do today.",
     "introStory.1.label": "",
     "introStory.1.title": "Choose a goal",
     "introStory.1.body":
@@ -531,13 +532,13 @@ const translations = {
     "buddy.defaultTitle": "Today’s flow",
     "buddy.defaultMessage": "Start small and leave one completed task behind.",
     "insight.readMore": "Read why",
-    "insight.kicker": "GoalFlow thinking",
+    "insight.kicker": "Paskra thinking",
     "insight.buddy.title": "How to keep going quietly",
     "insight.buddy.body":
-      "GoalFlow cares less about forcing motivation and more about reducing the time spent wondering what to do. When one next action is visible, even a low-energy day can still move. A small record today is more useful than a perfect plan you never touch.",
+      "Paskra cares less about forcing motivation and more about reducing the time spent wondering what to do. When one next action is visible, even a low-energy day can still move. A small record today is more useful than a perfect plan you never touch.",
     "insight.noGoal.title": "When there is no goal, keep one reason",
     "insight.noGoal.body":
-      "You do not need a perfect plan at the beginning. GoalFlow starts by keeping the reason you want to continue. When the reason is visible, it becomes easier to choose the next action later.",
+      "You do not need a perfect plan at the beginning. Paskra starts by keeping the reason you want to continue. When the reason is visible, it becomes easier to choose the next action later.",
     "insight.noTask.title": "Turn the goal into today-sized work",
     "insight.noTask.body":
       "A large goal feels heavy when it stays large. Split it into a task that can be finished in 15 to 30 minutes. Smaller tasks are easier to place, start, and record.",
@@ -555,11 +556,11 @@ const translations = {
       "A goal is not just a bucket for tasks. It keeps the reason close: why you train, study, recover, or build the habit. When the reason and deadline are visible, even a small action today feels connected to something larger.",
     "insight.task.title": "2. A task makes the goal small enough for today",
     "insight.task.body":
-      "Plans usually break when the next step is too large. GoalFlow turns the goal into actions like 30 words, 10 pushups, or one page. Smaller tasks are easier to start, easier to place on today, and easier to record.",
+      "Plans usually break when the next step is too large. Paskra turns the goal into actions like 30 words, 10 pushups, or one page. Smaller tasks are easier to start, easier to place on today, and easier to record.",
     "insight.today.title": "3. Today is where thinking turns into motion",
     "insight.today.body":
       "Putting a task on today is not about filling a calendar. It removes extra options and leaves one clear action. Less choice means less friction, and less friction makes completion feel closer.",
-    "flow.aria": "GoalFlow flow",
+    "flow.aria": "Paskra flow",
     "flow.goal.title": "Goal",
     "flow.goal.body": "Direction",
     "flow.task.title": "Task",
@@ -569,7 +570,7 @@ const translations = {
     "flow.progress.title": "Today’s progress",
     "flow.progress.cta": "View progress",
     "dashboard.aria": "Home dashboard",
-    "empty.kicker": "GoalFlow method",
+    "empty.kicker": "Paskra method",
     "empty.title": "First goal",
     "empty.body": "Start with one.",
     "empty.button": "+",
@@ -740,7 +741,7 @@ const translations = {
     "next.done.button": "Tomorrow",
     "next.done.buddyTitle": "Good streak",
     "next.done.buddyMessage":
-      "Completion turned into a record. That small accumulation is the heart of GoalFlow.",
+      "Completion turned into a record. That small accumulation is the heart of Paskra.",
     "offline.failed": "Offline setup failed.",
     "tutorial.open": "?",
     "tutorial.openTitle": "Guide",
@@ -754,7 +755,7 @@ const translations = {
     "tutorial.done": "Done",
     "tutorial.next": "Next",
     "tutorial.targetLabel": "Next action",
-    "tutorial.step0.title": "Try the GoalFlow loop",
+    "tutorial.step0.title": "Try the Paskra loop",
     "tutorial.step0.body":
       "Create a goal, save a task, place it on today, and finish it. Learn the flow by doing it once.",
     "tutorial.step0.primary": "Start",
@@ -973,7 +974,8 @@ function seedState() {
 }
 
 function loadState() {
-  const saved = localStorage.getItem(storageKey);
+  const saved =
+    localStorage.getItem(storageKey) ?? localStorage.getItem(legacyStorageKey);
   if (!saved) return createEmptyState();
   try {
     const parsed = JSON.parse(saved);
@@ -1437,7 +1439,7 @@ function bindTaskBankReturnDrop() {
 
 function isScheduledDrag(event) {
   return [...(event.dataTransfer?.types ?? [])].includes(
-    "application/x-goalflow-scheduled",
+    "application/x-paskra-scheduled",
   );
 }
 
@@ -1456,7 +1458,7 @@ function handleTaskBankReturnLeave(event) {
 
 function handleTaskBankReturnDrop(event) {
   const scheduledId = event.dataTransfer.getData(
-    "application/x-goalflow-scheduled",
+    "application/x-paskra-scheduled",
   );
   if (!scheduledId) return;
   event.preventDefault();
@@ -1715,7 +1717,7 @@ function renderCalendar() {
       document.body.classList.remove("is-scheduling");
       clearDropTargets(column);
       const scheduledId = event.dataTransfer.getData(
-        "application/x-goalflow-scheduled",
+        "application/x-paskra-scheduled",
       );
       if (scheduledId) {
         moveScheduledTask(scheduledId, iso);
@@ -1895,7 +1897,7 @@ function scheduledElement(item, isCompact = false) {
     pulseElement(node, 0.985);
     vibrate(6);
     event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("application/x-goalflow-scheduled", item.id);
+    event.dataTransfer.setData("application/x-paskra-scheduled", item.id);
     event.dataTransfer.setData("text/plain", item.taskId);
   });
   node.addEventListener("dragend", () => {
@@ -3891,7 +3893,7 @@ function createFlowOrbitAnimation() {
     op: 90,
     w: 120,
     h: 56,
-    nm: "GoalFlow motion",
+    nm: "Paskra motion",
     ddd: 0,
     assets: [],
     layers: [
@@ -4544,7 +4546,7 @@ els.dismissOnboarding.addEventListener("click", () => {
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js?v=20260531-task-bank-scroll")
+      .register("./sw.js?v=20260603-paskra-rename")
       .then((registration) => registration.update())
       .catch(() => {
         showToast(t("offline.failed"));
