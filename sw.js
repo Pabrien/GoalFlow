@@ -1,9 +1,9 @@
-const cacheName = "paskra-v75-20260603-week-scale-edit-flow";
+const cacheName = "paskra-v76-20260603-week-day-scroll-limits";
 const coreAssets = [
   "./",
   "./index.html",
-  "./styles.css?v=20260603-week-scale-edit-flow",
-  "./app.js?v=20260603-week-scale-edit-flow",
+  "./styles.css?v=20260603-week-day-scroll-limits",
+  "./app.js?v=20260603-week-day-scroll-limits",
   "./vendor/gsap.min.js",
   "./vendor/lottie.min.js",
   "./vendor/howler.min.js",

@@ -2478,7 +2478,7 @@ body.is-returning-scheduled .task-bank {
   overflow: visible;
   --day-width: 148px;
   --month-day-width: 118px;
-  --week-day-height: 1240px;
+  --week-day-height: 480px;
   --month-day-height: 132px;
   --week-task-padding: 10px;
   --week-task-font: 13px;
@@ -2490,7 +2490,7 @@ body.is-returning-scheduled .task-bank {
 body[data-calendar-size="compact"] .planner {
   --day-width: 118px;
   --month-day-width: 92px;
-  --week-day-height: 760px;
+  --week-day-height: 300px;
   --month-day-height: 104px;
   --week-task-padding: 7px;
   --week-task-font: 11px;
@@ -2502,7 +2502,7 @@ body[data-calendar-size="compact"] .planner {
 body[data-calendar-size="large"] .planner {
   --day-width: 188px;
   --month-day-width: 152px;
-  --week-day-height: 1480px;
+  --week-day-height: 700px;
   --month-day-height: 170px;
   --week-task-padding: 13px;
   --week-task-font: 15px;
@@ -2514,7 +2514,7 @@ body[data-calendar-size="large"] .planner {
 body[data-calendar-size="size-1"] .planner {
   --day-width: 106px;
   --month-day-width: 82px;
-  --week-day-height: 620px;
+  --week-day-height: 240px;
   --month-day-height: 92px;
   --week-task-padding: 6px;
   --week-task-font: 10px;
@@ -2527,7 +2527,7 @@ body[data-calendar-size="size-2"] .planner,
 body[data-calendar-size="compact"] .planner {
   --day-width: 122px;
   --month-day-width: 94px;
-  --week-day-height: 760px;
+  --week-day-height: 300px;
   --month-day-height: 106px;
   --week-task-padding: 7px;
   --week-task-font: 11px;
@@ -2539,7 +2539,7 @@ body[data-calendar-size="compact"] .planner {
 body[data-calendar-size="size-3"] .planner {
   --day-width: 136px;
   --month-day-width: 106px;
-  --week-day-height: 980px;
+  --week-day-height: 380px;
   --month-day-height: 120px;
   --week-task-padding: 8px;
   --week-task-font: 12px;
@@ -2551,7 +2551,7 @@ body[data-calendar-size="size-3"] .planner {
 body[data-calendar-size="size-4"] .planner {
   --day-width: 150px;
   --month-day-width: 118px;
-  --week-day-height: 1240px;
+  --week-day-height: 480px;
   --month-day-height: 134px;
   --week-task-padding: 10px;
   --week-task-font: 13px;
@@ -2563,7 +2563,7 @@ body[data-calendar-size="size-4"] .planner {
 body[data-calendar-size="size-5"] .planner {
   --day-width: 166px;
   --month-day-width: 132px;
-  --week-day-height: 1360px;
+  --week-day-height: 580px;
   --month-day-height: 150px;
   --week-task-padding: 11px;
   --week-task-font: 14px;
@@ -2576,7 +2576,7 @@ body[data-calendar-size="size-6"] .planner,
 body[data-calendar-size="large"] .planner {
   --day-width: 184px;
   --month-day-width: 148px;
-  --week-day-height: 1480px;
+  --week-day-height: 700px;
   --month-day-height: 168px;
   --week-task-padding: 13px;
   --week-task-font: 15px;
@@ -2588,7 +2588,7 @@ body[data-calendar-size="large"] .planner {
 body[data-calendar-size="size-7"] .planner {
   --day-width: 204px;
   --month-day-width: 164px;
-  --week-day-height: 1640px;
+  --week-day-height: 820px;
   --month-day-height: 186px;
   --week-task-padding: 15px;
   --week-task-font: 16px;
@@ -2862,9 +2862,11 @@ body.is-picking-schedule-date .day-column.pick-target:hover {
 }
 
 .calendar-grid.week-mode .day-tasks {
-  max-height: none;
-  overflow: visible;
-  padding-right: 0;
+  max-height: max(150px, calc(var(--week-day-height) - 72px));
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
 }
 
 .month-mode .day-tasks {
@@ -4724,8 +4726,10 @@ dialog {
   }
 
   body[data-active-screen="schedule"] .calendar-grid.week-mode .day-tasks {
-    max-height: none;
-    overflow: visible;
+    max-height: max(62px, calc(var(--mobile-week-day-height, 176px) - 34px));
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
   }
 
@@ -6048,8 +6052,10 @@ body[data-active-screen="home"] .bank-task:focus-visible {
   }
 
   body[data-active-screen="home"] .calendar-grid.week-mode .day-tasks {
-    max-height: none;
-    overflow: visible;
+    max-height: max(62px, calc(var(--mobile-week-day-height, 176px) - 34px));
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
   }
 
