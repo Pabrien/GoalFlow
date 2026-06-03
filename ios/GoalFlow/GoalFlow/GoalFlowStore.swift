@@ -52,9 +52,22 @@ final class GoalFlowStore: ObservableObject {
         )
     }
 
-    func updateGoalColor(_ goal: Goal, colorHex: String) {
+    func updateGoal(_ goal: Goal, title: String, category: String, deadline: Date, colorHex: String) {
         guard let index = goals.firstIndex(where: { $0.id == goal.id }) else { return }
+        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanTitle.isEmpty else { return }
+        goals[index].title = cleanTitle
+        goals[index].category = category
+        goals[index].deadline = deadline.startOfDay
         goals[index].colorHex = colorHex
+    }
+
+    func deleteGoal(_ goal: Goal) {
+        goals.removeAll { $0.id == goal.id }
+        tasks.removeAll { $0.goalID == goal.id }
+        scheduled.removeAll { $0.goalID == goal.id }
+        backcastItems.removeAll { $0.goalID == goal.id }
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
 
     func addCategory(_ name: String) {
@@ -264,7 +277,10 @@ private struct Snapshot: Codable {
 private let defaultCategories = ["勉強", "筋トレ", "制作", "資格", "生活", "その他"]
 
 private let palette = [
-    "#0F766E", "#2563EB", "#7C3AED", "#DB2777", "#EA580C", "#16A34A", "#0891B2", "#4F46E5"
+    "#0F766E", "#2563EB", "#7C3AED", "#DB2777", "#EA580C", "#16A34A",
+    "#0891B2", "#4F46E5", "#9333EA", "#BE123C", "#C2410C", "#CA8A04",
+    "#65A30D", "#059669", "#0284C7", "#1D4ED8", "#4338CA", "#A21CAF",
+    "#E11D48", "#374151", "#111827", "#78716C", "#0369A1", "#B45309"
 ]
 
 private extension JSONEncoder {

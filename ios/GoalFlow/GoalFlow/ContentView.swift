@@ -30,6 +30,9 @@ struct ContentView: View {
             case .goal:
                 GoalEditor()
                     .presentationDetents([.large])
+            case .editGoal(let goal):
+                GoalEditor(goal: goal)
+                    .presentationDetents([.large])
             case .task(let goalID):
                 TaskEditor(initialGoalID: goalID)
                     .presentationDetents([.large])
@@ -56,6 +59,7 @@ private enum AppTab {
 
 enum ActiveSheet: Identifiable {
     case goal
+    case editGoal(Goal)
     case task(UUID?)
     case schedule(ActionTask)
     case scheduled(ScheduledTask)
@@ -64,6 +68,7 @@ enum ActiveSheet: Identifiable {
     var id: String {
         switch self {
         case .goal: "goal"
+        case .editGoal(let goal): "edit-goal-\(goal.id)"
         case .task(let goalID): "task-\(goalID?.uuidString ?? "new")"
         case .schedule(let task): "schedule-\(task.id)"
         case .scheduled(let item): "scheduled-\(item.id)"
@@ -127,9 +132,13 @@ struct GoalsView: View {
                             EmptyGoalCard(onAddGoal: { sheet = .goal })
                         } else {
                             ForEach(store.goals) { goal in
-                                GoalCard(goal: goal) {
-                                    sheet = .backcast(goal)
-                                }
+                                GoalCard(
+                                    goal: goal,
+                                    onEdit: { sheet = .editGoal(goal) },
+                                    onBackcast: {
+                                        sheet = .backcast(goal)
+                                    }
+                                )
                             }
                         }
                     }
@@ -178,8 +187,8 @@ struct EmptyGoalCard: View {
 struct GoalCard: View {
     @EnvironmentObject private var store: GoalFlowStore
     let goal: Goal
+    let onEdit: () -> Void
     let onBackcast: () -> Void
-    @State private var showsColors = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -209,27 +218,25 @@ struct GoalCard: View {
                     color: goalColor
                 )
                 Button(action: onBackcast) {
-                    Image(systemName: "wand.and.stars")
-                        .font(.headline.weight(.bold))
-                        .frame(width: 44, height: 44)
+                    Label("逆算", systemImage: "arrow.triangle.branch")
+                        .font(.caption.weight(.bold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
                 }
                 .buttonStyle(.plain)
                 .background(goalColor.opacity(0.14))
                 .foregroundStyle(goalColor)
-                .clipShape(Circle())
-                Button {
-                    withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
-                        showsColors.toggle()
-                    }
-                } label: {
-                    Image(systemName: "paintpalette")
-                        .font(.headline.weight(.bold))
-                        .frame(width: 44, height: 44)
+                .clipShape(Capsule())
+                Button(action: onEdit) {
+                    Label("編集", systemImage: "pencil")
+                        .font(.caption.weight(.bold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
                 }
                 .buttonStyle(.plain)
                 .background(Color.primary.opacity(0.08))
-                .foregroundStyle(goalColor)
-                .clipShape(Circle())
+                .foregroundStyle(.primary)
+                .clipShape(Capsule())
             }
 
             let plan = store.backcastPlan(for: goal.id)
@@ -263,17 +270,9 @@ struct GoalCard: View {
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
 
-            if showsColors {
-                ColorSwatchGrid(
-                    selectedHex: Binding(
-                        get: { goal.colorHex },
-                        set: { store.updateGoalColor(goal, colorHex: $0) }
-                    ),
-                    colors: store.goalColors
-                )
-                .transition(.move(edge: .top).combined(with: .opacity))
-            }
         }
+        .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .onTapGesture(perform: onEdit)
         .cardStyle()
     }
 
@@ -357,8 +356,8 @@ struct PlannerView: View {
     private var calendarBody: some View {
         switch mode {
         case .week:
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 12) {
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVStack(spacing: 10) {
                     ForEach(week, id: \.self) { date in
                         CalendarDayCard(
                             date: date,
@@ -373,7 +372,8 @@ struct PlannerView: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.top, 2)
+                .padding(.bottom, 4)
             }
         case .month:
             MonthGrid(
@@ -470,38 +470,38 @@ struct CalendarControls: View {
     let next: () -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Button(action: previous) {
-                Image(systemName: "chevron.left")
+                Text("前")
             }
-            Spacer()
             Picker("", selection: $mode) {
                 ForEach(PlannerMode.allCases) { mode in
                     Text(mode.rawValue).tag(mode)
                 }
             }
             .pickerStyle(.segmented)
-            .frame(width: 112)
+            .frame(width: 104)
             Text(label)
-                .font(.headline.monospacedDigit())
-                .frame(minWidth: 92)
-            Spacer()
+                .font(.subheadline.weight(.bold).monospacedDigit())
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity)
             Button {
                 showsGoalDeadlines.toggle()
                 UISelectionFeedbackGenerator().selectionChanged()
             } label: {
-                Image(systemName: showsGoalDeadlines ? "target" : "target")
+                Text("期限")
             }
             .foregroundStyle(showsGoalDeadlines ? Color.goalAccent : Color.primary)
             Button(action: today) {
-                Image(systemName: "dot.scope")
+                Text("今日")
             }
             Button(action: next) {
-                Image(systemName: "chevron.right")
+                Text("次")
             }
         }
-        .buttonStyle(.quietIcon)
-        .padding(8)
+        .buttonStyle(.softPill)
+        .padding(6)
         .background(.ultraThinMaterial)
         .clipShape(Capsule())
     }
@@ -540,26 +540,24 @@ struct CalendarDayCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        HStack(alignment: .top, spacing: 12) {
             Button(action: onTapDate) {
-                HStack(alignment: .firstTextBaseline) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(date, format: .dateTime.weekday(.abbreviated))
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(.secondary)
-                        Text(date, format: .dateTime.day())
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
-                    }
-                    Spacer()
+                VStack(spacing: 2) {
+                    Text(date, format: .dateTime.weekday(.abbreviated))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                    Text(date, format: .dateTime.day())
+                        .font(.system(size: 30, weight: .bold, design: .rounded))
                     if !items.isEmpty {
                         Text("\(items.count)")
-                            .font(.caption.weight(.bold))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 5)
+                            .font(.caption2.weight(.bold))
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
                             .background(Color.primary.opacity(0.08))
                             .clipShape(Capsule())
                     }
                 }
+                .frame(width: 52)
             }
             .buttonStyle(.plain)
 
@@ -582,16 +580,14 @@ struct CalendarDayCard: View {
             }
             .scrollIndicators(.hidden)
         }
-        .containerRelativeFrame(.horizontal, count: 2, spacing: 12)
-        .frame(minWidth: 138, maxWidth: 180)
-        .frame(height: UIScreen.main.bounds.height < 750 ? 236 : 286, alignment: .topLeading)
-        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 92, maxHeight: 142, alignment: .topLeading)
+        .padding(12)
         .background(dayBackground)
         .overlay {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .stroke(borderColor, lineWidth: selectedTaskID == nil ? 1 : 2)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .scaleEffect(isPulsing ? 1.025 : 1)
         .animation(.spring(response: 0.32, dampingFraction: 0.7), value: isPulsing)
         .dropDestination(for: String.self) { payloads, _ in
@@ -813,16 +809,16 @@ struct TaskShelf: View {
                 }
                 Spacer()
                 Button(action: store.goals.isEmpty ? onAddGoal : onAddTask) {
-                    Image(systemName: "plus")
+                    Text(store.goals.isEmpty ? "目標" : "行動")
                 }
                 if selectedTaskID != nil {
-                    Image(systemName: "hand.draw.fill")
-                        .font(.headline)
+                    Text("置く日を選ぶ")
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(Color.goalAccent)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
-            .buttonStyle(.quietIcon)
+            .buttonStyle(.softPill)
 
             if store.goals.isEmpty {
                 Button(action: onAddGoal) {
@@ -872,10 +868,20 @@ struct TaskShelf: View {
                                     DragPreview(title: task.title)
                                 }
                             }
+                            Button(action: onAddTask) {
+                                Label("行動を追加", systemImage: "plus")
+                                    .font(.subheadline.weight(.bold))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color.goalAccent)
+                            .background(Color.goalAccent.opacity(0.09))
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                         }
                         .padding(.vertical, 2)
                     }
-                    .frame(maxHeight: UIScreen.main.bounds.height < 750 ? 104 : 150)
+                    .frame(maxHeight: UIScreen.main.bounds.height < 750 ? 160 : 230)
                 }
             }
         }
@@ -1206,13 +1212,23 @@ struct ProgressLine: View {
 struct GoalEditor: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Environment(\.dismiss) private var dismiss
+    let goal: Goal?
     @State private var title = ""
     @State private var category = ""
     @State private var deadline = Date().addingDays(30)
     @State private var colorHex = ""
     @State private var categoryDraft = ""
     @State private var editsCategories = false
+    @State private var showsDeleteConfirm = false
     @FocusState private var titleFocused: Bool
+
+    init(goal: Goal? = nil) {
+        self.goal = goal
+        _title = State(initialValue: goal?.title ?? "")
+        _category = State(initialValue: goal?.category ?? "")
+        _deadline = State(initialValue: goal?.deadline ?? Date().addingDays(30))
+        _colorHex = State(initialValue: goal?.colorHex ?? "")
+    }
 
     var body: some View {
         NavigationStack {
@@ -1272,12 +1288,35 @@ struct GoalEditor: View {
 
                         EditorFieldCard(title: "色") {
                             ColorSwatchGrid(selectedHex: $colorHex, colors: store.goalColors)
+                            Button {
+                                colorHex = Self.randomColorHex()
+                                UISelectionFeedbackGenerator().selectionChanged()
+                            } label: {
+                                Label("別の色", systemImage: "sparkles")
+                                    .font(.subheadline.weight(.bold))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color(hex: colorHex))
+                            .background(Color(hex: colorHex).opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                         }
 
                         EditorFieldCard(title: "期限") {
                             DatePicker("", selection: $deadline, displayedComponents: .date)
                                 .labelsHidden()
                                 .datePickerStyle(.compact)
+                        }
+
+                        if goal != nil {
+                            Button(role: .destructive) {
+                                showsDeleteConfirm = true
+                            } label: {
+                                Label("目標を削除", systemImage: "trash")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.softPill)
                         }
                     }
                     .padding(18)
@@ -1287,9 +1326,18 @@ struct GoalEditor: View {
             .onAppear {
                 category = category.isEmpty ? (store.categories.first ?? "その他") : category
                 colorHex = colorHex.isEmpty ? (store.goalColors.first ?? "#2563EB") : colorHex
-                titleFocused = true
+                titleFocused = goal == nil
             }
-            .navigationTitle("目標")
+            .navigationTitle(goal == nil ? "目標を作る" : "目標を編集")
+            .confirmationDialog("この目標を削除しますか？", isPresented: $showsDeleteConfirm, titleVisibility: .visible) {
+                Button("削除", role: .destructive) {
+                    if let goal {
+                        store.deleteGoal(goal)
+                    }
+                    dismiss()
+                }
+                Button("キャンセル", role: .cancel) {}
+            }
             .safeAreaInset(edge: .bottom) {
                 Button {
                     saveGoal()
@@ -1324,8 +1372,29 @@ struct GoalEditor: View {
     }
 
     private func saveGoal() {
-        store.addGoal(title: title, category: category, deadline: deadline, colorHex: colorHex)
+        if let goal {
+            store.updateGoal(goal, title: title, category: category, deadline: deadline, colorHex: colorHex)
+        } else {
+            store.addGoal(title: title, category: category, deadline: deadline, colorHex: colorHex)
+        }
         dismiss()
+    }
+
+    private static func randomColorHex() -> String {
+        let hue = Double.random(in: 0...1)
+        let saturation = Double.random(in: 0.56...0.78)
+        let brightness = Double.random(in: 0.58...0.82)
+        let uiColor = UIColor(hue: hue, saturation: saturation, brightness: brightness, alpha: 1)
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        uiColor.getRed(&red, green: &green, blue: &blue, alpha: nil)
+        return String(
+            format: "#%02X%02X%02X",
+            Int(red * 255),
+            Int(green * 255),
+            Int(blue * 255)
+        )
     }
 }
 
