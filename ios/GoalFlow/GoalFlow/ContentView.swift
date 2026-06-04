@@ -394,12 +394,9 @@ struct PlannerView: View {
     @State private var showsTaskShelf = false
     @State private var showsDeadlines = false
 
-    private var week: [Date] {
-        let calendar = Calendar.current
-        let weekday = calendar.component(.weekday, from: anchorDate)
-        let mondayOffset = weekday == 1 ? -6 : 2 - weekday
-        let start = calendar.date(byAdding: .day, value: mondayOffset, to: anchorDate) ?? anchorDate
-        return (0..<7).map { start.addingDays($0) }
+    private var rollingDays: [Date] {
+        let start = anchorDate.startOfDay
+        return (0..<30).map { start.addingDays($0) }
     }
 
     private var month: [Date] {
@@ -424,19 +421,12 @@ struct PlannerView: View {
                         anchorDate: anchorDate,
                         today: { moveToToday() }
                     )
+                    .highPriorityGesture(calendarSwipeGesture)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
 
-                    ZStack {
-                        calendarBody
-                            .id(calendarPageID)
-                            .transition(pageTransition)
-                    }
-                        .frame(maxHeight: .infinity)
-                        .clipped()
-                        .offset(y: calendarDragOffset * 0.2)
-                        .contentShape(Rectangle())
-                        .simultaneousGesture(calendarSwipeGesture)
+                    calendarStage
+                        .padding(.horizontal, 16)
 
                     if showsTaskShelf {
                         TaskShelf(
@@ -505,7 +495,7 @@ struct PlannerView: View {
         case .week:
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(spacing: 10) {
-                    ForEach(week, id: \.self) { date in
+                    ForEach(rollingDays, id: \.self) { date in
                         CalendarDayCard(
                             date: date,
                             items: store.tasks(for: date),
@@ -519,7 +509,6 @@ struct PlannerView: View {
                         )
                     }
                 }
-                .padding(.horizontal, 16)
                 .padding(.top, 2)
                 .padding(.bottom, 4)
             }
@@ -534,15 +523,37 @@ struct PlannerView: View {
                 onEdit: { sheet = .scheduled($0) },
                 onDropPayload: handleDrop
             )
-            .padding(.horizontal, 16)
             .padding(.vertical, 8)
+        }
+    }
+
+    private var calendarCore: some View {
+        ZStack {
+            calendarBody
+                .id(calendarPageID)
+                .transition(pageTransition)
+        }
+        .frame(maxHeight: .infinity)
+        .clipped()
+        .offset(y: calendarDragOffset * 0.2)
+        .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .cardStyle()
+    }
+
+    @ViewBuilder
+    private var calendarStage: some View {
+        if mode == .month {
+            calendarCore
+                .highPriorityGesture(calendarSwipeGesture)
+        } else {
+            calendarCore
         }
     }
 
     private var calendarPageID: String {
         switch mode {
         case .week:
-            return "week-\(week.first?.timeIntervalSince1970 ?? 0)"
+            return "days-\(rollingDays.first?.timeIntervalSince1970 ?? 0)"
         case .month:
             let components = Calendar.current.dateComponents([.year, .month], from: anchorDate)
             return "month-\(components.year ?? 0)-\(components.month ?? 0)"
@@ -552,7 +563,7 @@ struct PlannerView: View {
     private var visibleDates: [Date] {
         switch mode {
         case .week:
-            return week
+            return rollingDays
         case .month:
             return month
         }
@@ -596,7 +607,7 @@ struct PlannerView: View {
             calendarPageDirection = direction
             switch mode {
             case .week:
-                anchorDate = anchorDate.addingDays(direction * 7)
+                anchorDate = anchorDate.addingDays(direction * 30)
             case .month:
                 anchorDate = Calendar.current.date(byAdding: .month, value: direction, to: anchorDate) ?? anchorDate
             }
@@ -676,7 +687,7 @@ struct PlannerView: View {
 }
 
 enum PlannerMode: String, CaseIterable, Identifiable {
-    case week = "週"
+    case week = "30日"
     case month = "月"
 
     var id: String { rawValue }
@@ -735,19 +746,11 @@ struct CalendarControls: View {
     private var label: String {
         switch mode {
         case .week:
-            let weekStart = weekStart(for: anchorDate)
-            let end = weekStart.addingDays(6)
-            return "\(weekStart.formatted(.dateTime.month(.abbreviated).day()))-\(end.formatted(.dateTime.day()))"
+            let end = anchorDate.addingDays(29)
+            return "\(anchorDate.formatted(.dateTime.month(.abbreviated).day()))-\(end.formatted(.dateTime.month(.abbreviated).day()))"
         case .month:
             return anchorDate.formatted(.dateTime.year().month(.wide))
         }
-    }
-
-    private func weekStart(for date: Date) -> Date {
-        let calendar = Calendar.current
-        let weekday = calendar.component(.weekday, from: date)
-        let mondayOffset = weekday == 1 ? -6 : 2 - weekday
-        return calendar.date(byAdding: .day, value: mondayOffset, to: date) ?? date
     }
 }
 
