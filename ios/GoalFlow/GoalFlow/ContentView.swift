@@ -360,6 +360,7 @@ struct PlannerView: View {
             }
             .navigationTitle("予定")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .onAppear {
                 if selectedGoalID == nil {
                     selectedGoalID = store.goals.first?.id
@@ -454,7 +455,6 @@ struct PlannerView: View {
         withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
             store.schedule(taskID: selectedTaskID, on: date)
             pulseDate = date
-            self.selectedTaskID = nil
         }
         clearPulse()
     }
@@ -465,13 +465,13 @@ struct PlannerView: View {
             switch target {
             case .task(let id):
                 store.schedule(taskID: id, on: date)
+                selectedTaskID = id
             case .scheduled(let id):
                 if let item = store.scheduled.first(where: { $0.id == id }) {
                     store.moveScheduled(item, to: date)
                 }
             }
             pulseDate = date
-            selectedTaskID = nil
         }
         clearPulse()
         return true
@@ -531,9 +531,9 @@ struct CalendarControls: View {
         case .week:
             let weekStart = weekStart(for: anchorDate)
             let end = weekStart.addingDays(6)
-            return "\(weekStart.formatted(.dateTime.month().day()))-\(end.formatted(.dateTime.day()))"
+            return "\(weekStart.shortMonthDayText)-\(end.dayText)"
         case .month:
-            return anchorDate.formatted(.dateTime.year().month())
+            return anchorDate.yearMonthText
         }
     }
 
@@ -563,10 +563,10 @@ struct CalendarDayCard: View {
         HStack(alignment: .top, spacing: 12) {
             Button(action: onTapDate) {
                 VStack(spacing: 2) {
-                    Text(date, format: .dateTime.weekday(.abbreviated))
+                    Text(date.japaneseWeekdayText)
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.secondary)
-                    Text(date, format: .dateTime.day())
+                    Text(date.dayText)
                         .font(.system(size: 30, weight: .bold, design: .rounded))
                     if !items.isEmpty {
                         Text("\(items.count)")
@@ -681,7 +681,7 @@ struct MonthDayCell: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
-                Text(date, format: .dateTime.day())
+                Text(date.dayNumberText)
                     .font(.caption.weight(.bold).monospacedDigit())
                     .foregroundStyle(isInMonth ? Color.primary : Color.secondary.opacity(0.45))
                 Spacer()
@@ -874,15 +874,15 @@ struct TaskShelf: View {
                             ForEach(visibleTasks) { task in
                                 SavedTaskChip(
                                     task: task,
-                                    isSelected: selectedTaskID == task.id
+                                    isSelected: selectedTaskID == task.id,
+                                    onPickDate: {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
+                                            selectedTaskID = selectedTaskID == task.id ? nil : task.id
+                                        }
+                                        UISelectionFeedbackGenerator().selectionChanged()
+                                    }
                                 )
                                 .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                                .onTapGesture {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.78)) {
-                                        selectedTaskID = selectedTaskID == task.id ? nil : task.id
-                                    }
-                                    UISelectionFeedbackGenerator().selectionChanged()
-                                }
                                 .draggable(DragPayload.task(task.id).rawValue) {
                                     DragPreview(title: task.title)
                                 }
@@ -985,6 +985,7 @@ struct SavedTaskChip: View {
     @EnvironmentObject private var store: GoalFlowStore
     let task: ActionTask
     let isSelected: Bool
+    let onPickDate: () -> Void
 
     var body: some View {
         HStack(spacing: 10) {
@@ -1001,12 +1002,15 @@ struct SavedTaskChip: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 8)
-            Image(systemName: "line.3.horizontal")
-                .font(.headline.weight(.bold))
-                .foregroundStyle(goalColor.opacity(0.82))
-                .frame(width: 34, height: 34)
-                .background(goalColor.opacity(0.12))
-                .clipShape(Circle())
+            Button(action: onPickDate) {
+                Image(systemName: "line.3.horizontal")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(isSelected ? .white : goalColor.opacity(0.82))
+                    .frame(width: 38, height: 38)
+                    .background(isSelected ? goalColor : goalColor.opacity(0.12))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -1538,6 +1542,8 @@ struct CategoryChipGrid: View {
 struct ColorSwatchGrid: View {
     @Binding var selectedHex: String
     let colors: [String]
+    var removableColors: [String] = []
+    var onDelete: (String) -> Void = { _ in }
 
     var body: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
@@ -1557,6 +1563,19 @@ struct ColorSwatchGrid: View {
                     .scaleEffect(selectedHex == hex ? 1.04 : 1)
                 }
                 .buttonStyle(.plain)
+                .contextMenu {
+                    if removableColors.contains(hex) {
+                        Button(role: .destructive) {
+                            onDelete(hex)
+                        } label: {
+                            Label("削除", systemImage: "trash")
+                        }
+                    }
+                }
+                .onLongPressGesture(minimumDuration: 0.55) {
+                    guard removableColors.contains(hex) else { return }
+                    onDelete(hex)
+                }
             }
         }
     }
@@ -1593,9 +1612,6 @@ struct GoalColorEditor: View {
                     .labelsHidden()
             }
 
-            ColorPicker("虹色から選ぶ", selection: $selectedColor, supportsOpacity: false)
-                .font(.subheadline.weight(.bold))
-
             Button {
                 selectedHex = selectedColor.hexString
                 store.addCustomColor(selectedHex)
@@ -1611,39 +1627,25 @@ struct GoalColorEditor: View {
             .background(selectedColor.opacity(0.12))
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
-            ColorSwatchGrid(selectedHex: $selectedHex, colors: store.goalColors)
+            ColorSwatchGrid(
+                selectedHex: $selectedHex,
+                colors: store.goalColors,
+                removableColors: store.customColors,
+                onDelete: deleteColor
+            )
                 .onChange(of: selectedHex) { _, newValue in
                     selectedColor = Color(hex: newValue)
                 }
-
-            if !store.customColors.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("保存した色")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-                    ForEach(store.customColors, id: \.self) { hex in
-                        HStack(spacing: 10) {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(Color(hex: hex))
-                                .frame(width: 34, height: 28)
-                            Text(hex)
-                                .font(.caption.weight(.bold).monospaced())
-                            Spacer()
-                            Button(role: .destructive) {
-                                store.deleteCustomColor(hex)
-                                if selectedHex == hex {
-                                    selectedHex = store.goalColors.first ?? "#0F766E"
-                                    selectedColor = Color(hex: selectedHex)
-                                }
-                            } label: {
-                                Image(systemName: "trash")
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-            }
         }
+    }
+
+    private func deleteColor(_ hex: String) {
+        store.deleteCustomColor(hex)
+        if selectedHex == hex {
+            selectedHex = store.goalColors.first ?? "#0F766E"
+            selectedColor = Color(hex: selectedHex)
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 }
 

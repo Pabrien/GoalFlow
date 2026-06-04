@@ -70,4 +70,27 @@ extension Date {
     func addingDays(_ days: Int) -> Date {
         Calendar.current.date(byAdding: .day, value: days, to: self) ?? self
     }
+
+    var dayNumberText: String {
+        "\(Calendar.current.component(.day, from: self))"
+    }
+
+    var dayText: String {
+        "\(dayNumberText)日"
+    }
+
+    var shortMonthDayText: String {
+        let calendar = Calendar.current
+        return "\(calendar.component(.month, from: self))月\(calendar.component(.day, from: self))日"
+    }
+
+    var yearMonthText: String {
+        let calendar = Calendar.current
+        return "\(calendar.component(.year, from: self))年\(calendar.component(.month, from: self))月"
+    }
+
+    var japaneseWeekdayText: String {
+        let symbols = ["日", "月", "火", "水", "木", "金", "土"]
+        return symbols[Calendar.current.component(.weekday, from: self) - 1]
+    }
 }
