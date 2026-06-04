@@ -320,6 +320,7 @@ struct PlannerView: View {
                     CalendarControls(
                         mode: $mode,
                         showsDeadlines: $showsDeadlines,
+                        hasRoadmapMarkers: hasRoadmapMarkers,
                         anchorDate: anchorDate,
                         today: { moveToToday() }
                     )
@@ -448,6 +449,21 @@ struct PlannerView: View {
         }
     }
 
+    private var visibleDates: [Date] {
+        switch mode {
+        case .week:
+            return week
+        case .month:
+            return month
+        }
+    }
+
+    private var hasRoadmapMarkers: Bool {
+        visibleDates.contains { date in
+            !goalsDue(on: date).isEmpty || !milestones(on: date).isEmpty
+        }
+    }
+
     private var pageTransition: AnyTransition {
         .asymmetric(
             insertion: .move(edge: calendarPageDirection > 0 ? .trailing : .leading).combined(with: .opacity),
@@ -561,6 +577,7 @@ enum PlannerMode: String, CaseIterable, Identifiable {
 struct CalendarControls: View {
     @Binding var mode: PlannerMode
     @Binding var showsDeadlines: Bool
+    let hasRoadmapMarkers: Bool
     let anchorDate: Date
     let today: () -> Void
 
@@ -582,9 +599,20 @@ struct CalendarControls: View {
                 showsDeadlines.toggle()
                 UISelectionFeedbackGenerator().selectionChanged()
             } label: {
-                Text(showsDeadlines ? "道筋表示中" : "期限・途中目標")
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: showsDeadlines ? "flag.fill" : "flag")
+                        .font(.headline.weight(.semibold))
+                        .frame(width: 34, height: 34)
+                    if hasRoadmapMarkers && !showsDeadlines {
+                        Circle()
+                            .fill(Color.goalAccent)
+                            .frame(width: 6, height: 6)
+                            .offset(x: -4, y: 5)
+                    }
+                }
             }
             .foregroundStyle(showsDeadlines ? Color.goalAccent : Color.primary)
+            .accessibilityLabel(showsDeadlines ? "期限と途中目標を隠す" : "期限と途中目標を表示")
             Button(action: today) {
                 Text("今日")
             }
@@ -938,6 +966,11 @@ struct TaskShelf: View {
         return store.tasks.filter { $0.goalID == goalID }
     }
 
+    private var selectedTaskTitle: String? {
+        guard let selectedTaskID else { return nil }
+        return store.task(id: selectedTaskID)?.title
+    }
+
     var body: some View {
         VStack(spacing: 12) {
             HStack {
@@ -958,9 +991,10 @@ struct TaskShelf: View {
                     Image(systemName: "chevron.down")
                 }
                 if selectedTaskID != nil {
-                    Text("置く日を選ぶ")
+                    Text(selectedTaskTitle.map { "「\($0)」を置く" } ?? "置く日を選ぶ")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(Color.goalAccent)
+                        .lineLimit(1)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
@@ -1036,16 +1070,23 @@ struct TaskShelf: View {
 }
 
 struct CollapsedTaskShelfButton: View {
+    @EnvironmentObject private var store: GoalFlowStore
     let selectedTaskID: UUID?
     let onTap: () -> Void
+
+    private var selectedTaskTitle: String? {
+        guard let selectedTaskID else { return nil }
+        return store.task(id: selectedTaskID)?.title
+    }
 
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 10) {
                 Image(systemName: selectedTaskID == nil ? "tray.full" : "hand.draw")
                     .font(.headline.weight(.bold))
-                Text(selectedTaskID == nil ? "行動を出す" : "置く日を選ぶ")
+                Text(selectedTaskID == nil ? "行動を出す" : selectedTaskTitle.map { "「\($0)」を置く" } ?? "置く日を選ぶ")
                     .font(.headline.weight(.bold))
+                    .lineLimit(1)
                 Spacer()
                 Image(systemName: "chevron.up")
                     .font(.caption.weight(.bold))
