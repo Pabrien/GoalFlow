@@ -393,6 +393,7 @@ struct PlannerView: View {
                             date: date,
                             items: store.tasks(for: date),
                             goalsDue: showsDeadlines ? goalsDue(on: date) : [],
+                            milestones: showsDeadlines ? milestones(on: date) : [],
                             selectedTaskID: selectedTaskID,
                             isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
                             onTapDate: { placeSelectedTask(on: date) },
@@ -519,6 +520,10 @@ struct PlannerView: View {
         store.goals.filter { Calendar.current.isDate($0.deadline, inSameDayAs: date) }
     }
 
+    private func milestones(on date: Date) -> [BackcastItem] {
+        store.backcastItems.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
+    }
+
 }
 
 enum PlannerMode: String, CaseIterable, Identifiable {
@@ -552,7 +557,7 @@ struct CalendarControls: View {
                 showsDeadlines.toggle()
                 UISelectionFeedbackGenerator().selectionChanged()
             } label: {
-                Text(showsDeadlines ? "期限表示中" : "期限")
+                Text(showsDeadlines ? "道筋表示中" : "期限・節目")
             }
             .foregroundStyle(showsDeadlines ? Color.goalAccent : Color.primary)
             Button(action: today) {
@@ -588,6 +593,7 @@ struct CalendarDayCard: View {
     let date: Date
     let items: [ScheduledTask]
     let goalsDue: [Goal]
+    let milestones: [BackcastItem]
     let selectedTaskID: UUID?
     let isPulsing: Bool
     let onTapDate: () -> Void
@@ -625,10 +631,17 @@ struct CalendarDayCard: View {
                     ForEach(goalsDue) { goal in
                         GoalDeadlinePill(goal: goal, compact: false)
                     }
+                    ForEach(milestones) { milestone in
+                        BackcastMilestonePill(item: milestone, compact: false)
+                    }
                     ForEach(items) { item in
                         CalendarTaskPill(item: item)
                             .onTapGesture {
-                                onEdit(item)
+                                if selectedTaskID == nil {
+                                    onEdit(item)
+                                } else {
+                                    onTapDate()
+                                }
                             }
                             .draggable(DragPayload.scheduled(item.id).rawValue) {
                                 DragPreview(title: item.title)
@@ -699,6 +712,7 @@ struct MonthGrid: View {
                         isInMonth: Calendar.current.isDate(date, equalTo: anchorDate, toGranularity: .month),
                         items: store.tasks(for: date),
                         goalsDue: showsDeadlines ? goalsDue(on: date) : [],
+                        milestones: showsDeadlines ? milestones(on: date) : [],
                         selectedTaskID: selectedTaskID,
                         isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
                         onTapDate: { onTapDate(date) },
@@ -713,6 +727,10 @@ struct MonthGrid: View {
     private func goalsDue(on date: Date) -> [Goal] {
         store.goals.filter { Calendar.current.isDate($0.deadline, inSameDayAs: date) }
     }
+
+    private func milestones(on date: Date) -> [BackcastItem] {
+        store.backcastItems.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
+    }
 }
 
 struct MonthDayCell: View {
@@ -721,6 +739,7 @@ struct MonthDayCell: View {
     let isInMonth: Bool
     let items: [ScheduledTask]
     let goalsDue: [Goal]
+    let milestones: [BackcastItem]
     let selectedTaskID: UUID?
     let isPulsing: Bool
     let onTapDate: () -> Void
@@ -747,11 +766,18 @@ struct MonthDayCell: View {
                 ForEach(goalsDue.prefix(2)) { goal in
                     GoalDeadlinePill(goal: goal, compact: true)
                 }
+                ForEach(milestones.prefix(max(0, 2 - goalsDue.prefix(2).count))) { milestone in
+                    BackcastMilestonePill(item: milestone, compact: true)
+                }
                 ForEach(items.prefix(3)) { item in
                     MonthTaskDot(item: item)
                         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         .onTapGesture {
-                            onEdit(item)
+                            if selectedTaskID == nil {
+                                onEdit(item)
+                            } else {
+                                onTapDate()
+                            }
                         }
                         .draggable(DragPayload.scheduled(item.id).rawValue) {
                             DragPreview(title: item.title)
@@ -839,6 +865,33 @@ struct GoalDeadlinePill: View {
 
     private var goalColor: Color {
         Color(hex: goal.colorHex)
+    }
+}
+
+struct BackcastMilestonePill: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    let item: BackcastItem
+    let compact: Bool
+
+    var body: some View {
+        HStack(spacing: compact ? 3 : 6) {
+            Circle()
+                .fill(goalColor)
+                .frame(width: compact ? 5 : 7, height: compact ? 5 : 7)
+            Text(item.title)
+                .font(compact ? .system(size: 8.5, weight: .bold) : .caption.weight(.bold))
+                .lineLimit(1)
+        }
+        .padding(.horizontal, compact ? 0 : 9)
+        .padding(.vertical, compact ? 0 : 7)
+        .foregroundStyle(goalColor)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(compact ? Color.clear : goalColor.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+    }
+
+    private var goalColor: Color {
+        Color(hex: store.goal(for: item.goalID)?.colorHex ?? "#2563EB")
     }
 }
 
@@ -2076,13 +2129,6 @@ struct GoalBackcastHeader: View {
                     .font(.headline.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
-            HStack(spacing: 8) {
-                Image(systemName: "target")
-                Image(systemName: "arrow.backward")
-                Image(systemName: "calendar")
-            }
-            .font(.title3.weight(.bold))
-            .foregroundStyle(Color(hex: goal.colorHex))
         }
         .cardStyle()
     }
