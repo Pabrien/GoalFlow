@@ -289,7 +289,8 @@ struct PlannerView: View {
     @State private var selectedTaskID: UUID?
     @State private var selectedGoalID: UUID?
     @State private var pulseDate: Date?
-    @State private var showsGoalDeadlines = false
+    @State private var calendarDragOffset: CGFloat = 0
+    @State private var showsTaskShelf = false
 
     private var week: [Date] {
         let calendar = Calendar.current
@@ -316,25 +317,45 @@ struct PlannerView: View {
                 VStack(spacing: 12) {
                     CalendarControls(
                         mode: $mode,
-                        showsGoalDeadlines: $showsGoalDeadlines,
                         anchorDate: anchorDate,
-                        previous: { movePeriod(-1) },
-                        today: { moveToToday() },
-                        next: { movePeriod(1) }
+                        today: { moveToToday() }
                     )
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
 
                     calendarBody
+                        .frame(maxHeight: .infinity)
+                        .offset(x: calendarDragOffset * 0.16)
+                        .contentShape(Rectangle())
+                        .simultaneousGesture(calendarSwipeGesture)
 
-                    TaskShelf(
-                        selectedGoalID: $selectedGoalID,
-                        selectedTaskID: $selectedTaskID,
-                        onAddTask: { sheet = .task(selectedGoalID) },
-                        onAddGoal: { sheet = .goal }
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
+                    if showsTaskShelf {
+                        TaskShelf(
+                            selectedGoalID: $selectedGoalID,
+                            selectedTaskID: $selectedTaskID,
+                            onAddTask: { sheet = .task(selectedGoalID) },
+                            onAddGoal: { sheet = .goal },
+                            onCollapse: {
+                                withAnimation(.spring(response: 0.34, dampingFraction: 0.86)) {
+                                    showsTaskShelf = false
+                                }
+                            }
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 12)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    } else {
+                        CollapsedTaskShelfButton(
+                            selectedTaskID: selectedTaskID,
+                            onTap: {
+                                withAnimation(.spring(response: 0.34, dampingFraction: 0.86)) {
+                                    showsTaskShelf = true
+                                }
+                            }
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 12)
+                    }
                 }
             }
             .navigationTitle("予定")
@@ -362,7 +383,7 @@ struct PlannerView: View {
                         CalendarDayCard(
                             date: date,
                             items: store.tasks(for: date),
-                            goalsDue: showsGoalDeadlines ? goalsDue(on: date) : [],
+                            goalsDue: [],
                             selectedTaskID: selectedTaskID,
                             isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
                             onTapDate: { placeSelectedTask(on: date) },
@@ -381,7 +402,6 @@ struct PlannerView: View {
                 anchorDate: anchorDate,
                 selectedTaskID: selectedTaskID,
                 pulseDate: pulseDate,
-                showsGoalDeadlines: showsGoalDeadlines,
                 onTapDate: placeSelectedTask,
                 onEdit: { sheet = .scheduled($0) },
                 onDropPayload: handleDrop
@@ -389,6 +409,25 @@ struct PlannerView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
         }
+    }
+
+    private var calendarSwipeGesture: some Gesture {
+        DragGesture(minimumDistance: 24)
+            .onChanged { value in
+                guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                calendarDragOffset = value.translation.width
+            }
+            .onEnded { value in
+                defer {
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
+                        calendarDragOffset = 0
+                    }
+                }
+                guard abs(value.translation.width) > abs(value.translation.height),
+                      abs(value.translation.width) > 70
+                else { return }
+                movePeriod(value.translation.width < 0 ? 1 : -1)
+            }
     }
 
     private func movePeriod(_ direction: Int) {
@@ -449,9 +488,6 @@ struct PlannerView: View {
         }
     }
 
-    private func goalsDue(on date: Date) -> [Goal] {
-        store.goals.filter { Calendar.current.isDate($0.deadline, inSameDayAs: date) }
-    }
 }
 
 enum PlannerMode: String, CaseIterable, Identifiable {
@@ -463,17 +499,11 @@ enum PlannerMode: String, CaseIterable, Identifiable {
 
 struct CalendarControls: View {
     @Binding var mode: PlannerMode
-    @Binding var showsGoalDeadlines: Bool
     let anchorDate: Date
-    let previous: () -> Void
     let today: () -> Void
-    let next: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
-            Button(action: previous) {
-                Text("前")
-            }
+        HStack(spacing: 10) {
             Picker("", selection: $mode) {
                 ForEach(PlannerMode.allCases) { mode in
                     Text(mode.rawValue).tag(mode)
@@ -486,18 +516,8 @@ struct CalendarControls: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .frame(maxWidth: .infinity)
-            Button {
-                showsGoalDeadlines.toggle()
-                UISelectionFeedbackGenerator().selectionChanged()
-            } label: {
-                Text("期限")
-            }
-            .foregroundStyle(showsGoalDeadlines ? Color.goalAccent : Color.primary)
             Button(action: today) {
                 Text("今日")
-            }
-            Button(action: next) {
-                Text("次")
             }
         }
         .buttonStyle(.softPill)
@@ -619,7 +639,6 @@ struct MonthGrid: View {
     let anchorDate: Date
     let selectedTaskID: UUID?
     let pulseDate: Date?
-    let showsGoalDeadlines: Bool
     let onTapDate: (Date) -> Void
     let onEdit: (ScheduledTask) -> Void
     let onDropPayload: (String, Date) -> Bool
@@ -634,7 +653,7 @@ struct MonthGrid: View {
                         date: date,
                         isInMonth: Calendar.current.isDate(date, equalTo: anchorDate, toGranularity: .month),
                         items: store.tasks(for: date),
-                        goalsDue: showsGoalDeadlines ? goalsDue(on: date) : [],
+                        goalsDue: [],
                         selectedTaskID: selectedTaskID,
                         isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
                         onTapDate: { onTapDate(date) },
@@ -644,10 +663,6 @@ struct MonthGrid: View {
                 }
             }
         }
-    }
-
-    private func goalsDue(on date: Date) -> [Goal] {
-        store.goals.filter { Calendar.current.isDate($0.deadline, inSameDayAs: date) }
     }
 }
 
@@ -784,6 +799,7 @@ struct TaskShelf: View {
     @Binding var selectedTaskID: UUID?
     let onAddTask: () -> Void
     let onAddGoal: () -> Void
+    let onCollapse: () -> Void
 
     private var selectedGoal: Goal? {
         guard let selectedGoalID else { return store.goals.first }
@@ -810,6 +826,9 @@ struct TaskShelf: View {
                 Spacer()
                 Button(action: store.goals.isEmpty ? onAddGoal : onAddTask) {
                     Text(store.goals.isEmpty ? "目標" : "行動")
+                }
+                Button(action: onCollapse) {
+                    Text("しまう")
                 }
                 if selectedTaskID != nil {
                     Text("置く日を選ぶ")
@@ -893,6 +912,37 @@ struct TaskShelf: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 24, y: 10)
+    }
+}
+
+struct CollapsedTaskShelfButton: View {
+    let selectedTaskID: UUID?
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 10) {
+                Image(systemName: selectedTaskID == nil ? "tray.full" : "hand.draw")
+                    .font(.headline.weight(.bold))
+                Text(selectedTaskID == nil ? "行動を出す" : "置く日を選ぶ")
+                    .font(.headline.weight(.bold))
+                Spacer()
+                Image(systemName: "chevron.up")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(Color.cardBackground)
+            .overlay {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(selectedTaskID == nil ? Color.primary.opacity(0.06) : Color.goalAccent.opacity(0.5), lineWidth: selectedTaskID == nil ? 1 : 2)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .shadow(color: .black.opacity(0.07), radius: 18, y: 8)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(selectedTaskID == nil ? Color.primary : Color.goalAccent)
     }
 }
 
