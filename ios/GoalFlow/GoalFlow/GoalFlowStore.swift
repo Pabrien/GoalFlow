@@ -9,7 +9,7 @@ final class GoalFlowStore: ObservableObject {
     @Published var scheduled: [ScheduledTask] = [] { didSet { save() } }
     @Published var backcastItems: [BackcastItem] = [] { didSet { save() } }
     @Published var categories: [String] = defaultCategories { didSet { save() } }
-    @Published var customColors: [String] = [] { didSet { save() } }
+    @Published var colorPalette: [String] = defaultPalette { didSet { save() } }
 
     private let storageURL: URL
 
@@ -39,17 +39,19 @@ final class GoalFlowStore: ObservableObject {
         return Double(done) / Double(scheduled.count)
     }
 
-    var goalColors: [String] { palette + customColors.filter { !palette.contains($0) } }
+    var goalColors: [String] { colorPalette }
 
     func addCustomColor(_ hex: String) {
-        guard !hex.isEmpty, !customColors.contains(hex), !palette.contains(hex) else { return }
-        customColors.append(hex)
+        guard !hex.isEmpty, !colorPalette.contains(hex) else { return }
+        colorPalette.append(hex)
     }
 
     func deleteCustomColor(_ hex: String) {
-        customColors.removeAll { $0 == hex }
+        guard colorPalette.count > 1 else { return }
+        colorPalette.removeAll { $0 == hex }
+        let fallback = colorPalette.first ?? defaultPalette[0]
         for index in goals.indices where goals[index].colorHex == hex {
-            goals[index].colorHex = palette.first ?? "#0F766E"
+            goals[index].colorHex = fallback
         }
     }
 
@@ -254,7 +256,7 @@ final class GoalFlowStore: ObservableObject {
             scheduled: scheduled,
             backcastItems: backcastItems,
             categories: categories,
-            customColors: customColors
+            colorPalette: colorPalette
         )
         guard let data = try? JSONEncoder.goalFlow.encode(snapshot) else { return }
         try? data.write(to: storageURL, options: .atomic)
@@ -270,7 +272,10 @@ final class GoalFlowStore: ObservableObject {
         scheduled = snapshot.scheduled
         backcastItems = snapshot.backcastItems ?? []
         categories = snapshot.categories ?? defaultCategories
-        customColors = snapshot.customColors ?? []
+        colorPalette = snapshot.colorPalette ?? defaultPalette
+        for hex in snapshot.customColors ?? [] where !colorPalette.contains(hex) {
+            colorPalette.append(hex)
+        }
         importLegacyBackcastTasksIfNeeded()
     }
 }
@@ -288,15 +293,14 @@ private struct Snapshot: Codable {
     var backcastItems: [BackcastItem]?
     var categories: [String]?
     var customColors: [String]?
+    var colorPalette: [String]?
 }
 
 private let defaultCategories = ["勉強", "筋トレ", "制作", "資格", "生活", "その他"]
 
-private let palette = [
-    "#0F766E", "#2563EB", "#7C3AED", "#DB2777", "#EA580C", "#16A34A",
-    "#0891B2", "#4F46E5", "#9333EA", "#BE123C", "#C2410C", "#CA8A04",
-    "#65A30D", "#059669", "#0284C7", "#1D4ED8", "#4338CA", "#A21CAF",
-    "#E11D48", "#374151", "#111827", "#78716C", "#0369A1", "#B45309"
+private let defaultPalette = [
+    "#0F766E", "#2563EB", "#7C3AED", "#DB2777",
+    "#EA580C", "#16A34A", "#0891B2", "#374151"
 ]
 
 private extension JSONEncoder {

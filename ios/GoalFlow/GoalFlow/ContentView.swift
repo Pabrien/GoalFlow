@@ -465,7 +465,6 @@ struct PlannerView: View {
             switch target {
             case .task(let id):
                 store.schedule(taskID: id, on: date)
-                selectedTaskID = id
             case .scheduled(let id):
                 if let item = store.scheduled.first(where: { $0.id == id }) {
                     store.moveScheduled(item, to: date)
@@ -825,10 +824,10 @@ struct TaskShelf: View {
                 }
                 Spacer()
                 Button(action: store.goals.isEmpty ? onAddGoal : onAddTask) {
-                    Text(store.goals.isEmpty ? "目標" : "行動")
+                    Image(systemName: "plus")
                 }
                 Button(action: onCollapse) {
-                    Text("しまう")
+                    Image(systemName: "chevron.down")
                 }
                 if selectedTaskID != nil {
                     Text("置く日を選ぶ")
@@ -887,16 +886,6 @@ struct TaskShelf: View {
                                     DragPreview(title: task.title)
                                 }
                             }
-                            Button(action: onAddTask) {
-                                Label("行動を追加", systemImage: "plus")
-                                    .font(.subheadline.weight(.bold))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Color.goalAccent)
-                            .background(Color.goalAccent.opacity(0.09))
-                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                         }
                         .padding(.vertical, 2)
                     }
@@ -1630,7 +1619,7 @@ struct GoalColorEditor: View {
             ColorSwatchGrid(
                 selectedHex: $selectedHex,
                 colors: store.goalColors,
-                removableColors: store.customColors,
+                removableColors: store.goalColors,
                 onDelete: deleteColor
             )
                 .onChange(of: selectedHex) { _, newValue in
