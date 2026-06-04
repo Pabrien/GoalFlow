@@ -270,33 +270,37 @@ struct GoalCard: View {
 
             let plan = store.backcastPlan(for: goal.id)
             if !plan.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
-                        Text("逆算")
-                        Spacer()
-                        Text("\(plan.count)")
-                            .font(.caption.weight(.bold).monospacedDigit())
-                            .foregroundStyle(.secondary)
-                    }
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(goalColor)
-
-                    ForEach(plan.prefix(3)) { item in
-                        HStack(spacing: 8) {
-                            Text(item.date, format: .dateTime.month().day())
-                                .font(.caption2.weight(.bold).monospacedDigit())
+                Button(action: onBackcast) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                            Text("逆算")
+                            Spacer()
+                            Text("\(plan.count)")
+                                .font(.caption.weight(.bold).monospacedDigit())
                                 .foregroundStyle(.secondary)
-                            Text(item.title)
-                                .font(.caption.weight(.semibold))
-                                .lineLimit(1)
-                            Spacer(minLength: 0)
+                        }
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(goalColor)
+
+                        ForEach(plan.prefix(3)) { item in
+                            HStack(spacing: 8) {
+                                Text(item.date, format: .dateTime.month().day())
+                                    .font(.caption2.weight(.bold).monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                                Text(item.title)
+                                    .font(.caption.weight(.semibold))
+                                    .lineLimit(1)
+                                Spacer(minLength: 0)
+                            }
                         }
                     }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(goalColor.opacity(0.09))
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
-                .padding(12)
-                .background(goalColor.opacity(0.09))
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .buttonStyle(.plain)
             }
 
         }
@@ -1647,6 +1651,24 @@ struct EmptyFocusCard: View {
 
 struct ProgressScreen: View {
     @EnvironmentObject private var store: GoalFlowStore
+    @State private var selectedDate = Date().startOfDay
+    @State private var mode: PlannerMode = .week
+
+    private var selectedItems: [ScheduledTask] {
+        store.tasks(for: selectedDate)
+    }
+
+    private var selectedDone: Int {
+        selectedItems.filter(\.isDone).count
+    }
+
+    private var selectedGoalProgress: [(goal: Goal, done: Int, total: Int)] {
+        store.goals.compactMap { goal in
+            let dayItems = selectedItems.filter { $0.goalID == goal.id }
+            guard !dayItems.isEmpty else { return nil }
+            return (goal, dayItems.filter(\.isDone).count, dayItems.count)
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -1654,10 +1676,14 @@ struct ProgressScreen: View {
                 Color.appBackground.ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: 16) {
+                        ProgressDatePicker(
+                            selectedDate: $selectedDate,
+                            mode: $mode
+                        )
                         ProgressCard(
-                            title: "今日",
-                            done: store.todayTasks.filter(\.isDone).count,
-                            total: store.todayTasks.count,
+                            title: selectedDateTitle,
+                            done: selectedDone,
+                            total: selectedItems.count,
                             color: .goalAccent
                         )
                         ProgressCard(
@@ -1666,20 +1692,223 @@ struct ProgressScreen: View {
                             total: store.scheduled.count,
                             color: .blue
                         )
-                        VStack(spacing: 10) {
-                            ForEach(store.goals) { goal in
-                                let total = store.scheduled.filter { $0.goalID == goal.id }.count
-                                let done = store.scheduled.filter { $0.goalID == goal.id && $0.isDone }.count
-                                ProgressLine(title: goal.title, done: done, total: total, color: Color(hex: goal.colorHex))
+                        if !selectedGoalProgress.isEmpty {
+                            VStack(spacing: 10) {
+                                ForEach(selectedGoalProgress, id: \.goal.id) { entry in
+                                    ProgressLine(
+                                        title: entry.goal.title,
+                                        done: entry.done,
+                                        total: entry.total,
+                                        color: Color(hex: entry.goal.colorHex)
+                                    )
+                                }
                             }
+                            .cardStyle()
                         }
-                        .cardStyle()
+
+                        if selectedItems.isEmpty {
+                            EmptyDayProgressCard()
+                        } else {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("やったこと")
+                                    .font(.headline.weight(.bold))
+                                ForEach(selectedItems) { item in
+                                    ScheduledTaskRow(item: item, compact: true)
+                                }
+                            }
+                            .cardStyle()
+                        }
                     }
                     .padding(18)
                 }
             }
             .navigationTitle("進捗")
         }
+    }
+
+    private var selectedDateTitle: String {
+        Calendar.current.isDateInToday(selectedDate)
+            ? "今日"
+            : selectedDate.formatted(.dateTime.month().day())
+    }
+}
+
+struct ProgressDatePicker: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    @Binding var selectedDate: Date
+    @Binding var mode: PlannerMode
+    @State private var anchorDate = Date().startOfDay
+
+    private var week: [Date] {
+        let calendar = Calendar.current
+        let weekday = calendar.component(.weekday, from: anchorDate)
+        let mondayOffset = weekday == 1 ? -6 : 2 - weekday
+        let start = calendar.date(byAdding: .day, value: mondayOffset, to: anchorDate) ?? anchorDate
+        return (0..<7).map { start.addingDays($0) }
+    }
+
+    private var month: [Date] {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month], from: anchorDate)
+        let first = calendar.date(from: components) ?? anchorDate
+        let weekday = calendar.component(.weekday, from: first)
+        let mondayOffset = weekday == 1 ? -6 : 2 - weekday
+        let start = calendar.date(byAdding: .day, value: mondayOffset, to: first) ?? first
+        return (0..<42).map { start.addingDays($0) }
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 10) {
+                Picker("", selection: $mode) {
+                    ForEach(PlannerMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 104)
+
+                Text(label)
+                    .font(.subheadline.weight(.bold).monospacedDigit())
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity)
+
+                Button {
+                    withAnimation(.spring(response: 0.34, dampingFraction: 0.84)) {
+                        anchorDate = Date().startOfDay
+                        selectedDate = Date().startOfDay
+                    }
+                } label: {
+                    Image(systemName: "location.fill")
+                        .frame(width: 34, height: 34)
+                }
+                .buttonStyle(.softPill)
+            }
+
+            Group {
+                switch mode {
+                case .week:
+                    HStack(spacing: 8) {
+                        ForEach(week, id: \.self) { date in
+                            ProgressDateCell(
+                                date: date,
+                                isSelected: Calendar.current.isDate(date, inSameDayAs: selectedDate),
+                                isInMonth: true,
+                                items: store.tasks(for: date),
+                                onTap: { select(date) }
+                            )
+                        }
+                    }
+                case .month:
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
+                        ForEach(month, id: \.self) { date in
+                            ProgressDateCell(
+                                date: date,
+                                isSelected: Calendar.current.isDate(date, inSameDayAs: selectedDate),
+                                isInMonth: Calendar.current.isDate(date, equalTo: anchorDate, toGranularity: .month),
+                                items: store.tasks(for: date),
+                                onTap: { select(date) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        .cardStyle()
+        .gesture(
+            DragGesture(minimumDistance: 24)
+                .onEnded { value in
+                    guard abs(value.translation.width) > abs(value.translation.height),
+                          abs(value.translation.width) > 60
+                    else { return }
+                    move(value.translation.width < 0 ? 1 : -1)
+                }
+        )
+    }
+
+    private var label: String {
+        switch mode {
+        case .week:
+            let start = week.first ?? anchorDate
+            let end = week.last ?? anchorDate
+            return "\(start.formatted(.dateTime.month(.abbreviated).day()))-\(end.formatted(.dateTime.day()))"
+        case .month:
+            return anchorDate.formatted(.dateTime.year().month(.wide))
+        }
+    }
+
+    private func select(_ date: Date) {
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+            selectedDate = date.startOfDay
+            anchorDate = date.startOfDay
+        }
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+
+    private func move(_ direction: Int) {
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.84)) {
+            switch mode {
+            case .week:
+                anchorDate = anchorDate.addingDays(direction * 7)
+            case .month:
+                anchorDate = Calendar.current.date(byAdding: .month, value: direction, to: anchorDate) ?? anchorDate
+            }
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+}
+
+struct ProgressDateCell: View {
+    let date: Date
+    let isSelected: Bool
+    let isInMonth: Bool
+    let items: [ScheduledTask]
+    let onTap: () -> Void
+
+    private var done: Int {
+        items.filter(\.isDone).count
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 5) {
+                Text(date, format: .dateTime.day())
+                    .font(.caption.weight(.bold).monospacedDigit())
+                    .foregroundStyle(isInMonth ? Color.primary : Color.secondary.opacity(0.42))
+                Capsule()
+                    .fill(done > 0 ? Color.goalAccent : Color.primary.opacity(items.isEmpty ? 0.08 : 0.2))
+                    .frame(width: items.isEmpty ? 10 : 22, height: 4)
+                if !items.isEmpty {
+                    Text("\(done)/\(items.count)")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .background(isSelected ? Color.goalAccent.opacity(0.16) : Color.primary.opacity(0.05))
+            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .stroke(isSelected ? Color.goalAccent.opacity(0.85) : .clear, lineWidth: 1.4)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct EmptyDayProgressCard: View {
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "calendar")
+                .font(.system(size: 30, weight: .semibold))
+                .foregroundStyle(Color.goalAccent)
+            Text("この日はまだ記録がありません")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .cardStyle()
     }
 }
 
