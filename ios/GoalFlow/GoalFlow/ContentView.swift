@@ -434,7 +434,7 @@ struct PlannerView: View {
                     }
                         .frame(maxHeight: .infinity)
                         .clipped()
-                        .offset(x: calendarDragOffset * 0.28)
+                        .offset(y: calendarDragOffset * 0.2)
                         .contentShape(Rectangle())
                         .simultaneousGesture(calendarSwipeGesture)
 
@@ -566,16 +566,16 @@ struct PlannerView: View {
 
     private var pageTransition: AnyTransition {
         .asymmetric(
-            insertion: .move(edge: calendarPageDirection > 0 ? .trailing : .leading).combined(with: .opacity),
-            removal: .move(edge: calendarPageDirection > 0 ? .leading : .trailing).combined(with: .opacity)
+            insertion: .move(edge: calendarPageDirection > 0 ? .bottom : .top).combined(with: .opacity),
+            removal: .move(edge: calendarPageDirection > 0 ? .top : .bottom).combined(with: .opacity)
         )
     }
 
     private var calendarSwipeGesture: some Gesture {
         DragGesture(minimumDistance: 24)
             .onChanged { value in
-                guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                calendarDragOffset = value.translation.width
+                guard abs(value.translation.height) > abs(value.translation.width) * 1.25 else { return }
+                calendarDragOffset = value.translation.height
             }
             .onEnded { value in
                 defer {
@@ -583,10 +583,10 @@ struct PlannerView: View {
                         calendarDragOffset = 0
                     }
                 }
-                guard abs(value.translation.width) > abs(value.translation.height),
-                      abs(value.translation.width) > 70
+                guard abs(value.translation.height) > abs(value.translation.width) * 1.25,
+                      abs(value.translation.height) > 115
                 else { return }
-                movePeriod(value.translation.width < 0 ? 1 : -1)
+                movePeriod(value.translation.height < 0 ? 1 : -1)
             }
     }
 
@@ -1815,13 +1815,14 @@ struct ProgressDatePicker: View {
             }
         }
         .cardStyle()
-        .gesture(
+        .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .highPriorityGesture(
             DragGesture(minimumDistance: 24)
                 .onEnded { value in
-                    guard abs(value.translation.width) > abs(value.translation.height),
-                          abs(value.translation.width) > 60
+                    guard abs(value.translation.height) > abs(value.translation.width) * 1.25,
+                          abs(value.translation.height) > 90
                     else { return }
-                    move(value.translation.width < 0 ? 1 : -1)
+                    move(value.translation.height < 0 ? 1 : -1)
                 }
         )
     }
