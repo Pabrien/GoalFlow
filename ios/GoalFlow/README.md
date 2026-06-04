@@ -1,6 +1,6 @@
-# GoalFlow iOS
+# Cevoa iOS
 
-SwiftUIで作ったGoalFlowのネイティブ版プロトタイプです。
+SwiftUIで作ったCevoaのネイティブ版プロトタイプです。
 
 ## できること
 

@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct GoalFlowApp: App {
+struct CevoaApp: App {
     @StateObject private var store = GoalFlowStore()
 
     var body: some Scene {

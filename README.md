@@ -1,6 +1,6 @@
-# GoalFlow
+# Cevoa
 
-GoalFlow is a goal-based planner that turns long-term goals into today’s next action.
+Cevoa is a goal-based planner that turns long-term goals into today’s next action.
 
 ## Features
 

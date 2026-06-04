@@ -109,7 +109,7 @@ struct TodayView: View {
                     .padding(.bottom, 32)
                 }
             }
-            .navigationTitle("GoalFlow")
+            .navigationTitle("Cevoa")
         }
     }
 }
@@ -1267,6 +1267,7 @@ struct GoalEditor: View {
     @State private var category = ""
     @State private var deadline = Date().addingDays(30)
     @State private var colorHex = ""
+    @State private var selectedColor = Color.goalAccent
     @State private var categoryDraft = ""
     @State private var editsCategories = false
     @State private var showsDeleteConfirm = false
@@ -1294,7 +1295,23 @@ struct GoalEditor: View {
                         }
 
                         EditorFieldCard(title: "カテゴリ") {
-                            CategoryChipGrid(selectedCategory: $category, categories: store.categories)
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(Color(hex: colorHex.isEmpty ? "#0F766E" : colorHex))
+                                    .frame(width: 10, height: 10)
+                                Text(category.isEmpty ? "未選択" : category)
+                                    .font(.subheadline.weight(.bold))
+                                Spacer()
+                                Text("選択中")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(Color.primary.opacity(0.06))
+                            .clipShape(Capsule())
+
+                            CategoryChipGrid(selectedCategory: $category, categories: store.categories, colorHex: colorHex)
 
                             HStack(spacing: 8) {
                                 TextField("新しいカテゴリ", text: $categoryDraft)
@@ -1329,7 +1346,7 @@ struct GoalEditor: View {
                             if editsCategories {
                                 VStack(spacing: 8) {
                                     ForEach(store.categories, id: \.self) { item in
-                                        InlineCategoryRow(category: item, selectedCategory: $category)
+                                        InlineCategoryRow(category: item, selectedCategory: $category, colorHex: colorHex)
                                     }
                                 }
                                 .transition(.move(edge: .top).combined(with: .opacity))
@@ -1337,20 +1354,10 @@ struct GoalEditor: View {
                         }
 
                         EditorFieldCard(title: "色") {
-                            ColorSwatchGrid(selectedHex: $colorHex, colors: store.goalColors)
-                            Button {
-                                colorHex = Self.randomColorHex()
-                                UISelectionFeedbackGenerator().selectionChanged()
-                            } label: {
-                                Label("別の色", systemImage: "sparkles")
-                                    .font(.subheadline.weight(.bold))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Color(hex: colorHex))
-                            .background(Color(hex: colorHex).opacity(0.12))
-                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            GoalColorEditor(
+                                selectedHex: $colorHex,
+                                selectedColor: $selectedColor
+                            )
                         }
 
                         EditorFieldCard(title: "期限") {
@@ -1376,7 +1383,11 @@ struct GoalEditor: View {
             .onAppear {
                 category = category.isEmpty ? (store.categories.first ?? "その他") : category
                 colorHex = colorHex.isEmpty ? (store.goalColors.first ?? "#2563EB") : colorHex
+                selectedColor = Color(hex: colorHex)
                 titleFocused = goal == nil
+            }
+            .onChange(of: selectedColor) { _, newValue in
+                colorHex = newValue.hexString
             }
             .navigationTitle(goal == nil ? "目標を作る" : "目標を編集")
             .confirmationDialog("この目標を削除しますか？", isPresented: $showsDeleteConfirm, titleVisibility: .visible) {
@@ -1430,54 +1441,30 @@ struct GoalEditor: View {
         dismiss()
     }
 
-    private static func randomColorHex() -> String {
-        let hue = Double.random(in: 0...1)
-        let saturation = Double.random(in: 0.56...0.78)
-        let brightness = Double.random(in: 0.58...0.82)
-        let uiColor = UIColor(hue: hue, saturation: saturation, brightness: brightness, alpha: 1)
-        var red: CGFloat = 0
-        var green: CGFloat = 0
-        var blue: CGFloat = 0
-        uiColor.getRed(&red, green: &green, blue: &blue, alpha: nil)
-        return String(
-            format: "#%02X%02X%02X",
-            Int(red * 255),
-            Int(green * 255),
-            Int(blue * 255)
-        )
-    }
 }
 
 struct InlineCategoryRow: View {
     @EnvironmentObject private var store: GoalFlowStore
     let category: String
     @Binding var selectedCategory: String
+    let colorHex: String
     @State private var draft = ""
 
     var body: some View {
         HStack(spacing: 10) {
+            Circle()
+                .fill(selectedCategory == category ? Color(hex: colorHex) : Color.secondary.opacity(0.28))
+                .frame(width: 9, height: 9)
             TextField(category, text: $draft)
                 .onAppear {
                     draft = category
                 }
                 .onSubmit {
-                    let old = category
-                    store.renameCategory(category, to: draft)
-                    if selectedCategory == old {
-                        selectedCategory = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-                    }
+                    commitRename()
                 }
-            Button {
-                let old = category
-                store.renameCategory(category, to: draft)
-                if selectedCategory == old {
-                    selectedCategory = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+                .onDisappear {
+                    commitRename()
                 }
-            } label: {
-                Image(systemName: "checkmark.circle")
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(Color.goalAccent)
             Button(role: .destructive) {
                 store.deleteCategory(category)
                 selectedCategory = store.categories.first ?? ""
@@ -1486,6 +1473,16 @@ struct InlineCategoryRow: View {
             }
             .buttonStyle(.plain)
             .disabled(store.categories.count <= 1)
+        }
+    }
+
+    private func commitRename() {
+        let old = category
+        let clean = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty, clean != old else { return }
+        store.renameCategory(old, to: clean)
+        if selectedCategory == old {
+            selectedCategory = clean
         }
     }
 }
@@ -1509,6 +1506,7 @@ struct EditorFieldCard<Content: View>: View {
 struct CategoryChipGrid: View {
     @Binding var selectedCategory: String
     let categories: [String]
+    let colorHex: String
 
     var body: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 8)], alignment: .leading, spacing: 8) {
@@ -1523,12 +1521,12 @@ struct CategoryChipGrid: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
                         .frame(maxWidth: .infinity)
-                        .background(selectedCategory == item ? Color.goalAccent.opacity(0.16) : Color.primary.opacity(0.07))
-                        .foregroundStyle(selectedCategory == item ? Color.goalAccent : Color.primary)
+                        .background(selectedCategory == item ? Color(hex: colorHex).opacity(0.16) : Color.primary.opacity(0.07))
+                        .foregroundStyle(selectedCategory == item ? Color(hex: colorHex) : Color.primary)
                         .clipShape(Capsule())
                         .overlay {
                             Capsule()
-                                .stroke(selectedCategory == item ? Color.goalAccent.opacity(0.8) : .clear, lineWidth: 1.5)
+                                .stroke(selectedCategory == item ? Color(hex: colorHex).opacity(0.8) : .clear, lineWidth: 1.5)
                         }
                 }
                 .buttonStyle(.plain)
@@ -1548,23 +1546,102 @@ struct ColorSwatchGrid: View {
                     selectedHex = hex
                     UISelectionFeedbackGenerator().selectionChanged()
                 } label: {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color(hex: hex).gradient)
-                            .frame(height: 48)
-                            .shadow(color: Color(hex: hex).opacity(0.28), radius: selectedHex == hex ? 10 : 0, y: 4)
-                        if selectedHex == hex {
-                            Image(systemName: "checkmark")
-                                .font(.headline.weight(.bold))
-                                .foregroundStyle(.white)
-                        }
-                    }
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(Color(hex: hex).gradient)
+                        .frame(height: 48)
+                        .shadow(color: Color(hex: hex).opacity(0.28), radius: selectedHex == hex ? 10 : 0, y: 4)
                     .overlay {
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(selectedHex == hex ? Color.primary.opacity(0.75) : Color.white.opacity(0.22), lineWidth: selectedHex == hex ? 2.5 : 1)
+                            .stroke(selectedHex == hex ? Color.primary.opacity(0.82) : Color.white.opacity(0.22), lineWidth: selectedHex == hex ? 3 : 1)
                     }
+                    .scaleEffect(selectedHex == hex ? 1.04 : 1)
                 }
                 .buttonStyle(.plain)
+            }
+        }
+    }
+}
+
+struct GoalColorEditor: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    @Binding var selectedHex: String
+    @Binding var selectedColor: Color
+
+    private var selectedDisplayHex: String {
+        selectedHex.isEmpty ? selectedColor.hexString : selectedHex
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(selectedColor.gradient)
+                    .frame(width: 64, height: 54)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+                    }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("選択中")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                    Text(selectedDisplayHex)
+                        .font(.headline.monospaced())
+                }
+                Spacer()
+                ColorPicker("", selection: $selectedColor, supportsOpacity: false)
+                    .labelsHidden()
+            }
+
+            ColorPicker("虹色から選ぶ", selection: $selectedColor, supportsOpacity: false)
+                .font(.subheadline.weight(.bold))
+
+            Button {
+                selectedHex = selectedColor.hexString
+                store.addCustomColor(selectedHex)
+                UISelectionFeedbackGenerator().selectionChanged()
+            } label: {
+                Label("この色を保存", systemImage: "plus")
+                    .font(.subheadline.weight(.bold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(selectedColor)
+            .background(selectedColor.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+            ColorSwatchGrid(selectedHex: $selectedHex, colors: store.goalColors)
+                .onChange(of: selectedHex) { _, newValue in
+                    selectedColor = Color(hex: newValue)
+                }
+
+            if !store.customColors.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("保存した色")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                    ForEach(store.customColors, id: \.self) { hex in
+                        HStack(spacing: 10) {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color(hex: hex))
+                                .frame(width: 34, height: 28)
+                            Text(hex)
+                                .font(.caption.weight(.bold).monospaced())
+                            Spacer()
+                            Button(role: .destructive) {
+                                store.deleteCustomColor(hex)
+                                if selectedHex == hex {
+                                    selectedHex = store.goalColors.first ?? "#0F766E"
+                                    selectedColor = Color(hex: selectedHex)
+                                }
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
             }
         }
     }

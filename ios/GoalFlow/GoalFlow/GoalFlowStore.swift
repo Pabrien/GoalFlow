@@ -9,6 +9,7 @@ final class GoalFlowStore: ObservableObject {
     @Published var scheduled: [ScheduledTask] = [] { didSet { save() } }
     @Published var backcastItems: [BackcastItem] = [] { didSet { save() } }
     @Published var categories: [String] = defaultCategories { didSet { save() } }
+    @Published var customColors: [String] = [] { didSet { save() } }
 
     private let storageURL: URL
 
@@ -38,7 +39,19 @@ final class GoalFlowStore: ObservableObject {
         return Double(done) / Double(scheduled.count)
     }
 
-    var goalColors: [String] { palette }
+    var goalColors: [String] { palette + customColors.filter { !palette.contains($0) } }
+
+    func addCustomColor(_ hex: String) {
+        guard !hex.isEmpty, !customColors.contains(hex), !palette.contains(hex) else { return }
+        customColors.append(hex)
+    }
+
+    func deleteCustomColor(_ hex: String) {
+        customColors.removeAll { $0 == hex }
+        for index in goals.indices where goals[index].colorHex == hex {
+            goals[index].colorHex = palette.first ?? "#0F766E"
+        }
+    }
 
     func addGoal(title: String, category: String, deadline: Date, colorHex: String) {
         goals.append(
@@ -240,7 +253,8 @@ final class GoalFlowStore: ObservableObject {
             tasks: tasks,
             scheduled: scheduled,
             backcastItems: backcastItems,
-            categories: categories
+            categories: categories,
+            customColors: customColors
         )
         guard let data = try? JSONEncoder.goalFlow.encode(snapshot) else { return }
         try? data.write(to: storageURL, options: .atomic)
@@ -256,6 +270,7 @@ final class GoalFlowStore: ObservableObject {
         scheduled = snapshot.scheduled
         backcastItems = snapshot.backcastItems ?? []
         categories = snapshot.categories ?? defaultCategories
+        customColors = snapshot.customColors ?? []
         importLegacyBackcastTasksIfNeeded()
     }
 }
@@ -272,6 +287,7 @@ private struct Snapshot: Codable {
     var scheduled: [ScheduledTask]
     var backcastItems: [BackcastItem]?
     var categories: [String]?
+    var customColors: [String]?
 }
 
 private let defaultCategories = ["勉強", "筋トレ", "制作", "資格", "生活", "その他"]

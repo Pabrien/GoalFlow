@@ -1,6 +1,6 @@
 {
-  "name": "GoalFlow",
-  "short_name": "GoalFlow",
+  "name": "Cevoa",
+  "short_name": "Cevoa",
   "description": "目標から逆算して、今日やることへ落とし込むタスク管理アプリ。",
   "start_url": "./index.html",
   "scope": "./",
