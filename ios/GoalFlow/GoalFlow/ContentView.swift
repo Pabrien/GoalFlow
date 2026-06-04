@@ -703,6 +703,7 @@ struct CalendarControls: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .frame(maxWidth: .infinity)
+            SwipeHintGlyph()
             Button {
                 showsDeadlines.toggle()
                 UISelectionFeedbackGenerator().selectionChanged()
@@ -1338,6 +1339,23 @@ struct MiniPlannerMetric: View {
     }
 }
 
+struct SwipeHintGlyph: View {
+    @State private var moves = false
+
+    var body: some View {
+        Image(systemName: "chevron.up.chevron.down")
+            .font(.caption.weight(.bold))
+            .foregroundStyle(Color.secondary.opacity(0.72))
+            .frame(width: 24, height: 30)
+            .offset(y: moves ? -2.5 : 2.5)
+            .animation(.easeInOut(duration: 1.05).repeatCount(4, autoreverses: true), value: moves)
+            .onAppear {
+                moves = true
+            }
+            .accessibilityHidden(true)
+    }
+}
+
 struct GoalTaskFilter: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Binding var selectedGoalID: UUID?
@@ -1652,7 +1670,6 @@ struct EmptyFocusCard: View {
 struct ProgressScreen: View {
     @EnvironmentObject private var store: GoalFlowStore
     @State private var selectedDate = Date().startOfDay
-    @State private var mode: PlannerMode = .week
 
     private var selectedItems: [ScheduledTask] {
         store.tasks(for: selectedDate)
@@ -1674,52 +1691,55 @@ struct ProgressScreen: View {
         NavigationStack {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
-                ScrollView {
-                    VStack(spacing: 16) {
-                        ProgressDatePicker(
-                            selectedDate: $selectedDate,
-                            mode: $mode
-                        )
-                        ProgressCard(
-                            title: selectedDateTitle,
-                            done: selectedDone,
-                            total: selectedItems.count,
-                            color: .goalAccent
-                        )
-                        ProgressCard(
-                            title: "全体",
-                            done: store.scheduled.filter(\.isDone).count,
-                            total: store.scheduled.count,
-                            color: .blue
-                        )
-                        if !selectedGoalProgress.isEmpty {
-                            VStack(spacing: 10) {
-                                ForEach(selectedGoalProgress, id: \.goal.id) { entry in
-                                    ProgressLine(
-                                        title: entry.goal.title,
-                                        done: entry.done,
-                                        total: entry.total,
-                                        color: Color(hex: entry.goal.colorHex)
-                                    )
-                                }
-                            }
-                            .cardStyle()
-                        }
+                VStack(spacing: 12) {
+                    ProgressDatePicker(selectedDate: $selectedDate)
+                        .padding(.horizontal, 18)
+                        .padding(.top, 12)
 
-                        if selectedItems.isEmpty {
-                            EmptyDayProgressCard()
-                        } else {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("やったこと")
-                                    .font(.headline.weight(.bold))
-                                ForEach(selectedItems) { item in
-                                    ScheduledTaskRow(item: item, compact: true)
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            ProgressCard(
+                                title: selectedDateTitle,
+                                done: selectedDone,
+                                total: selectedItems.count,
+                                color: .goalAccent
+                            )
+                            ProgressCard(
+                                title: "全体",
+                                done: store.scheduled.filter(\.isDone).count,
+                                total: store.scheduled.count,
+                                color: .blue
+                            )
+                            if !selectedGoalProgress.isEmpty {
+                                VStack(spacing: 10) {
+                                    ForEach(selectedGoalProgress, id: \.goal.id) { entry in
+                                        ProgressLine(
+                                            title: entry.goal.title,
+                                            done: entry.done,
+                                            total: entry.total,
+                                            color: Color(hex: entry.goal.colorHex)
+                                        )
+                                    }
                                 }
+                                .cardStyle()
                             }
-                            .cardStyle()
+
+                            if selectedItems.isEmpty {
+                                EmptyDayProgressCard()
+                            } else {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("やったこと")
+                                        .font(.headline.weight(.bold))
+                                    ForEach(selectedItems) { item in
+                                        ScheduledTaskRow(item: item, compact: true)
+                                    }
+                                }
+                                .cardStyle()
+                            }
                         }
+                        .padding(.horizontal, 18)
+                        .padding(.bottom, 24)
                     }
-                    .padding(18)
                 }
             }
             .navigationTitle("進捗")
@@ -1736,16 +1756,7 @@ struct ProgressScreen: View {
 struct ProgressDatePicker: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Binding var selectedDate: Date
-    @Binding var mode: PlannerMode
     @State private var anchorDate = Date().startOfDay
-
-    private var week: [Date] {
-        let calendar = Calendar.current
-        let weekday = calendar.component(.weekday, from: anchorDate)
-        let mondayOffset = weekday == 1 ? -6 : 2 - weekday
-        let start = calendar.date(byAdding: .day, value: mondayOffset, to: anchorDate) ?? anchorDate
-        return (0..<7).map { start.addingDays($0) }
-    }
 
     private var month: [Date] {
         let calendar = Calendar.current
@@ -1760,18 +1771,12 @@ struct ProgressDatePicker: View {
     var body: some View {
         VStack(spacing: 12) {
             HStack(spacing: 10) {
-                Picker("", selection: $mode) {
-                    ForEach(PlannerMode.allCases) { mode in
-                        Text(mode.rawValue).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 104)
-
                 Text(label)
                     .font(.subheadline.weight(.bold).monospacedDigit())
                     .lineLimit(1)
                     .frame(maxWidth: .infinity)
+
+                SwipeHintGlyph()
 
                 Button {
                     withAnimation(.spring(response: 0.34, dampingFraction: 0.84)) {
@@ -1785,32 +1790,15 @@ struct ProgressDatePicker: View {
                 .buttonStyle(.softPill)
             }
 
-            Group {
-                switch mode {
-                case .week:
-                    HStack(spacing: 8) {
-                        ForEach(week, id: \.self) { date in
-                            ProgressDateCell(
-                                date: date,
-                                isSelected: Calendar.current.isDate(date, inSameDayAs: selectedDate),
-                                isInMonth: true,
-                                items: store.tasks(for: date),
-                                onTap: { select(date) }
-                            )
-                        }
-                    }
-                case .month:
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
-                        ForEach(month, id: \.self) { date in
-                            ProgressDateCell(
-                                date: date,
-                                isSelected: Calendar.current.isDate(date, inSameDayAs: selectedDate),
-                                isInMonth: Calendar.current.isDate(date, equalTo: anchorDate, toGranularity: .month),
-                                items: store.tasks(for: date),
-                                onTap: { select(date) }
-                            )
-                        }
-                    }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
+                ForEach(month, id: \.self) { date in
+                    ProgressDateCell(
+                        date: date,
+                        isSelected: Calendar.current.isDate(date, inSameDayAs: selectedDate),
+                        isInMonth: Calendar.current.isDate(date, equalTo: anchorDate, toGranularity: .month),
+                        items: store.tasks(for: date),
+                        onTap: { select(date) }
+                    )
                 }
             }
         }
@@ -1828,14 +1816,7 @@ struct ProgressDatePicker: View {
     }
 
     private var label: String {
-        switch mode {
-        case .week:
-            let start = week.first ?? anchorDate
-            let end = week.last ?? anchorDate
-            return "\(start.formatted(.dateTime.month(.abbreviated).day()))-\(end.formatted(.dateTime.day()))"
-        case .month:
-            return anchorDate.formatted(.dateTime.year().month(.wide))
-        }
+        anchorDate.formatted(.dateTime.year().month(.wide))
     }
 
     private func select(_ date: Date) {
@@ -1848,12 +1829,7 @@ struct ProgressDatePicker: View {
 
     private func move(_ direction: Int) {
         withAnimation(.spring(response: 0.34, dampingFraction: 0.84)) {
-            switch mode {
-            case .week:
-                anchorDate = anchorDate.addingDays(direction * 7)
-            case .month:
-                anchorDate = Calendar.current.date(byAdding: .month, value: direction, to: anchorDate) ?? anchorDate
-            }
+            anchorDate = Calendar.current.date(byAdding: .month, value: direction, to: anchorDate) ?? anchorDate
         }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
