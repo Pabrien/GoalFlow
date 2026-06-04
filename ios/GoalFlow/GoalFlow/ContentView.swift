@@ -290,7 +290,9 @@ struct PlannerView: View {
     @State private var selectedGoalID: UUID?
     @State private var pulseDate: Date?
     @State private var calendarDragOffset: CGFloat = 0
+    @State private var calendarPageDirection = 1
     @State private var showsTaskShelf = false
+    @State private var showsDeadlines = false
 
     private var week: [Date] {
         let calendar = Calendar.current
@@ -317,15 +319,21 @@ struct PlannerView: View {
                 VStack(spacing: 12) {
                     CalendarControls(
                         mode: $mode,
+                        showsDeadlines: $showsDeadlines,
                         anchorDate: anchorDate,
                         today: { moveToToday() }
                     )
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
 
-                    calendarBody
+                    ZStack {
+                        calendarBody
+                            .id(calendarPageID)
+                            .transition(pageTransition)
+                    }
                         .frame(maxHeight: .infinity)
-                        .offset(x: calendarDragOffset * 0.16)
+                        .clipped()
+                        .offset(x: calendarDragOffset * 0.28)
                         .contentShape(Rectangle())
                         .simultaneousGesture(calendarSwipeGesture)
 
@@ -384,7 +392,7 @@ struct PlannerView: View {
                         CalendarDayCard(
                             date: date,
                             items: store.tasks(for: date),
-                            goalsDue: [],
+                            goalsDue: showsDeadlines ? goalsDue(on: date) : [],
                             selectedTaskID: selectedTaskID,
                             isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
                             onTapDate: { placeSelectedTask(on: date) },
@@ -403,6 +411,7 @@ struct PlannerView: View {
                 anchorDate: anchorDate,
                 selectedTaskID: selectedTaskID,
                 pulseDate: pulseDate,
+                showsDeadlines: showsDeadlines,
                 onTapDate: placeSelectedTask,
                 onEdit: { sheet = .scheduled($0) },
                 onDropPayload: handleDrop
@@ -410,6 +419,23 @@ struct PlannerView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
         }
+    }
+
+    private var calendarPageID: String {
+        switch mode {
+        case .week:
+            return "week-\(week.first?.timeIntervalSince1970 ?? 0)"
+        case .month:
+            let components = Calendar.current.dateComponents([.year, .month], from: anchorDate)
+            return "month-\(components.year ?? 0)-\(components.month ?? 0)"
+        }
+    }
+
+    private var pageTransition: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: calendarPageDirection > 0 ? .trailing : .leading).combined(with: .opacity),
+            removal: .move(edge: calendarPageDirection > 0 ? .leading : .trailing).combined(with: .opacity)
+        )
     }
 
     private var calendarSwipeGesture: some Gesture {
@@ -433,6 +459,7 @@ struct PlannerView: View {
 
     private func movePeriod(_ direction: Int) {
         withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+            calendarPageDirection = direction
             switch mode {
             case .week:
                 anchorDate = anchorDate.addingDays(direction * 7)
@@ -445,6 +472,7 @@ struct PlannerView: View {
 
     private func moveToToday() {
         withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+            calendarPageDirection = Date().startOfDay >= anchorDate ? 1 : -1
             anchorDate = Date().startOfDay
         }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -487,6 +515,10 @@ struct PlannerView: View {
         }
     }
 
+    private func goalsDue(on date: Date) -> [Goal] {
+        store.goals.filter { Calendar.current.isDate($0.deadline, inSameDayAs: date) }
+    }
+
 }
 
 enum PlannerMode: String, CaseIterable, Identifiable {
@@ -498,6 +530,7 @@ enum PlannerMode: String, CaseIterable, Identifiable {
 
 struct CalendarControls: View {
     @Binding var mode: PlannerMode
+    @Binding var showsDeadlines: Bool
     let anchorDate: Date
     let today: () -> Void
 
@@ -515,6 +548,13 @@ struct CalendarControls: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .frame(maxWidth: .infinity)
+            Button {
+                showsDeadlines.toggle()
+                UISelectionFeedbackGenerator().selectionChanged()
+            } label: {
+                Text(showsDeadlines ? "期限表示中" : "期限")
+            }
+            .foregroundStyle(showsDeadlines ? Color.goalAccent : Color.primary)
             Button(action: today) {
                 Text("今日")
             }
@@ -530,9 +570,9 @@ struct CalendarControls: View {
         case .week:
             let weekStart = weekStart(for: anchorDate)
             let end = weekStart.addingDays(6)
-            return "\(weekStart.shortMonthDayText)-\(end.dayText)"
+            return "\(weekStart.formatted(.dateTime.month(.abbreviated).day()))-\(end.formatted(.dateTime.day()))"
         case .month:
-            return anchorDate.yearMonthText
+            return anchorDate.formatted(.dateTime.year().month(.wide))
         }
     }
 
@@ -562,10 +602,10 @@ struct CalendarDayCard: View {
         HStack(alignment: .top, spacing: 12) {
             Button(action: onTapDate) {
                 VStack(spacing: 2) {
-                    Text(date.japaneseWeekdayText)
+                    Text(date, format: .dateTime.weekday(.abbreviated))
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.secondary)
-                    Text(date.dayText)
+                    Text(date, format: .dateTime.day())
                         .font(.system(size: 30, weight: .bold, design: .rounded))
                     if !items.isEmpty {
                         Text("\(items.count)")
@@ -600,6 +640,11 @@ struct CalendarDayCard: View {
             .scrollIndicators(.hidden)
         }
         .frame(maxWidth: .infinity, minHeight: 92, maxHeight: 142, alignment: .topLeading)
+        .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .onTapGesture {
+            guard selectedTaskID != nil else { return }
+            onTapDate()
+        }
         .padding(12)
         .background(dayBackground)
         .overlay {
@@ -638,6 +683,7 @@ struct MonthGrid: View {
     let anchorDate: Date
     let selectedTaskID: UUID?
     let pulseDate: Date?
+    let showsDeadlines: Bool
     let onTapDate: (Date) -> Void
     let onEdit: (ScheduledTask) -> Void
     let onDropPayload: (String, Date) -> Bool
@@ -652,7 +698,7 @@ struct MonthGrid: View {
                         date: date,
                         isInMonth: Calendar.current.isDate(date, equalTo: anchorDate, toGranularity: .month),
                         items: store.tasks(for: date),
-                        goalsDue: [],
+                        goalsDue: showsDeadlines ? goalsDue(on: date) : [],
                         selectedTaskID: selectedTaskID,
                         isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
                         onTapDate: { onTapDate(date) },
@@ -662,6 +708,10 @@ struct MonthGrid: View {
                 }
             }
         }
+    }
+
+    private func goalsDue(on date: Date) -> [Goal] {
+        store.goals.filter { Calendar.current.isDate($0.deadline, inSameDayAs: date) }
     }
 }
 
@@ -680,7 +730,7 @@ struct MonthDayCell: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
-                Text(date.dayNumberText)
+                Text(date, format: .dateTime.day())
                     .font(.caption.weight(.bold).monospacedDigit())
                     .foregroundStyle(isInMonth ? Color.primary : Color.secondary.opacity(0.45))
                 Spacer()
