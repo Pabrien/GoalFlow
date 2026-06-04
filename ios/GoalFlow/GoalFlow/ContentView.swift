@@ -103,13 +103,6 @@ struct TodayView: View {
                                 onAddTask: { sheet = .task(store.goals.first?.id) }
                             )
                         }
-                        TodayRing(progress: store.todayCompletionRate)
-                        ContinuityCard(
-                            streak: store.currentStreak,
-                            weekDone: store.weekCompletedCount,
-                            todayDone: store.todayTasks.filter(\.isDone).count
-                        )
-
                         if store.todayTasks.isEmpty {
                             EmptyFocusCard()
                         } else {
@@ -385,7 +378,6 @@ struct PlannerView: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Binding var sheet: ActiveSheet?
     @State private var anchorDate = Date().startOfDay
-    @State private var mode: PlannerMode = .week
     @State private var selectedTaskID: UUID?
     @State private var selectedGoalID: UUID?
     @State private var pulseDate: Date?
@@ -393,11 +385,6 @@ struct PlannerView: View {
     @State private var calendarPageDirection = 1
     @State private var showsTaskShelf = false
     @State private var showsDeadlines = false
-
-    private var rollingDays: [Date] {
-        let start = anchorDate.startOfDay
-        return (0..<30).map { start.addingDays($0) }
-    }
 
     private var month: [Date] {
         let calendar = Calendar.current
@@ -415,13 +402,11 @@ struct PlannerView: View {
                 Color.appBackground.ignoresSafeArea()
                 VStack(spacing: 12) {
                     CalendarControls(
-                        mode: $mode,
                         showsDeadlines: $showsDeadlines,
                         hasRoadmapMarkers: hasRoadmapMarkers,
                         anchorDate: anchorDate,
                         today: { moveToToday() }
                     )
-                    .highPriorityGesture(calendarSwipeGesture)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
 
@@ -477,9 +462,6 @@ struct PlannerView: View {
                 selectedGoalID = goals.first?.id
                 selectedTaskID = nil
             }
-            .onChange(of: mode) { _, _ in
-                clearSelectedTask()
-            }
             .onChange(of: showsDeadlines) { _, _ in
                 clearSelectedTask()
             }
@@ -491,43 +473,20 @@ struct PlannerView: View {
 
     @ViewBuilder
     private var calendarBody: some View {
-        switch mode {
-        case .week:
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVStack(spacing: 10) {
-                    ForEach(rollingDays, id: \.self) { date in
-                        CalendarDayCard(
-                            date: date,
-                            items: store.tasks(for: date),
-                            goalsDue: showsDeadlines ? goalsDue(on: date) : [],
-                            milestones: showsDeadlines ? milestones(on: date) : [],
-                            selectedTaskID: selectedTaskID,
-                            isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
-                            onTapDate: { handleDateTap(date) },
-                            onEdit: { sheet = .scheduled($0) },
-                            onDropPayload: { payload in handleDrop(payload, on: date) }
-                        )
-                    }
-                }
-                .padding(.top, 2)
-                .padding(.bottom, 4)
-            }
-        case .month:
-            MonthGrid(
-                dates: month,
-                anchorDate: anchorDate,
-                selectedTaskID: selectedTaskID,
-                pulseDate: pulseDate,
-                showsDeadlines: showsDeadlines,
-                onTapDate: handleDateTap,
-                onEdit: { sheet = .scheduled($0) },
-                onDropPayload: handleDrop
-            )
-            .padding(.vertical, 8)
-        }
+        MonthGrid(
+            dates: month,
+            anchorDate: anchorDate,
+            selectedTaskID: selectedTaskID,
+            pulseDate: pulseDate,
+            showsDeadlines: showsDeadlines,
+            onTapDate: handleDateTap,
+            onEdit: { sheet = .scheduled($0) },
+            onDropPayload: handleDrop
+        )
+        .padding(.vertical, 8)
     }
 
-    private var calendarCore: some View {
+    private var calendarStage: some View {
         ZStack {
             calendarBody
                 .id(calendarPageID)
@@ -537,36 +496,18 @@ struct PlannerView: View {
         .clipped()
         .offset(y: calendarDragOffset * 0.2)
         .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .highPriorityGesture(calendarSwipeGesture)
+        .subtleVerticalCue()
         .cardStyle()
     }
 
-    @ViewBuilder
-    private var calendarStage: some View {
-        if mode == .month {
-            calendarCore
-                .highPriorityGesture(calendarSwipeGesture)
-        } else {
-            calendarCore
-        }
-    }
-
     private var calendarPageID: String {
-        switch mode {
-        case .week:
-            return "days-\(rollingDays.first?.timeIntervalSince1970 ?? 0)"
-        case .month:
-            let components = Calendar.current.dateComponents([.year, .month], from: anchorDate)
-            return "month-\(components.year ?? 0)-\(components.month ?? 0)"
-        }
+        let components = Calendar.current.dateComponents([.year, .month], from: anchorDate)
+        return "month-\(components.year ?? 0)-\(components.month ?? 0)"
     }
 
     private var visibleDates: [Date] {
-        switch mode {
-        case .week:
-            return rollingDays
-        case .month:
-            return month
-        }
+        month
     }
 
     private var hasRoadmapMarkers: Bool {
@@ -605,12 +546,7 @@ struct PlannerView: View {
         withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
             selectedTaskID = nil
             calendarPageDirection = direction
-            switch mode {
-            case .week:
-                anchorDate = anchorDate.addingDays(direction * 30)
-            case .month:
-                anchorDate = Calendar.current.date(byAdding: .month, value: direction, to: anchorDate) ?? anchorDate
-            }
+            anchorDate = Calendar.current.date(byAdding: .month, value: direction, to: anchorDate) ?? anchorDate
         }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
@@ -686,15 +622,7 @@ struct PlannerView: View {
 
 }
 
-enum PlannerMode: String, CaseIterable, Identifiable {
-    case week = "30日"
-    case month = "月"
-
-    var id: String { rawValue }
-}
-
 struct CalendarControls: View {
-    @Binding var mode: PlannerMode
     @Binding var showsDeadlines: Bool
     let hasRoadmapMarkers: Bool
     let anchorDate: Date
@@ -702,19 +630,11 @@ struct CalendarControls: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Picker("", selection: $mode) {
-                ForEach(PlannerMode.allCases) { mode in
-                    Text(mode.rawValue).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 104)
             Text(label)
                 .font(.subheadline.weight(.bold).monospacedDigit())
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .frame(maxWidth: .infinity)
-            SwipeHintGlyph()
             Button {
                 showsDeadlines.toggle()
                 UISelectionFeedbackGenerator().selectionChanged()
@@ -744,13 +664,7 @@ struct CalendarControls: View {
     }
 
     private var label: String {
-        switch mode {
-        case .week:
-            let end = anchorDate.addingDays(29)
-            return "\(anchorDate.formatted(.dateTime.month(.abbreviated).day()))-\(end.formatted(.dateTime.month(.abbreviated).day()))"
-        case .month:
-            return anchorDate.formatted(.dateTime.year().month(.wide))
-        }
+        anchorDate.formatted(.dateTime.year().month(.wide))
     }
 }
 
@@ -1342,20 +1256,22 @@ struct MiniPlannerMetric: View {
     }
 }
 
-struct SwipeHintGlyph: View {
+struct SubtleVerticalCueModifier: ViewModifier {
     @State private var moves = false
 
-    var body: some View {
-        Image(systemName: "chevron.up.chevron.down")
-            .font(.caption.weight(.bold))
-            .foregroundStyle(Color.secondary.opacity(0.72))
-            .frame(width: 24, height: 30)
-            .offset(y: moves ? -2.5 : 2.5)
-            .animation(.easeInOut(duration: 1.05).repeatCount(4, autoreverses: true), value: moves)
+    func body(content: Content) -> some View {
+        content
+            .offset(y: moves ? -3 : 3)
+            .animation(.easeInOut(duration: 1.05).repeatCount(3, autoreverses: true), value: moves)
             .onAppear {
                 moves = true
             }
-            .accessibilityHidden(true)
+    }
+}
+
+extension View {
+    func subtleVerticalCue() -> some View {
+        modifier(SubtleVerticalCueModifier())
     }
 }
 
@@ -1779,8 +1695,6 @@ struct ProgressDatePicker: View {
                     .lineLimit(1)
                     .frame(maxWidth: .infinity)
 
-                SwipeHintGlyph()
-
                 Button {
                     withAnimation(.spring(response: 0.34, dampingFraction: 0.84)) {
                         anchorDate = Date().startOfDay
@@ -1806,6 +1720,7 @@ struct ProgressDatePicker: View {
             }
         }
         .cardStyle()
+        .subtleVerticalCue()
         .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .highPriorityGesture(
             DragGesture(minimumDistance: 24)
