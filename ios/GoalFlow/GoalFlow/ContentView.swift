@@ -42,6 +42,9 @@ struct ContentView: View {
             case .scheduled(let item):
                 ScheduledEditor(item: item)
                     .presentationDetents([.medium])
+            case .day(let date):
+                DayProgressSheet(date: date)
+                    .presentationDetents([.medium, .large])
             case .backcast(let goal):
                 BackcastEditor(goal: goal)
                     .presentationDetents([.large])
@@ -63,6 +66,7 @@ enum ActiveSheet: Identifiable {
     case task(UUID?)
     case schedule(ActionTask)
     case scheduled(ScheduledTask)
+    case day(Date)
     case backcast(Goal)
 
     var id: String {
@@ -72,6 +76,7 @@ enum ActiveSheet: Identifiable {
         case .task(let goalID): "task-\(goalID?.uuidString ?? "new")"
         case .schedule(let task): "schedule-\(task.id)"
         case .scheduled(let item): "scheduled-\(item.id)"
+        case .day(let date): "day-\(date.startOfDay.timeIntervalSince1970)"
         case .backcast(let goal): "backcast-\(goal.id)"
         }
     }
@@ -504,7 +509,7 @@ struct PlannerView: View {
                             milestones: showsDeadlines ? milestones(on: date) : [],
                             selectedTaskID: selectedTaskID,
                             isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
-                            onTapDate: { placeSelectedTask(on: date) },
+                            onTapDate: { handleDateTap(date) },
                             onEdit: { sheet = .scheduled($0) },
                             onDropPayload: { payload in handleDrop(payload, on: date) }
                         )
@@ -521,7 +526,7 @@ struct PlannerView: View {
                 selectedTaskID: selectedTaskID,
                 pulseDate: pulseDate,
                 showsDeadlines: showsDeadlines,
-                onTapDate: placeSelectedTask,
+                onTapDate: handleDateTap,
                 onEdit: { sheet = .scheduled($0) },
                 onDropPayload: handleDrop
             )
@@ -611,6 +616,14 @@ struct PlannerView: View {
             pulseDate = date
         }
         clearPulse()
+    }
+
+    private func handleDateTap(_ date: Date) {
+        if selectedTaskID != nil {
+            placeSelectedTask(on: date)
+        } else {
+            sheet = .day(date.startOfDay)
+        }
     }
 
     private func handleDrop(_ payload: String, on date: Date) -> Bool {
@@ -1263,19 +1276,27 @@ struct CollapsedTaskShelfButton: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 10) {
-                Image(systemName: selectedTaskID == nil ? "tray.full" : "hand.draw")
-                    .font(.headline.weight(.bold))
-                Text(selectedTaskID == nil ? "行動を出す" : selectedTaskTitle.map { "「\($0)」を置く" } ?? "置く日を選ぶ")
-                    .font(.headline.weight(.bold))
-                    .lineLimit(1)
-                Spacer()
-                Image(systemName: "chevron.up")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
+            VStack(spacing: 10) {
+                HStack(spacing: 10) {
+                    Image(systemName: selectedTaskID == nil ? "tray.full" : "hand.draw")
+                        .font(.headline.weight(.bold))
+                    Text(selectedTaskID == nil ? "行動リスト" : selectedTaskTitle.map { "「\($0)」を置く" } ?? "置く日を選ぶ")
+                        .font(.headline.weight(.bold))
+                        .lineLimit(1)
+                    Spacer()
+                    Image(systemName: "chevron.up")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack(spacing: 8) {
+                    MiniPlannerMetric(title: "今日", value: "\(store.todayTasks.filter { !$0.isDone }.count)", unit: "残り")
+                    MiniPlannerMetric(title: "今週", value: "\(store.weekCompletedCount)", unit: "完了")
+                    MiniPlannerMetric(title: "連続", value: "\(store.currentStreak)", unit: "日")
+                }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.vertical, 12)
             .background(Color.cardBackground)
             .overlay {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -1286,6 +1307,30 @@ struct CollapsedTaskShelfButton: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(selectedTaskID == nil ? Color.primary : Color.goalAccent)
+    }
+}
+
+struct MiniPlannerMetric: View {
+    let title: String
+    let value: String
+    let unit: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+            Text(value)
+                .font(.caption.weight(.bold).monospacedDigit())
+            Text(unit)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 9)
+        .padding(.vertical, 7)
+        .background(Color.primary.opacity(0.055))
+        .clipShape(Capsule())
     }
 }
 
@@ -1697,6 +1742,103 @@ struct ProgressLine: View {
             }
             ProgressView(value: progress)
                 .tint(color)
+        }
+    }
+}
+
+struct DayProgressSheet: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    @Environment(\.dismiss) private var dismiss
+    let date: Date
+
+    private var items: [ScheduledTask] {
+        store.tasks(for: date)
+    }
+
+    private var done: Int {
+        items.filter(\.isDone).count
+    }
+
+    private var groupedByGoal: [(goal: Goal, done: Int, total: Int)] {
+        store.goals.compactMap { goal in
+            let goalItems = items.filter { $0.goalID == goal.id }
+            guard !goalItems.isEmpty else { return nil }
+            return (goal, goalItems.filter(\.isDone).count, goalItems.count)
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack(alignment: .lastTextBaseline) {
+                            Text(date, format: .dateTime.month().day())
+                                .font(.system(size: 34, weight: .bold, design: .rounded))
+                            Spacer()
+                            Text(date, format: .dateTime.weekday(.wide))
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(.secondary)
+                        }
+
+                        ProgressCard(
+                            title: "この日の進み具合",
+                            done: done,
+                            total: items.count,
+                            color: .goalAccent
+                        )
+
+                        if items.isEmpty {
+                            VStack(spacing: 10) {
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 32, weight: .semibold))
+                                    .foregroundStyle(Color.goalAccent)
+                                Text("この日はまだ空いています")
+                                    .font(.headline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 22)
+                            .cardStyle()
+                        } else {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("行動")
+                                    .font(.headline.weight(.bold))
+                                ForEach(items) { item in
+                                    ScheduledTaskRow(item: item, compact: true)
+                                }
+                            }
+                            .cardStyle()
+                        }
+
+                        if !groupedByGoal.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("目標別")
+                                    .font(.headline.weight(.bold))
+                                ForEach(groupedByGoal, id: \.goal.id) { entry in
+                                    ProgressLine(
+                                        title: entry.goal.title,
+                                        done: entry.done,
+                                        total: entry.total,
+                                        color: Color(hex: entry.goal.colorHex)
+                                    )
+                                }
+                            }
+                            .cardStyle()
+                        }
+                    }
+                    .padding(18)
+                    .padding(.bottom, 24)
+                }
+            }
+            .navigationTitle("日別レポート")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("閉じる") { dismiss() }
+                }
+            }
         }
     }
 }
