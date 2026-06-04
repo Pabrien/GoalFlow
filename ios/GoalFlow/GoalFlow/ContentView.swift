@@ -341,10 +341,17 @@ struct PlannerView: View {
                         TaskShelf(
                             selectedGoalID: $selectedGoalID,
                             selectedTaskID: $selectedTaskID,
-                            onAddTask: { sheet = .task(selectedGoalID) },
-                            onAddGoal: { sheet = .goal },
+                            onAddTask: {
+                                clearSelectedTask()
+                                sheet = .task(selectedGoalID)
+                            },
+                            onAddGoal: {
+                                clearSelectedTask()
+                                sheet = .goal
+                            },
                             onCollapse: {
                                 withAnimation(.spring(response: 0.34, dampingFraction: 0.86)) {
+                                    selectedTaskID = nil
                                     showsTaskShelf = false
                                 }
                             }
@@ -377,6 +384,15 @@ struct PlannerView: View {
             .onChange(of: store.goals) { _, goals in
                 guard !goals.contains(where: { $0.id == selectedGoalID }) else { return }
                 selectedGoalID = goals.first?.id
+                selectedTaskID = nil
+            }
+            .onChange(of: mode) { _, _ in
+                clearSelectedTask()
+            }
+            .onChange(of: showsDeadlines) { _, _ in
+                clearSelectedTask()
+            }
+            .onDisappear {
                 selectedTaskID = nil
             }
         }
@@ -460,6 +476,7 @@ struct PlannerView: View {
 
     private func movePeriod(_ direction: Int) {
         withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+            selectedTaskID = nil
             calendarPageDirection = direction
             switch mode {
             case .week:
@@ -473,6 +490,7 @@ struct PlannerView: View {
 
     private func moveToToday() {
         withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+            selectedTaskID = nil
             calendarPageDirection = Date().startOfDay >= anchorDate ? 1 : -1
             anchorDate = Date().startOfDay
         }
@@ -513,6 +531,13 @@ struct PlannerView: View {
                     pulseDate = nil
                 }
             }
+        }
+    }
+
+    private func clearSelectedTask() {
+        guard selectedTaskID != nil else { return }
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+            selectedTaskID = nil
         }
     }
 
@@ -557,7 +582,7 @@ struct CalendarControls: View {
                 showsDeadlines.toggle()
                 UISelectionFeedbackGenerator().selectionChanged()
             } label: {
-                Text(showsDeadlines ? "道筋表示中" : "期限・節目")
+                Text(showsDeadlines ? "道筋表示中" : "期限・途中目標")
             }
             .foregroundStyle(showsDeadlines ? Color.goalAccent : Color.primary)
             Button(action: today) {
@@ -956,6 +981,9 @@ struct TaskShelf: View {
                 .foregroundStyle(Color.goalAccent)
             } else {
                 GoalTaskFilter(selectedGoalID: $selectedGoalID)
+                    .onChange(of: selectedGoalID) { _, _ in
+                        selectedTaskID = nil
+                    }
 
                 if visibleTasks.isEmpty {
                     Button(action: onAddTask) {
@@ -2070,12 +2098,12 @@ struct BackcastHintCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.triangle.branch")
-                Text("ゴールから節目を置く")
+                Text("ゴールから途中目標を置く")
             }
             .font(.headline)
             .foregroundStyle(Color(hex: goal.colorHex))
 
-            Text("ここで作る項目は予定ではなく、目標の道筋です。必要な節目だけ残して、日々の行動は予定に置きます。")
+            Text("ここで作る項目は予定ではなく、目標の道筋です。必要な途中目標だけ残して、日々の行動は予定に置きます。")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -2096,7 +2124,7 @@ struct BackcastStepRow: View {
                 .datePickerStyle(.compact)
                 .frame(minWidth: 98, alignment: .leading)
 
-            TextField("節目", text: $step.title)
+            TextField("途中目標", text: $step.title)
                 .font(.headline)
 
             Button(role: .destructive, action: onDelete) {
