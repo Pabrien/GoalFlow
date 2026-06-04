@@ -89,7 +89,21 @@ struct TodayView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
                         TodayHeader()
+                        if store.goals.isEmpty || store.tasks.isEmpty || store.scheduled.isEmpty {
+                            FirstRunPathCard(
+                                hasGoal: !store.goals.isEmpty,
+                                hasTask: !store.tasks.isEmpty,
+                                hasSchedule: !store.scheduled.isEmpty,
+                                onAddGoal: { sheet = .goal },
+                                onAddTask: { sheet = .task(store.goals.first?.id) }
+                            )
+                        }
                         TodayRing(progress: store.todayCompletionRate)
+                        ContinuityCard(
+                            streak: store.currentStreak,
+                            weekDone: store.weekCompletedCount,
+                            todayDone: store.todayTasks.filter(\.isDone).count
+                        )
 
                         if store.todayTasks.isEmpty {
                             EmptyFocusCard()
@@ -190,6 +204,14 @@ struct GoalCard: View {
     let onEdit: () -> Void
     let onBackcast: () -> Void
 
+    private var scheduledItems: [ScheduledTask] {
+        store.scheduled(for: goal.id)
+    }
+
+    private var progressMeaning: GoalProgressMeaning {
+        GoalProgressMeaning(goal: goal, scheduled: scheduledItems)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 12) {
@@ -213,8 +235,8 @@ struct GoalCard: View {
             HStack(spacing: 10) {
                 ProgressLine(
                     title: "進み具合",
-                    done: store.scheduled.filter { $0.goalID == goal.id && $0.isDone }.count,
-                    total: store.scheduled.filter { $0.goalID == goal.id }.count,
+                    done: store.doneCount(for: goal.id),
+                    total: scheduledItems.count,
                     color: goalColor
                 )
                 Button(action: onBackcast) {
@@ -238,6 +260,8 @@ struct GoalCard: View {
                 .foregroundStyle(.primary)
                 .clipShape(Capsule())
             }
+
+            GoalMeaningRow(meaning: progressMeaning, color: goalColor)
 
             let plan = store.backcastPlan(for: goal.id)
             if !plan.isEmpty {
@@ -278,6 +302,73 @@ struct GoalCard: View {
 
     private var goalColor: Color {
         Color(hex: goal.colorHex)
+    }
+}
+
+struct GoalProgressMeaning {
+    let title: String
+    let detail: String
+    let systemImage: String
+
+    init(goal: Goal, scheduled: [ScheduledTask]) {
+        let total = scheduled.count
+        let done = scheduled.filter(\.isDone).count
+        let today = Date().startOfDay
+        let totalDays = max(1, Calendar.current.dateComponents([.day], from: goal.startDate.startOfDay, to: goal.deadline.startOfDay).day ?? 1)
+        let elapsedDays = min(max(0, Calendar.current.dateComponents([.day], from: goal.startDate.startOfDay, to: today).day ?? 0), totalDays)
+        let expected = Double(elapsedDays) / Double(totalDays)
+        let actual = total == 0 ? 0 : Double(done) / Double(total)
+        let remainingDays = max(0, Calendar.current.dateComponents([.day], from: today, to: goal.deadline.startOfDay).day ?? 0)
+
+        if total == 0 {
+            title = "まだ道筋だけ"
+            detail = "行動を予定に置くと進み具合が見えます"
+            systemImage = "calendar.badge.plus"
+        } else if done == total {
+            title = "積み上がっています"
+            detail = "置いた行動はすべて完了済み"
+            systemImage = "checkmark.seal.fill"
+        } else if today > goal.deadline.startOfDay {
+            title = "期限を見直す"
+            detail = "期限を過ぎています。予定を組み直しましょう"
+            systemImage = "exclamationmark.circle.fill"
+        } else if actual + 0.12 < expected {
+            title = "少し遅れ気味"
+            detail = "今日ひとつ終えると流れを戻せます"
+            systemImage = "arrow.up.forward.circle"
+        } else {
+            title = "予定通り"
+            detail = remainingDays == 0 ? "今日が期限です" : "期限まであと\(remainingDays)日"
+            systemImage = "sparkle"
+        }
+    }
+}
+
+struct GoalMeaningRow: View {
+    let meaning: GoalProgressMeaning
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Image(systemName: meaning.systemImage)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(color)
+                .frame(width: 24, height: 24)
+                .background(color.opacity(0.12))
+                .clipShape(Circle())
+            VStack(alignment: .leading, spacing: 2) {
+                Text(meaning.title)
+                    .font(.caption.weight(.bold))
+                Text(meaning.detail)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(color.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
@@ -952,6 +1043,8 @@ struct TaskShelf: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Binding var selectedGoalID: UUID?
     @Binding var selectedTaskID: UUID?
+    @State private var searchText = ""
+    @State private var filter: TaskShelfFilter = .all
     let onAddTask: () -> Void
     let onAddGoal: () -> Void
     let onCollapse: () -> Void
@@ -961,9 +1054,30 @@ struct TaskShelf: View {
         return store.goal(for: selectedGoalID)
     }
 
-    private var visibleTasks: [ActionTask] {
+    private var baseTasks: [ActionTask] {
         guard let goalID = selectedGoal?.id else { return [] }
         return store.tasks.filter { $0.goalID == goalID }
+    }
+
+    private var visibleTasks: [ActionTask] {
+        let recentIDs = store.recentTaskIDs()
+        let filteredByUse: [ActionTask]
+        switch filter {
+        case .all:
+            filteredByUse = baseTasks
+        case .recent:
+            filteredByUse = baseTasks.filter { recentIDs.contains($0.id) }
+        case .unused:
+            filteredByUse = baseTasks.filter { task in
+                !store.scheduled.contains { $0.taskID == task.id }
+            }
+        }
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return filteredByUse }
+        return filteredByUse.filter { task in
+            task.title.localizedCaseInsensitiveContains(query)
+                || (store.goal(for: task.goalID)?.title.localizedCaseInsensitiveContains(query) ?? false)
+        }
     }
 
     private var selectedTaskTitle: String? {
@@ -1017,14 +1131,22 @@ struct TaskShelf: View {
                 GoalTaskFilter(selectedGoalID: $selectedGoalID)
                     .onChange(of: selectedGoalID) { _, _ in
                         selectedTaskID = nil
+                        searchText = ""
+                        filter = .all
                     }
 
+                TaskShelfSearchField(text: $searchText)
+                TaskShelfFilterBar(selection: $filter)
+
                 if visibleTasks.isEmpty {
-                    Button(action: onAddTask) {
+                    Button(action: searchText.isEmpty && filter == .all ? onAddTask : {
+                        searchText = ""
+                        filter = .all
+                    }) {
                         VStack(spacing: 10) {
-                            Image(systemName: "plus.circle.fill")
+                            Image(systemName: searchText.isEmpty && filter == .all ? "plus.circle.fill" : "arrow.uturn.backward.circle.fill")
                                 .font(.system(size: 34, weight: .semibold))
-                            Text("行動を作る")
+                            Text(searchText.isEmpty && filter == .all ? "行動を作る" : "絞り込みを戻す")
                                 .font(.headline)
                         }
                         .frame(maxWidth: .infinity)
@@ -1066,6 +1188,66 @@ struct TaskShelf: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 24, y: 10)
+    }
+}
+
+enum TaskShelfFilter: String, CaseIterable, Identifiable {
+    case all = "全部"
+    case recent = "最近"
+    case unused = "未使用"
+
+    var id: String { rawValue }
+}
+
+struct TaskShelfSearchField: View {
+    @Binding var text: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+            TextField("探す", text: $text)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.primary.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+struct TaskShelfFilterBar: View {
+    @Binding var selection: TaskShelfFilter
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(TaskShelfFilter.allCases) { item in
+                Button {
+                    selection = item
+                    UISelectionFeedbackGenerator().selectionChanged()
+                } label: {
+                    Text(item.rawValue)
+                        .font(.caption.weight(.bold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(selection == item ? Color.goalAccent.opacity(0.16) : Color.primary.opacity(0.06))
+                        .foregroundStyle(selection == item ? Color.goalAccent : Color.primary)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 }
 
@@ -1305,6 +1487,101 @@ struct TodayRing: View {
             Spacer()
         }
         .cardStyle()
+    }
+}
+
+struct FirstRunPathCard: View {
+    let hasGoal: Bool
+    let hasTask: Bool
+    let hasSchedule: Bool
+    let onAddGoal: () -> Void
+    let onAddTask: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("最初の一周")
+                    .font(.headline.weight(.bold))
+                Spacer()
+                Text("\([hasGoal, hasTask, hasSchedule].filter { $0 }.count)/3")
+                    .font(.caption.weight(.bold).monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(spacing: 9) {
+                FirstRunStepRow(title: "ゴール", isDone: hasGoal)
+                FirstRunStepRow(title: "行動", isDone: hasTask)
+                FirstRunStepRow(title: "予定", isDone: hasSchedule)
+            }
+
+            if !hasGoal {
+                Button("ゴールを作る", action: onAddGoal)
+                    .buttonStyle(.filledPill)
+            } else if !hasTask {
+                Button("行動を作る", action: onAddTask)
+                    .buttonStyle(.filledPill)
+            } else if !hasSchedule {
+                Text("予定タブで行動をカレンダーへ置く")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.goalAccent)
+            }
+        }
+        .cardStyle()
+    }
+}
+
+struct FirstRunStepRow: View {
+    let title: String
+    let isDone: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: isDone ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(isDone ? Color.goalAccent : Color.secondary)
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+            Spacer()
+        }
+    }
+}
+
+struct ContinuityCard: View {
+    let streak: Int
+    let weekDone: Int
+    let todayDone: Int
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ContinuityMetric(value: "\(streak)", label: "連続", unit: "日")
+            Divider().opacity(0.35)
+            ContinuityMetric(value: "\(weekDone)", label: "今週", unit: "件")
+            Divider().opacity(0.35)
+            ContinuityMetric(value: "\(todayDone)", label: "今日", unit: "件")
+        }
+        .frame(maxWidth: .infinity)
+        .cardStyle()
+    }
+}
+
+struct ContinuityMetric: View {
+    let value: String
+    let label: String
+    let unit: String
+
+    var body: some View {
+        VStack(spacing: 4) {
+            HStack(alignment: .lastTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(.title2.weight(.bold).monospacedDigit())
+                Text(unit)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+            Text(label)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

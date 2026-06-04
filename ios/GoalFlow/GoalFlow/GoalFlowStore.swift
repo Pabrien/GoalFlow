@@ -39,6 +39,30 @@ final class GoalFlowStore: ObservableObject {
         return Double(done) / Double(scheduled.count)
     }
 
+    var weekCompletedCount: Int {
+        let calendar = Calendar.current
+        let start = calendar.dateInterval(of: .weekOfYear, for: today)?.start ?? today
+        let end = calendar.date(byAdding: .day, value: 7, to: start) ?? today.addingDays(7)
+        return scheduled.filter { item in
+            item.isDone && item.date >= start && item.date < end
+        }.count
+    }
+
+    var currentStreak: Int {
+        let calendar = Calendar.current
+        let doneDates = Set(scheduled.filter(\.isDone).map { $0.date.startOfDay })
+        guard !doneDates.isEmpty else { return 0 }
+        let anchor = doneDates.contains(today) ? today : today.addingDays(-1)
+        var streak = 0
+        var cursor = anchor
+        while doneDates.contains(cursor) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous.startOfDay
+        }
+        return streak
+    }
+
     var goalColors: [String] { colorPalette }
 
     func addCustomColor(_ hex: String) {
@@ -247,6 +271,26 @@ final class GoalFlowStore: ObservableObject {
         scheduled
             .filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
             .sorted { $0.title < $1.title }
+    }
+
+    func scheduled(for goalID: UUID) -> [ScheduledTask] {
+        scheduled.filter { $0.goalID == goalID }
+    }
+
+    func doneCount(for goalID: UUID) -> Int {
+        scheduled(for: goalID).filter(\.isDone).count
+    }
+
+    func recentTaskIDs(limit: Int = 8) -> [UUID] {
+        var seen: Set<UUID> = []
+        var ids: [UUID] = []
+        for item in scheduled.sorted(by: { $0.date > $1.date }) {
+            guard !seen.contains(item.taskID) else { continue }
+            seen.insert(item.taskID)
+            ids.append(item.taskID)
+            if ids.count == limit { break }
+        }
+        return ids
     }
 
     private func save() {
