@@ -8,6 +8,7 @@ final class GoalFlowStore: ObservableObject {
     @Published var tasks: [ActionTask] = [] { didSet { save() } }
     @Published var scheduled: [ScheduledTask] = [] { didSet { save() } }
     @Published var backcastItems: [BackcastItem] = [] { didSet { save() } }
+    @Published var inboxTasks: [InboxTask] = [] { didSet { save() } }
     @Published var categories: [String] = defaultCategories { didSet { save() } }
     @Published var colorPalette: [String] = defaultPalette { didSet { save() } }
 
@@ -142,6 +143,17 @@ final class GoalFlowStore: ObservableObject {
                 estimatedMinutes: max(1, estimatedMinutes)
             )
         )
+    }
+
+    func addInboxTask(_ title: String) {
+        let clean = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { return }
+        inboxTasks.insert(InboxTask(title: clean), at: 0)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    func deleteInboxTask(_ item: InboxTask) {
+        inboxTasks.removeAll { $0.id == item.id }
     }
 
     func replaceBackcastPlan(goalID: UUID, steps: [BackcastStep]) {
@@ -287,6 +299,7 @@ final class GoalFlowStore: ObservableObject {
             tasks: tasks,
             scheduled: scheduled,
             backcastItems: backcastItems,
+            inboxTasks: inboxTasks,
             categories: categories,
             colorPalette: colorPalette
         )
@@ -303,6 +316,7 @@ final class GoalFlowStore: ObservableObject {
         tasks = snapshot.tasks
         scheduled = snapshot.scheduled
         backcastItems = snapshot.backcastItems ?? []
+        inboxTasks = snapshot.inboxTasks ?? []
         categories = snapshot.categories ?? defaultCategories
         colorPalette = snapshot.colorPalette ?? defaultPalette
         for hex in snapshot.customColors ?? [] where !colorPalette.contains(hex) {
@@ -323,6 +337,7 @@ private struct Snapshot: Codable {
     var tasks: [ActionTask]
     var scheduled: [ScheduledTask]
     var backcastItems: [BackcastItem]?
+    var inboxTasks: [InboxTask]?
     var categories: [String]?
     var customColors: [String]?
     var colorPalette: [String]?

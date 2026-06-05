@@ -48,6 +48,9 @@ struct ContentView: View {
             case .backcast(let goal):
                 BackcastEditor(goal: goal)
                     .presentationDetents([.large])
+            case .sync:
+                SyncSheet()
+                    .presentationDetents([.medium])
             }
         }
     }
@@ -68,6 +71,7 @@ enum ActiveSheet: Identifiable {
     case scheduled(ScheduledTask)
     case day(Date)
     case backcast(Goal)
+    case sync
 
     var id: String {
         switch self {
@@ -78,6 +82,7 @@ enum ActiveSheet: Identifiable {
         case .scheduled(let item): "scheduled-\(item.id)"
         case .day(let date): "day-\(date.startOfDay.timeIntervalSince1970)"
         case .backcast(let goal): "backcast-\(goal.id)"
+        case .sync: "sync"
         }
     }
 }
@@ -93,7 +98,12 @@ struct TodayView: View {
                 Color.appBackground.ignoresSafeArea()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
-                        TodayHeader()
+                        TodayHeader(onSyncTap: { sheet = .sync })
+                        ContinuityCard(
+                            streak: store.currentStreak,
+                            weekDone: store.weekCompletedCount,
+                            todayDone: store.todayTasks.filter(\.isDone).count
+                        )
                         if store.goals.isEmpty || store.tasks.isEmpty || store.scheduled.isEmpty {
                             FirstRunPathCard(
                                 hasGoal: !store.goals.isEmpty,
@@ -103,6 +113,11 @@ struct TodayView: View {
                                 onAddTask: { sheet = .task(store.goals.first?.id) }
                             )
                         }
+                        TodayPriorityCard(
+                            items: store.todayTasks,
+                            onEdit: { sheet = .scheduled($0) }
+                        )
+                        InboxCaptureCard()
                         if store.todayTasks.isEmpty {
                             EmptyFocusCard()
                         } else {
@@ -129,6 +144,7 @@ struct TodayView: View {
 struct GoalsView: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Binding var sheet: ActiveSheet?
+    @State private var expandedGoalID: UUID?
 
     var body: some View {
         NavigationStack {
@@ -146,6 +162,13 @@ struct GoalsView: View {
                             ForEach(store.goals) { goal in
                                 GoalCard(
                                     goal: goal,
+                                    isExpanded: expandedGoalID == goal.id,
+                                    onToggle: {
+                                        withAnimation(.spring(response: 0.38, dampingFraction: 0.84)) {
+                                            expandedGoalID = expandedGoalID == goal.id ? nil : goal.id
+                                        }
+                                        UISelectionFeedbackGenerator().selectionChanged()
+                                    },
                                     onEdit: { sheet = .editGoal(goal) },
                                     onBackcast: {
                                         sheet = .backcast(goal)
@@ -199,6 +222,8 @@ struct EmptyGoalCard: View {
 struct GoalCard: View {
     @EnvironmentObject private var store: GoalFlowStore
     let goal: Goal
+    let isExpanded: Bool
+    let onToggle: () -> Void
     let onEdit: () -> Void
     let onBackcast: () -> Void
 
@@ -261,6 +286,11 @@ struct GoalCard: View {
 
             GoalMeaningRow(meaning: progressMeaning, color: goalColor)
 
+            if isExpanded {
+                GoalDetailPanel(goal: goal, items: scheduledItems, color: goalColor)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
             let plan = store.backcastPlan(for: goal.id)
             if !plan.isEmpty {
                 Button(action: onBackcast) {
@@ -298,7 +328,7 @@ struct GoalCard: View {
 
         }
         .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .onTapGesture(perform: onEdit)
+        .onTapGesture(perform: onToggle)
         .cardStyle()
     }
 
@@ -343,6 +373,77 @@ struct GoalProgressMeaning {
             detail = remainingDays == 0 ? "今日が期限です" : "期限まであと\(remainingDays)日"
             systemImage = "sparkle"
         }
+    }
+}
+
+struct GoalDetailPanel: View {
+    let goal: Goal
+    let items: [ScheduledTask]
+    let color: Color
+
+    private var doneItems: [ScheduledTask] {
+        items.filter(\.isDone).sorted { $0.date > $1.date }
+    }
+
+    private var remainingDays: Int {
+        max(0, Calendar.current.dateComponents([.day], from: Date().startOfDay, to: goal.deadline.startOfDay).day ?? 0)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                GoalDetailMetric(title: "開始", value: goal.startDate.formatted(.dateTime.month().day()))
+                GoalDetailMetric(title: "期限", value: goal.deadline.formatted(.dateTime.month().day()))
+                GoalDetailMetric(title: "残り", value: "\(remainingDays)日")
+            }
+
+            HStack(spacing: 10) {
+                GoalDetailMetric(title: "予定", value: "\(items.count)件")
+                GoalDetailMetric(title: "完了", value: "\(doneItems.count)件")
+                GoalDetailMetric(title: "未完了", value: "\(max(0, items.count - doneItems.count))件")
+            }
+
+            if let latest = doneItems.first {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundStyle(color)
+                    Text("最近: \(latest.title)")
+                        .font(.caption.weight(.semibold))
+                        .lineLimit(1)
+                    Spacer()
+                    Text(latest.date, format: .dateTime.month().day())
+                        .font(.caption2.weight(.bold).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+                .padding(10)
+                .background(color.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+        }
+        .padding(12)
+        .background(Color.primary.opacity(0.045))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+struct GoalDetailMetric: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.caption.weight(.bold).monospacedDigit())
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.cardBackground.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
 
@@ -1366,15 +1467,189 @@ struct ScheduledTaskRow: View {
 }
 
 struct TodayHeader: View {
+    let onSyncTap: () -> Void
+
     var body: some View {
         HStack(alignment: .lastTextBaseline) {
             Text(Date(), format: .dateTime.month().day())
                 .font(.system(size: 42, weight: .bold, design: .rounded))
             Spacer()
-            Text(Date(), format: .dateTime.weekday(.wide))
-                .font(.headline)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .trailing, spacing: 8) {
+                Button(action: onSyncTap) {
+                    SyncStatusPill()
+                }
+                .buttonStyle(.plain)
+                Text(Date(), format: .dateTime.weekday(.wide))
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+            }
         }
+    }
+}
+
+struct SyncStatusPill: View {
+    @AppStorage("goalflow.syncRequested") private var syncRequested = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: syncRequested ? "icloud.fill" : "icloud.slash")
+                .font(.caption.weight(.bold))
+            Text(syncRequested ? "同期準備" : "この端末")
+                .font(.caption.weight(.bold))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .foregroundStyle(syncRequested ? Color.goalAccent : Color.secondary)
+        .background(Color.primary.opacity(0.06))
+        .clipShape(Capsule())
+    }
+}
+
+struct TodayPriorityCard: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    let items: [ScheduledTask]
+    let onEdit: (ScheduledTask) -> Void
+
+    private var orderedItems: [ScheduledTask] {
+        items.sorted {
+            if $0.isDone != $1.isDone { return !$0.isDone && $1.isDone }
+            return $0.title < $1.title
+        }
+    }
+
+    private var topItem: ScheduledTask? {
+        orderedItems.first { !$0.isDone } ?? orderedItems.first
+    }
+
+    private var done: Int {
+        items.filter(\.isDone).count
+    }
+
+    private var progress: Double {
+        items.isEmpty ? 0 : Double(done) / Double(items.count)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("今日の一手")
+                    .font(.headline.weight(.bold))
+                Spacer()
+                Text(items.isEmpty ? "0件" : "\(done)/\(items.count)")
+                    .font(.caption.weight(.bold).monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            if let topItem {
+                Button {
+                    onEdit(topItem)
+                } label: {
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(Color(hex: store.goal(for: topItem.goalID)?.colorHex ?? "#2563EB"))
+                            .frame(width: 10, height: 10)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(topItem.title)
+                                .font(.title3.weight(.bold))
+                                .lineLimit(2)
+                            if let goal = store.goal(for: topItem.goalID) {
+                                Text(goal.title)
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                        Spacer()
+                        Image(systemName: topItem.isDone ? "checkmark.circle.fill" : "arrow.right.circle")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(topItem.isDone ? Color.goalAccent : Color.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+            } else {
+                Text("予定タブで行動を置くと、ここに最優先が出ます")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+
+            ProgressView(value: progress)
+                .tint(progress >= 1 ? .goalAccent : .primary)
+                .animation(.spring(response: 0.45, dampingFraction: 0.86), value: progress)
+        }
+        .cardStyle()
+    }
+}
+
+struct InboxCaptureCard: View {
+    @EnvironmentObject private var store: GoalFlowStore
+    @State private var title = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "tray.and.arrow.down")
+                    .foregroundStyle(Color.goalAccent)
+                Text("あとで整理")
+                    .font(.headline.weight(.bold))
+                Spacer()
+                if !store.inboxTasks.isEmpty {
+                    Text("\(store.inboxTasks.count)")
+                        .font(.caption.weight(.bold).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            HStack(spacing: 8) {
+                TextField("思いついた行動", text: $title)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .submitLabel(.done)
+                    .onSubmit(add)
+                Button(action: add) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title3.weight(.semibold))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Color.goalAccent)
+                .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color.primary.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            if !store.inboxTasks.isEmpty {
+                VStack(spacing: 8) {
+                    ForEach(store.inboxTasks.prefix(4)) { item in
+                        HStack(spacing: 10) {
+                            Text(item.title)
+                                .font(.subheadline.weight(.semibold))
+                                .lineLimit(1)
+                            Spacer()
+                            Button {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.84)) {
+                                    store.deleteInboxTask(item)
+                                }
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 9)
+                        .background(Color.cardBackground.opacity(0.7))
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                }
+            }
+        }
+        .cardStyle()
+    }
+
+    private func add() {
+        store.addInboxTask(title)
+        title = ""
     }
 }
 
@@ -1894,6 +2169,86 @@ struct DayProgressSheet: View {
                     Button("閉じる") { dismiss() }
                 }
             }
+        }
+    }
+}
+
+struct SyncSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("goalflow.syncRequested") private var syncRequested = false
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack(spacing: 12) {
+                        Image(systemName: syncRequested ? "icloud.fill" : "icloud.slash")
+                            .font(.system(size: 28, weight: .semibold))
+                            .foregroundStyle(syncRequested ? Color.goalAccent : Color.secondary)
+                            .frame(width: 48, height: 48)
+                            .background(Color.primary.opacity(0.06))
+                            .clipShape(Circle())
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(syncRequested ? "同期の準備中" : "この端末に保存中")
+                                .font(.title3.weight(.bold))
+                            Text(syncRequested ? "Googleログイン接続後、複数端末で使える形にできます" : "今のデータは端末内に保存されています")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        SyncStateRow(icon: "checkmark.seal.fill", title: "この端末への保存", isReady: true)
+                        SyncStateRow(icon: "person.crop.circle.badge.plus", title: "Googleログイン", isReady: syncRequested)
+                        SyncStateRow(icon: "arrow.triangle.2.circlepath", title: "デバイス間同期", isReady: false)
+                    }
+                    .cardStyle()
+
+                    Button {
+                        syncRequested = true
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    } label: {
+                        Label("Google同期の準備を始める", systemImage: "g.circle.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.filledPill)
+
+                    Text("実際のGoogleログインとクラウド同期には、FirebaseまたはSupabaseなどの接続設定が必要です。ここではユーザーに見せる同期状態と導線を先に整えています。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+                }
+                .padding(18)
+            }
+            .navigationTitle("同期")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("閉じる") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+struct SyncStateRow: View {
+    let icon: String
+    let title: String
+    let isReady: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(isReady ? Color.goalAccent : Color.secondary)
+                .frame(width: 28)
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+            Spacer()
+            Image(systemName: isReady ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(isReady ? Color.goalAccent : Color.secondary.opacity(0.55))
         }
     }
 }
