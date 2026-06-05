@@ -49,9 +49,9 @@ todo-ui/
   manifest.webmanifest
   sw.js
   ios/
-    GoalFlow/
-      GoalFlow.xcodeproj
-      GoalFlow/
+    Cevoa/
+      Cevoa.xcodeproj
+      Cevoa/
   icons/
   docs/
     product-notes.md
@@ -68,7 +68,7 @@ The public app should be opened through a web server or GitHub Pages URL. The UI
 
 ## iOS Prototype
 
-A native SwiftUI prototype is available at `ios/GoalFlow/GoalFlow.xcodeproj`.
+A native SwiftUI prototype is available at `ios/Cevoa/Cevoa.xcodeproj`.
 
 It includes goals, actions, scheduling, today's tasks, progress, local JSON persistence, and basic haptic feedback.
 

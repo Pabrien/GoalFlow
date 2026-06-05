@@ -3,20 +3,21 @@ import SwiftUI
 import UIKit
 
 @MainActor
-final class GoalFlowStore: ObservableObject {
+final class CevoaStore: ObservableObject {
     @Published var goals: [Goal] = [] { didSet { save() } }
     @Published var tasks: [ActionTask] = [] { didSet { save() } }
     @Published var scheduled: [ScheduledTask] = [] { didSet { save() } }
     @Published var backcastItems: [BackcastItem] = [] { didSet { save() } }
-    @Published var inboxTasks: [InboxTask] = [] { didSet { save() } }
     @Published var categories: [String] = defaultCategories { didSet { save() } }
     @Published var colorPalette: [String] = defaultPalette { didSet { save() } }
 
     private let storageURL: URL
+    private let legacyStorageURL: URL?
 
     init(storageURL: URL? = nil) {
         let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-        self.storageURL = storageURL ?? directory!.appendingPathComponent("goalflow-state.json")
+        self.storageURL = storageURL ?? directory!.appendingPathComponent("cevoa-state.json")
+        self.legacyStorageURL = storageURL == nil ? directory?.appendingPathComponent("cevoa-legacy-state.json") : nil
         load()
     }
 
@@ -143,17 +144,6 @@ final class GoalFlowStore: ObservableObject {
                 estimatedMinutes: max(1, estimatedMinutes)
             )
         )
-    }
-
-    func addInboxTask(_ title: String) {
-        let clean = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty else { return }
-        inboxTasks.insert(InboxTask(title: clean), at: 0)
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-    }
-
-    func deleteInboxTask(_ item: InboxTask) {
-        inboxTasks.removeAll { $0.id == item.id }
     }
 
     func replaceBackcastPlan(goalID: UUID, steps: [BackcastStep]) {
@@ -299,24 +289,30 @@ final class GoalFlowStore: ObservableObject {
             tasks: tasks,
             scheduled: scheduled,
             backcastItems: backcastItems,
-            inboxTasks: inboxTasks,
             categories: categories,
             colorPalette: colorPalette
         )
-        guard let data = try? JSONEncoder.goalFlow.encode(snapshot) else { return }
+        guard let data = try? JSONEncoder.cevoa.encode(snapshot) else { return }
         try? data.write(to: storageURL, options: .atomic)
     }
 
     private func load() {
+        let readURL: URL
+        if FileManager.default.fileExists(atPath: storageURL.path) {
+            readURL = storageURL
+        } else if let legacyStorageURL, FileManager.default.fileExists(atPath: legacyStorageURL.path) {
+            readURL = legacyStorageURL
+        } else {
+            return
+        }
         guard
-            let data = try? Data(contentsOf: storageURL),
-            let snapshot = try? JSONDecoder.goalFlow.decode(Snapshot.self, from: data)
+            let data = try? Data(contentsOf: readURL),
+            let snapshot = try? JSONDecoder.cevoa.decode(Snapshot.self, from: data)
         else { return }
         goals = snapshot.goals
         tasks = snapshot.tasks
         scheduled = snapshot.scheduled
         backcastItems = snapshot.backcastItems ?? []
-        inboxTasks = snapshot.inboxTasks ?? []
         categories = snapshot.categories ?? defaultCategories
         colorPalette = snapshot.colorPalette ?? defaultPalette
         for hex in snapshot.customColors ?? [] where !colorPalette.contains(hex) {
@@ -337,7 +333,6 @@ private struct Snapshot: Codable {
     var tasks: [ActionTask]
     var scheduled: [ScheduledTask]
     var backcastItems: [BackcastItem]?
-    var inboxTasks: [InboxTask]?
     var categories: [String]?
     var customColors: [String]?
     var colorPalette: [String]?
@@ -351,7 +346,7 @@ private let defaultPalette = [
 ]
 
 private extension JSONEncoder {
-    static var goalFlow: JSONEncoder {
+    static var cevoa: JSONEncoder {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         return encoder
@@ -359,7 +354,7 @@ private extension JSONEncoder {
 }
 
 private extension JSONDecoder {
-    static var goalFlow: JSONDecoder {
+    static var cevoa: JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         return decoder

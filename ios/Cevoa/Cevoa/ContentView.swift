@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 struct ContentView: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @State private var selectedTab: AppTab = .plan
     @State private var sheet: ActiveSheet?
 
@@ -48,9 +48,6 @@ struct ContentView: View {
             case .backcast(let goal):
                 BackcastEditor(goal: goal)
                     .presentationDetents([.large])
-            case .sync:
-                SyncSheet()
-                    .presentationDetents([.medium])
             }
         }
     }
@@ -71,7 +68,6 @@ enum ActiveSheet: Identifiable {
     case scheduled(ScheduledTask)
     case day(Date)
     case backcast(Goal)
-    case sync
 
     var id: String {
         switch self {
@@ -82,13 +78,12 @@ enum ActiveSheet: Identifiable {
         case .scheduled(let item): "scheduled-\(item.id)"
         case .day(let date): "day-\(date.startOfDay.timeIntervalSince1970)"
         case .backcast(let goal): "backcast-\(goal.id)"
-        case .sync: "sync"
         }
     }
 }
 
 struct TodayView: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Binding var sheet: ActiveSheet?
     @Namespace private var completeNamespace
 
@@ -98,12 +93,7 @@ struct TodayView: View {
                 Color.appBackground.ignoresSafeArea()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
-                        TodayHeader(onSyncTap: { sheet = .sync })
-                        ContinuityCard(
-                            streak: store.currentStreak,
-                            weekDone: store.weekCompletedCount,
-                            todayDone: store.todayTasks.filter(\.isDone).count
-                        )
+                        TodayHeader()
                         if store.goals.isEmpty || store.tasks.isEmpty || store.scheduled.isEmpty {
                             FirstRunPathCard(
                                 hasGoal: !store.goals.isEmpty,
@@ -117,7 +107,6 @@ struct TodayView: View {
                             items: store.todayTasks,
                             onEdit: { sheet = .scheduled($0) }
                         )
-                        InboxCaptureCard()
                         if store.todayTasks.isEmpty {
                             EmptyFocusCard()
                         } else {
@@ -142,7 +131,7 @@ struct TodayView: View {
 }
 
 struct GoalsView: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Binding var sheet: ActiveSheet?
     @State private var expandedGoalID: UUID?
 
@@ -220,7 +209,7 @@ struct EmptyGoalCard: View {
 }
 
 struct GoalCard: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     let goal: Goal
     let isExpanded: Bool
     let onToggle: () -> Void
@@ -377,6 +366,7 @@ struct GoalProgressMeaning {
 }
 
 struct GoalDetailPanel: View {
+    @EnvironmentObject private var store: CevoaStore
     let goal: Goal
     let items: [ScheduledTask]
     let color: Color
@@ -387,6 +377,14 @@ struct GoalDetailPanel: View {
 
     private var remainingDays: Int {
         max(0, Calendar.current.dateComponents([.day], from: Date().startOfDay, to: goal.deadline.startOfDay).day ?? 0)
+    }
+
+    private var milestones: [BackcastItem] {
+        store.backcastPlan(for: goal.id)
+    }
+
+    private var reachedMilestones: Int {
+        milestones.filter { $0.date.startOfDay <= Date().startOfDay }.count
     }
 
     var body: some View {
@@ -400,7 +398,7 @@ struct GoalDetailPanel: View {
             HStack(spacing: 10) {
                 GoalDetailMetric(title: "予定", value: "\(items.count)件")
                 GoalDetailMetric(title: "完了", value: "\(doneItems.count)件")
-                GoalDetailMetric(title: "未完了", value: "\(max(0, items.count - doneItems.count))件")
+                GoalDetailMetric(title: "途中目標", value: "\(reachedMilestones)/\(milestones.count)")
             }
 
             if let latest = doneItems.first {
@@ -476,7 +474,7 @@ struct GoalMeaningRow: View {
 }
 
 struct PlannerView: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Binding var sheet: ActiveSheet?
     @State private var anchorDate = Date().startOfDay
     @State private var selectedTaskID: UUID?
@@ -895,7 +893,7 @@ struct CalendarDayCard: View {
 }
 
 struct MonthGrid: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     let dates: [Date]
     let anchorDate: Date
     let selectedTaskID: UUID?
@@ -936,7 +934,7 @@ struct MonthGrid: View {
 }
 
 struct MonthDayCell: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     let date: Date
     let isInMonth: Bool
     let items: [ScheduledTask]
@@ -1018,7 +1016,7 @@ struct MonthDayCell: View {
 }
 
 struct MonthTaskDot: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     let item: ScheduledTask
 
     var body: some View {
@@ -1064,7 +1062,7 @@ struct GoalDeadlinePill: View {
 }
 
 struct BackcastMilestonePill: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     let item: BackcastItem
     let compact: Bool
 
@@ -1091,7 +1089,7 @@ struct BackcastMilestonePill: View {
 }
 
 struct TaskShelf: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Binding var selectedGoalID: UUID?
     @Binding var selectedTaskID: UUID?
     @State private var searchText = ""
@@ -1255,7 +1253,7 @@ struct TaskShelfSearchField: View {
 }
 
 struct CollapsedTaskShelfButton: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     let selectedTaskID: UUID?
     let onTap: () -> Void
 
@@ -1266,24 +1264,16 @@ struct CollapsedTaskShelfButton: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 10) {
-                HStack(spacing: 10) {
-                    Image(systemName: selectedTaskID == nil ? "tray.full" : "hand.draw")
-                        .font(.headline.weight(.bold))
-                    Text(selectedTaskID == nil ? "行動リスト" : selectedTaskTitle.map { "「\($0)」を置く" } ?? "置く日を選ぶ")
-                        .font(.headline.weight(.bold))
-                        .lineLimit(1)
-                    Spacer()
-                    Image(systemName: "chevron.up")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-                }
-
-                HStack(spacing: 8) {
-                    MiniPlannerMetric(title: "今日", value: "\(store.todayTasks.filter { !$0.isDone }.count)", unit: "残り")
-                    MiniPlannerMetric(title: "今週", value: "\(store.weekCompletedCount)", unit: "完了")
-                    MiniPlannerMetric(title: "連続", value: "\(store.currentStreak)", unit: "日")
-                }
+            HStack(spacing: 10) {
+                Image(systemName: selectedTaskID == nil ? "tray.full" : "hand.draw")
+                    .font(.headline.weight(.bold))
+                Text(selectedTaskID == nil ? "行動リスト" : selectedTaskTitle.map { "「\($0)」を置く" } ?? "置く日を選ぶ")
+                    .font(.headline.weight(.bold))
+                    .lineLimit(1)
+                Spacer()
+                Image(systemName: "chevron.up")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -1300,32 +1290,8 @@ struct CollapsedTaskShelfButton: View {
     }
 }
 
-struct MiniPlannerMetric: View {
-    let title: String
-    let value: String
-    let unit: String
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Text(title)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
-            Spacer(minLength: 0)
-            Text(value)
-                .font(.caption.weight(.bold).monospacedDigit())
-            Text(unit)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 9)
-        .padding(.vertical, 7)
-        .background(Color.primary.opacity(0.055))
-        .clipShape(Capsule())
-    }
-}
-
 struct GoalTaskFilter: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Binding var selectedGoalID: UUID?
 
     var body: some View {
@@ -1360,7 +1326,7 @@ struct GoalTaskFilter: View {
 }
 
 struct SavedTaskChip: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     let task: ActionTask
     let isSelected: Bool
     let onPickDate: () -> Void
@@ -1409,7 +1375,7 @@ struct SavedTaskChip: View {
 }
 
 struct CalendarTaskPill: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     let item: ScheduledTask
 
     var body: some View {
@@ -1439,7 +1405,7 @@ struct CalendarTaskPill: View {
 }
 
 struct ScheduledTaskRow: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     let item: ScheduledTask
     var compact = false
 
@@ -1483,46 +1449,20 @@ struct ScheduledTaskRow: View {
 }
 
 struct TodayHeader: View {
-    let onSyncTap: () -> Void
-
     var body: some View {
         HStack(alignment: .lastTextBaseline) {
             Text(Date(), format: .dateTime.month().day())
                 .font(.system(size: 42, weight: .bold, design: .rounded))
             Spacer()
-            VStack(alignment: .trailing, spacing: 8) {
-                Button(action: onSyncTap) {
-                    SyncStatusPill()
-                }
-                .buttonStyle(.plain)
-                Text(Date(), format: .dateTime.weekday(.wide))
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
-            }
+            Text(Date(), format: .dateTime.weekday(.wide))
+                .font(.headline)
+                .foregroundStyle(.secondary)
         }
-    }
-}
-
-struct SyncStatusPill: View {
-    @AppStorage("goalflow.syncRequested") private var syncRequested = false
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: syncRequested ? "icloud.fill" : "icloud.slash")
-                .font(.caption.weight(.bold))
-            Text(syncRequested ? "同期準備" : "この端末")
-                .font(.caption.weight(.bold))
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .foregroundStyle(syncRequested ? Color.goalAccent : Color.secondary)
-        .background(Color.primary.opacity(0.06))
-        .clipShape(Capsule())
     }
 }
 
 struct TodayPriorityCard: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     let items: [ScheduledTask]
     let onEdit: (ScheduledTask) -> Void
 
@@ -1593,79 +1533,6 @@ struct TodayPriorityCard: View {
                 .animation(.spring(response: 0.45, dampingFraction: 0.86), value: progress)
         }
         .cardStyle()
-    }
-}
-
-struct InboxCaptureCard: View {
-    @EnvironmentObject private var store: GoalFlowStore
-    @State private var title = ""
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "tray.and.arrow.down")
-                    .foregroundStyle(Color.goalAccent)
-                Text("あとで整理")
-                    .font(.headline.weight(.bold))
-                Spacer()
-                if !store.inboxTasks.isEmpty {
-                    Text("\(store.inboxTasks.count)")
-                        .font(.caption.weight(.bold).monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            HStack(spacing: 8) {
-                TextField("思いついた行動", text: $title)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .submitLabel(.done)
-                    .onSubmit(add)
-                Button(action: add) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title3.weight(.semibold))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(Color.goalAccent)
-                .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(Color.primary.opacity(0.06))
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-            if !store.inboxTasks.isEmpty {
-                VStack(spacing: 8) {
-                    ForEach(store.inboxTasks.prefix(4)) { item in
-                        HStack(spacing: 10) {
-                            Text(item.title)
-                                .font(.subheadline.weight(.semibold))
-                                .lineLimit(1)
-                            Spacer()
-                            Button {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.84)) {
-                                    store.deleteInboxTask(item)
-                                }
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.secondary)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 9)
-                        .background(Color.cardBackground.opacity(0.7))
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    }
-                }
-            }
-        }
-        .cardStyle()
-    }
-
-    private func add() {
-        store.addInboxTask(title)
-        title = ""
     }
 }
 
@@ -1754,46 +1621,6 @@ struct FirstRunStepRow: View {
     }
 }
 
-struct ContinuityCard: View {
-    let streak: Int
-    let weekDone: Int
-    let todayDone: Int
-
-    var body: some View {
-        HStack(spacing: 10) {
-            ContinuityMetric(value: "\(streak)", label: "連続", unit: "日")
-            Divider().opacity(0.35)
-            ContinuityMetric(value: "\(weekDone)", label: "今週", unit: "件")
-            Divider().opacity(0.35)
-            ContinuityMetric(value: "\(todayDone)", label: "今日", unit: "件")
-        }
-        .frame(maxWidth: .infinity)
-        .cardStyle()
-    }
-}
-
-struct ContinuityMetric: View {
-    let value: String
-    let label: String
-    let unit: String
-
-    var body: some View {
-        VStack(spacing: 4) {
-            HStack(alignment: .lastTextBaseline, spacing: 2) {
-                Text(value)
-                    .font(.title2.weight(.bold).monospacedDigit())
-                Text(unit)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
-            }
-            Text(label)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
 struct EmptyFocusCard: View {
     var body: some View {
         VStack(spacing: 14) {
@@ -1810,7 +1637,7 @@ struct EmptyFocusCard: View {
 }
 
 struct ProgressScreen: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @State private var selectedDate = Date().startOfDay
 
     private var selectedItems: [ScheduledTask] {
@@ -1896,7 +1723,7 @@ struct ProgressScreen: View {
 }
 
 struct ProgressDatePicker: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Binding var selectedDate: Date
     @State private var anchorDate = Date().startOfDay
 
@@ -2093,7 +1920,7 @@ struct ProgressLine: View {
 }
 
 struct DayProgressSheet: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Environment(\.dismiss) private var dismiss
     let date: Date
     @State private var editingItem: ScheduledTask?
@@ -2219,88 +2046,8 @@ struct DayProgressSheet: View {
     }
 }
 
-struct SyncSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @AppStorage("goalflow.syncRequested") private var syncRequested = false
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.appBackground.ignoresSafeArea()
-                VStack(alignment: .leading, spacing: 18) {
-                    HStack(spacing: 12) {
-                        Image(systemName: syncRequested ? "icloud.fill" : "icloud.slash")
-                            .font(.system(size: 28, weight: .semibold))
-                            .foregroundStyle(syncRequested ? Color.goalAccent : Color.secondary)
-                            .frame(width: 48, height: 48)
-                            .background(Color.primary.opacity(0.06))
-                            .clipShape(Circle())
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(syncRequested ? "同期の準備中" : "この端末に保存中")
-                                .font(.title3.weight(.bold))
-                            Text(syncRequested ? "Googleログイン接続後、複数端末で使える形にできます" : "今のデータは端末内に保存されています")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        SyncStateRow(icon: "checkmark.seal.fill", title: "この端末への保存", isReady: true)
-                        SyncStateRow(icon: "person.crop.circle.badge.plus", title: "Googleログイン", isReady: syncRequested)
-                        SyncStateRow(icon: "arrow.triangle.2.circlepath", title: "デバイス間同期", isReady: false)
-                    }
-                    .cardStyle()
-
-                    Button {
-                        syncRequested = true
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    } label: {
-                        Label("Google同期の準備を始める", systemImage: "g.circle.fill")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.filledPill)
-
-                    Text("実際のGoogleログインとクラウド同期には、FirebaseまたはSupabaseなどの接続設定が必要です。ここではユーザーに見せる同期状態と導線を先に整えています。")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    Spacer()
-                }
-                .padding(18)
-            }
-            .navigationTitle("同期")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("閉じる") { dismiss() }
-                }
-            }
-        }
-    }
-}
-
-struct SyncStateRow: View {
-    let icon: String
-    let title: String
-    let isReady: Bool
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(isReady ? Color.goalAccent : Color.secondary)
-                .frame(width: 28)
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-            Spacer()
-            Image(systemName: isReady ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(isReady ? Color.goalAccent : Color.secondary.opacity(0.55))
-        }
-    }
-}
-
 struct GoalEditor: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Environment(\.dismiss) private var dismiss
     let goal: Goal?
     @State private var title = ""
@@ -2484,7 +2231,7 @@ struct GoalEditor: View {
 }
 
 struct InlineCategoryRow: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     let category: String
     @Binding var selectedCategory: String
     let colorHex: String
@@ -2618,7 +2365,7 @@ struct ColorSwatchGrid: View {
 }
 
 struct GoalColorEditor: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Binding var selectedHex: String
     @Binding var selectedColor: Color
 
@@ -2716,7 +2463,7 @@ struct GoalSelectChip: View {
 }
 
 struct TaskEditor: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Environment(\.dismiss) private var dismiss
     let initialGoalID: UUID?
     @State private var goalID: UUID?
@@ -2801,7 +2548,7 @@ struct TaskEditor: View {
 }
 
 struct ScheduleEditor: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Environment(\.dismiss) private var dismiss
     let task: ActionTask
     @State private var date = Date()
@@ -2843,7 +2590,7 @@ struct ScheduleEditor: View {
 }
 
 struct ScheduledEditor: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Environment(\.dismiss) private var dismiss
     let item: ScheduledTask
     @State private var title: String
@@ -2900,8 +2647,15 @@ struct ScheduledEditor: View {
     }
 }
 
+struct BackcastTemplate: Identifiable {
+    let id: String
+    let title: String
+    let icon: String
+    let steps: [String]
+}
+
 struct BackcastEditor: View {
-    @EnvironmentObject private var store: GoalFlowStore
+    @EnvironmentObject private var store: CevoaStore
     @Environment(\.dismiss) private var dismiss
     let goal: Goal
     @State private var steps: [BackcastStep] = []
@@ -2920,6 +2674,20 @@ struct BackcastEditor: View {
 
                         BackcastHintCard(goal: goal)
 
+                        BackcastProgressCard(goal: goal, steps: steps)
+
+                        BackcastTemplateGrid(
+                            color: Color(hex: goal.colorHex),
+                            templates: Self.templates(for: goal),
+                            onApply: applyTemplate
+                        )
+
+                        BackcastActionAssistCard(
+                            color: Color(hex: goal.colorHex),
+                            suggestions: Self.actionSuggestions(for: goal),
+                            onAddTask: addSuggestedTask
+                        )
+
                         ForEach($steps) { $step in
                             BackcastStepRow(
                                 step: $step,
@@ -2933,7 +2701,7 @@ struct BackcastEditor: View {
                         Button {
                             addStep()
                         } label: {
-                            Label("追加", systemImage: "plus")
+                            Label("途中目標を追加", systemImage: "plus")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.softPill)
@@ -2970,9 +2738,21 @@ struct BackcastEditor: View {
     private func addStep() {
         let nextDate = steps.last?.date.addingDays(7) ?? Date().startOfDay
         withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
-            steps.append(BackcastStep(title: "", date: Self.minDate(nextDate, goal.deadline)))
+            steps.append(BackcastStep(title: "途中目標", date: Self.minDate(nextDate, goal.deadline)))
         }
         UISelectionFeedbackGenerator().selectionChanged()
+    }
+
+    private func applyTemplate(_ template: BackcastTemplate) {
+        withAnimation(.spring(response: 0.36, dampingFraction: 0.84)) {
+            steps = Self.steps(from: template.steps, goal: goal)
+        }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+
+    private func addSuggestedTask(_ title: String) {
+        store.addTask(goalID: goal.id, title: title, detail: "分解補助: \(goal.title)", estimatedMinutes: 25)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     private func removeStep(_ step: BackcastStep) {
@@ -2983,19 +2763,68 @@ struct BackcastEditor: View {
     }
 
     private static func defaultSteps(for goal: Goal) -> [BackcastStep] {
+        steps(from: templates(for: goal).first?.steps ?? ["最初の一手", "途中確認", "達成ライン"], goal: goal)
+    }
+
+    private static func steps(from titles: [String], goal: Goal) -> [BackcastStep] {
         let today = Date().startOfDay
         let deadline = maxDate(today, goal.deadline.startOfDay)
         let totalDays = max(1, Calendar.current.dateComponents([.day], from: today, to: deadline).day ?? 1)
-        let dates = [
-            today,
-            today.addingDays(max(1, totalDays / 2)),
-            deadline
-        ]
-        return [
-            BackcastStep(title: "最初の一手", date: dates[0]),
-            BackcastStep(title: "途中確認", date: minDate(dates[1], deadline)),
-            BackcastStep(title: "達成ライン", date: deadline)
-        ]
+        let count = max(1, titles.count)
+        return titles.enumerated().map { index, title in
+            let offset = count == 1 ? 0 : Int((Double(totalDays) * Double(index)) / Double(count - 1))
+            return BackcastStep(title: title, date: minDate(today.addingDays(offset), deadline))
+        }
+    }
+
+    private static func templates(for goal: Goal) -> [BackcastTemplate] {
+        let base = BackcastTemplate(
+            id: "base",
+            title: "標準",
+            icon: "point.topleft.down.curvedto.point.bottomright.up",
+            steps: ["最初の一手", "中間確認", "仕上げ", "達成"]
+        )
+        let study = BackcastTemplate(
+            id: "study",
+            title: "学習",
+            icon: "book.closed",
+            steps: ["範囲を決める", "毎日の型を作る", "弱点を潰す", "本番形式で確認", "達成"]
+        )
+        let creation = BackcastTemplate(
+            id: "creation",
+            title: "制作",
+            icon: "hammer",
+            steps: ["完成形を決める", "試作品を作る", "使って直す", "公開前に整える", "完成"]
+        )
+        let habit = BackcastTemplate(
+            id: "habit",
+            title: "習慣",
+            icon: "repeat",
+            steps: ["始める条件を決める", "小さく続ける", "負荷を少し上げる", "記録を見直す", "定着"]
+        )
+        if goal.category.contains("勉強") || goal.category.contains("資格") || goal.title.localizedCaseInsensitiveContains("TOEIC") {
+            return [study, base, creation, habit]
+        }
+        if goal.category.contains("制作") || goal.title.contains("アプリ") || goal.title.contains("作品") {
+            return [creation, base, study, habit]
+        }
+        if goal.category.contains("筋トレ") || goal.title.contains("筋") || goal.title.contains("体") {
+            return [habit, base, study, creation]
+        }
+        return [base, study, creation, habit]
+    }
+
+    private static func actionSuggestions(for goal: Goal) -> [String] {
+        if goal.category.contains("勉強") || goal.category.contains("資格") || goal.title.localizedCaseInsensitiveContains("TOEIC") {
+            return ["今日の範囲を15分だけ進める", "分からない箇所を3つ書き出す", "昨日の復習をする", "小テストを1回解く"]
+        }
+        if goal.category.contains("制作") || goal.title.contains("アプリ") || goal.title.contains("作品") {
+            return ["完成形を1画面で描く", "必要機能を3つに絞る", "一番小さい試作品を作る", "使いづらい箇所を1つ直す"]
+        }
+        if goal.category.contains("筋トレ") || goal.title.contains("筋") || goal.title.contains("体") {
+            return ["今日のメニューを決める", "フォームを確認する", "軽いセットを1回やる", "記録を残す"]
+        }
+        return ["最初の一手を書き出す", "10分だけ進める", "迷っている点を1つ決める", "次にやることを1つ予定へ置く"]
     }
 
     private static func minDate(_ lhs: Date, _ rhs: Date) -> Date {
@@ -3023,6 +2852,113 @@ struct BackcastHintCard: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+        .cardStyle()
+    }
+}
+
+struct BackcastProgressCard: View {
+    let goal: Goal
+    let steps: [BackcastStep]
+
+    private var reached: Int {
+        steps.filter { $0.date.startOfDay <= Date().startOfDay && !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.count
+    }
+
+    private var progress: Double {
+        steps.isEmpty ? 0 : Double(reached) / Double(steps.count)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("途中目標の進み具合", systemImage: "flag.checkered")
+                    .font(.headline.weight(.bold))
+                Spacer()
+                Text("\(reached)/\(steps.count)")
+                    .font(.caption.weight(.bold).monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            ProgressView(value: progress)
+                .tint(Color(hex: goal.colorHex))
+                .animation(.spring(response: 0.45, dampingFraction: 0.86), value: progress)
+        }
+        .cardStyle()
+    }
+}
+
+struct BackcastTemplateGrid: View {
+    let color: Color
+    let templates: [BackcastTemplate]
+    let onApply: (BackcastTemplate) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("テンプレート")
+                .font(.headline.weight(.bold))
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                ForEach(templates) { template in
+                    Button {
+                        onApply(template)
+                    } label: {
+                        HStack(spacing: 9) {
+                            Image(systemName: template.icon)
+                                .font(.headline.weight(.semibold))
+                            Text(template.title)
+                                .font(.subheadline.weight(.bold))
+                            Spacer(minLength: 0)
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity)
+                        .background(color.opacity(0.1))
+                        .foregroundStyle(color)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .cardStyle()
+    }
+}
+
+struct BackcastActionAssistCard: View {
+    let color: Color
+    let suggestions: [String]
+    let onAddTask: (String) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("必要行動", systemImage: "square.stack.3d.up")
+                    .font(.headline.weight(.bold))
+                Spacer()
+                Text("＋で行動リストへ")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(spacing: 8) {
+                ForEach(suggestions, id: \.self) { suggestion in
+                    HStack(spacing: 10) {
+                        Text(suggestion)
+                            .font(.subheadline.weight(.semibold))
+                            .lineLimit(2)
+                        Spacer()
+                        Button {
+                            onAddTask(suggestion)
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(color)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(11)
+                    .background(Color.primary.opacity(0.055))
+                    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+                }
+            }
         }
         .cardStyle()
     }
@@ -3188,5 +3124,5 @@ private extension Color {
 
 #Preview {
     ContentView()
-        .environmentObject(GoalFlowStore())
+        .environmentObject(CevoaStore())
 }

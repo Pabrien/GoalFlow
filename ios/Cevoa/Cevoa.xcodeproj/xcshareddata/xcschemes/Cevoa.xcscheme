@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1A0000400000000000000001"
-               BuildableName = "GoalFlow.app"
-               BlueprintName = "GoalFlow"
-               ReferencedContainer = "container:GoalFlow.xcodeproj">
+               BuildableName = "Cevoa.app"
+               BlueprintName = "Cevoa"
+               ReferencedContainer = "container:Cevoa.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -46,9 +46,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1A0000400000000000000001"
-            BuildableName = "GoalFlow.app"
-            BlueprintName = "GoalFlow"
-            ReferencedContainer = "container:GoalFlow.xcodeproj">
+            BuildableName = "Cevoa.app"
+            BlueprintName = "Cevoa"
+            ReferencedContainer = "container:Cevoa.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -63,9 +63,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1A0000400000000000000001"
-            BuildableName = "GoalFlow.app"
-            BlueprintName = "GoalFlow"
-            ReferencedContainer = "container:GoalFlow.xcodeproj">
+            BuildableName = "Cevoa.app"
+            BlueprintName = "Cevoa"
+            ReferencedContainer = "container:Cevoa.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

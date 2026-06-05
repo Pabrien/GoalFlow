@@ -16,19 +16,18 @@ SwiftUIで作ったCevoaのネイティブ版プロトタイプです。
 Xcodeで以下を開きます。
 
 ```txt
-ios/GoalFlow/GoalFlow.xcodeproj
+ios/Cevoa/Cevoa.xcodeproj
 ```
 
 またはターミナルでビルドします。
 
 ```sh
-xcodebuild -project ios/GoalFlow/GoalFlow.xcodeproj -scheme GoalFlow -destination 'platform=iOS Simulator,name=iPhone 17' build
+xcodebuild -project ios/Cevoa/Cevoa.xcodeproj -scheme Cevoa -destination 'platform=iOS Simulator,name=iPhone 17' build
 ```
 
 ## 次に入れると強いもの
 
 - 通知とリマインダー
-- iCloud同期
 - 完了音と触覚フィードバックの調整
 - ウィジェット
 - App Store配布に向けたBundle ID/表示名の最終調整

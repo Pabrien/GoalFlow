@@ -35,12 +35,6 @@ struct BackcastItem: Identifiable, Codable, Equatable {
     var date: Date
 }
 
-struct InboxTask: Identifiable, Codable, Equatable {
-    var id: UUID = UUID()
-    var title: String
-    var createdAt: Date = Date()
-}
-
 extension Color {
     init(hex: String) {
         let clean = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
