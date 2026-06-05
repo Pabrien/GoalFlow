@@ -281,18 +281,6 @@ final class GoalFlowStore: ObservableObject {
         scheduled(for: goalID).filter(\.isDone).count
     }
 
-    func recentTaskIDs(limit: Int = 8) -> [UUID] {
-        var seen: Set<UUID> = []
-        var ids: [UUID] = []
-        for item in scheduled.sorted(by: { $0.date > $1.date }) {
-            guard !seen.contains(item.taskID) else { continue }
-            seen.insert(item.taskID)
-            ids.append(item.taskID)
-            if ids.count == limit { break }
-        }
-        return ids
-    }
-
     private func save() {
         let snapshot = Snapshot(
             goals: goals,

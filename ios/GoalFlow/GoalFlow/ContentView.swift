@@ -497,7 +497,6 @@ struct PlannerView: View {
         .offset(y: calendarDragOffset * 0.2)
         .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .highPriorityGesture(calendarSwipeGesture)
-        .subtleVerticalCue()
         .cardStyle()
     }
 
@@ -979,7 +978,6 @@ struct TaskShelf: View {
     @Binding var selectedGoalID: UUID?
     @Binding var selectedTaskID: UUID?
     @State private var searchText = ""
-    @State private var filter: TaskShelfFilter = .all
     let onAddTask: () -> Void
     let onAddGoal: () -> Void
     let onCollapse: () -> Void
@@ -995,21 +993,9 @@ struct TaskShelf: View {
     }
 
     private var visibleTasks: [ActionTask] {
-        let recentIDs = store.recentTaskIDs()
-        let filteredByUse: [ActionTask]
-        switch filter {
-        case .all:
-            filteredByUse = baseTasks
-        case .recent:
-            filteredByUse = baseTasks.filter { recentIDs.contains($0.id) }
-        case .unused:
-            filteredByUse = baseTasks.filter { task in
-                !store.scheduled.contains { $0.taskID == task.id }
-            }
-        }
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return filteredByUse }
-        return filteredByUse.filter { task in
+        guard !query.isEmpty else { return baseTasks }
+        return baseTasks.filter { task in
             task.title.localizedCaseInsensitiveContains(query)
                 || (store.goal(for: task.goalID)?.title.localizedCaseInsensitiveContains(query) ?? false)
         }
@@ -1067,21 +1053,18 @@ struct TaskShelf: View {
                     .onChange(of: selectedGoalID) { _, _ in
                         selectedTaskID = nil
                         searchText = ""
-                        filter = .all
                     }
 
                 TaskShelfSearchField(text: $searchText)
-                TaskShelfFilterBar(selection: $filter)
 
                 if visibleTasks.isEmpty {
-                    Button(action: searchText.isEmpty && filter == .all ? onAddTask : {
+                    Button(action: searchText.isEmpty ? onAddTask : {
                         searchText = ""
-                        filter = .all
                     }) {
                         VStack(spacing: 10) {
-                            Image(systemName: searchText.isEmpty && filter == .all ? "plus.circle.fill" : "arrow.uturn.backward.circle.fill")
+                            Image(systemName: searchText.isEmpty ? "plus.circle.fill" : "arrow.uturn.backward.circle.fill")
                                 .font(.system(size: 34, weight: .semibold))
-                            Text(searchText.isEmpty && filter == .all ? "行動を作る" : "絞り込みを戻す")
+                            Text(searchText.isEmpty ? "行動を作る" : "検索を戻す")
                                 .font(.headline)
                         }
                         .frame(maxWidth: .infinity)
@@ -1126,14 +1109,6 @@ struct TaskShelf: View {
     }
 }
 
-enum TaskShelfFilter: String, CaseIterable, Identifiable {
-    case all = "全部"
-    case recent = "最近"
-    case unused = "未使用"
-
-    var id: String { rawValue }
-}
-
 struct TaskShelfSearchField: View {
     @Binding var text: String
 
@@ -1159,30 +1134,6 @@ struct TaskShelfSearchField: View {
         .padding(.vertical, 10)
         .background(Color.primary.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-}
-
-struct TaskShelfFilterBar: View {
-    @Binding var selection: TaskShelfFilter
-
-    var body: some View {
-        HStack(spacing: 8) {
-            ForEach(TaskShelfFilter.allCases) { item in
-                Button {
-                    selection = item
-                    UISelectionFeedbackGenerator().selectionChanged()
-                } label: {
-                    Text(item.rawValue)
-                        .font(.caption.weight(.bold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(selection == item ? Color.goalAccent.opacity(0.16) : Color.primary.opacity(0.06))
-                        .foregroundStyle(selection == item ? Color.goalAccent : Color.primary)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-            }
-        }
     }
 }
 
@@ -1253,25 +1204,6 @@ struct MiniPlannerMetric: View {
         .padding(.vertical, 7)
         .background(Color.primary.opacity(0.055))
         .clipShape(Capsule())
-    }
-}
-
-struct SubtleVerticalCueModifier: ViewModifier {
-    @State private var moves = false
-
-    func body(content: Content) -> some View {
-        content
-            .offset(y: moves ? -3 : 3)
-            .animation(.easeInOut(duration: 1.05).repeatCount(3, autoreverses: true), value: moves)
-            .onAppear {
-                moves = true
-            }
-    }
-}
-
-extension View {
-    func subtleVerticalCue() -> some View {
-        modifier(SubtleVerticalCueModifier())
     }
 }
 
@@ -1720,7 +1652,6 @@ struct ProgressDatePicker: View {
             }
         }
         .cardStyle()
-        .subtleVerticalCue()
         .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .highPriorityGesture(
             DragGesture(minimumDistance: 24)
