@@ -581,7 +581,6 @@ struct PlannerView: View {
             pulseDate: pulseDate,
             showsDeadlines: showsDeadlines,
             onTapDate: handleDateTap,
-            onEdit: { sheet = .scheduled($0) },
             onDropPayload: handleDrop
         )
         .padding(.vertical, 8)
@@ -592,6 +591,13 @@ struct PlannerView: View {
             calendarBody
                 .id(calendarPageID)
                 .transition(pageTransition)
+            if !showsTaskShelf {
+                PlannerCurrentDateBadge(date: Date())
+                    .padding(12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .allowsHitTesting(false)
+            }
         }
         .frame(maxHeight: .infinity)
         .clipped()
@@ -768,6 +774,25 @@ struct CalendarControls: View {
     }
 }
 
+struct PlannerCurrentDateBadge: View {
+    let date: Date
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(date, format: .dateTime.month().day())
+                .font(.caption.weight(.bold).monospacedDigit())
+            Text(date, format: .dateTime.weekday(.wide))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+        .shadow(color: .black.opacity(0.08), radius: 14, y: 6)
+    }
+}
+
 struct CalendarDayCard: View {
     let date: Date
     let items: [ScheduledTask]
@@ -877,7 +902,6 @@ struct MonthGrid: View {
     let pulseDate: Date?
     let showsDeadlines: Bool
     let onTapDate: (Date) -> Void
-    let onEdit: (ScheduledTask) -> Void
     let onDropPayload: (String, Date) -> Bool
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 7), count: 7)
@@ -895,7 +919,6 @@ struct MonthGrid: View {
                         selectedTaskID: selectedTaskID,
                         isPulsing: Calendar.current.isDate(pulseDate ?? .distantPast, inSameDayAs: date),
                         onTapDate: { onTapDate(date) },
-                        onEdit: onEdit,
                         onDropPayload: { onDropPayload($0, date) }
                     )
                 }
@@ -922,7 +945,6 @@ struct MonthDayCell: View {
     let selectedTaskID: UUID?
     let isPulsing: Bool
     let onTapDate: () -> Void
-    let onEdit: (ScheduledTask) -> Void
     let onDropPayload: (String) -> Bool
 
     var body: some View {
@@ -951,13 +973,7 @@ struct MonthDayCell: View {
                 ForEach(items.prefix(3)) { item in
                     MonthTaskDot(item: item)
                         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        .onTapGesture {
-                            if selectedTaskID == nil {
-                                onEdit(item)
-                            } else {
-                                onTapDate()
-                            }
-                        }
+                        .onTapGesture(perform: onTapDate)
                         .draggable(DragPayload.scheduled(item.id).rawValue) {
                             DragPreview(title: item.title)
                         }
@@ -2080,6 +2096,7 @@ struct DayProgressSheet: View {
     @EnvironmentObject private var store: GoalFlowStore
     @Environment(\.dismiss) private var dismiss
     let date: Date
+    @State private var editingItem: ScheduledTask?
 
     private var items: [ScheduledTask] {
         store.tasks(for: date)
@@ -2095,6 +2112,14 @@ struct DayProgressSheet: View {
             guard !goalItems.isEmpty else { return nil }
             return (goal, goalItems.filter(\.isDone).count, goalItems.count)
         }
+    }
+
+    private var goalsDue: [Goal] {
+        store.goals.filter { Calendar.current.isDate($0.deadline, inSameDayAs: date) }
+    }
+
+    private var milestones: [BackcastItem] {
+        store.backcastItems.filter { Calendar.current.isDate($0.date, inSameDayAs: date) }
     }
 
     var body: some View {
@@ -2119,6 +2144,20 @@ struct DayProgressSheet: View {
                             color: .goalAccent
                         )
 
+                        if !goalsDue.isEmpty || !milestones.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("目印")
+                                    .font(.headline.weight(.bold))
+                                ForEach(goalsDue) { goal in
+                                    GoalDeadlinePill(goal: goal, compact: false)
+                                }
+                                ForEach(milestones) { milestone in
+                                    BackcastMilestonePill(item: milestone, compact: false)
+                                }
+                            }
+                            .cardStyle()
+                        }
+
                         if items.isEmpty {
                             VStack(spacing: 10) {
                                 Image(systemName: "calendar")
@@ -2137,6 +2176,9 @@ struct DayProgressSheet: View {
                                     .font(.headline.weight(.bold))
                                 ForEach(items) { item in
                                     ScheduledTaskRow(item: item, compact: true)
+                                        .onTapGesture {
+                                            editingItem = item
+                                        }
                                 }
                             }
                             .cardStyle()
@@ -2168,6 +2210,10 @@ struct DayProgressSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("閉じる") { dismiss() }
                 }
+            }
+            .sheet(item: $editingItem) { item in
+                ScheduledEditor(item: item)
+                    .presentationDetents([.medium])
             }
         }
     }
