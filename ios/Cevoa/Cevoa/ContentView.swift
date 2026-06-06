@@ -103,10 +103,6 @@ struct TodayView: View {
                                 onAddTask: { sheet = .task(store.goals.first?.id) }
                             )
                         }
-                        TodayPriorityCard(
-                            items: store.todayTasks,
-                            onEdit: { sheet = .scheduled($0) }
-                        )
                         if store.todayTasks.isEmpty {
                             EmptyFocusCard()
                         } else {
@@ -547,9 +543,24 @@ struct PlannerView: View {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
                 VStack(spacing: 12) {
+                    if !showsTaskShelf {
+                        PlannerYearHeader(date: anchorDate)
+                            .padding(.horizontal, 24)
+                            .padding(.top, 8)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+
+                    CalendarControls(
+                        showsDeadlines: $showsDeadlines,
+                        hasRoadmapMarkers: hasRoadmapMarkers,
+                        anchorDate: anchorDate,
+                        monthPicker: { showsMonthPicker = true },
+                        today: { moveToToday() }
+                    )
+                    .padding(.horizontal, 16)
+
                     calendarStage
                         .padding(.horizontal, 16)
-                        .padding(.top, 8)
 
                     if showsTaskShelf {
                         TaskShelf(
@@ -604,6 +615,10 @@ struct PlannerView: View {
             .onDisappear {
                 selectedTaskID = nil
             }
+            .sheet(isPresented: $showsMonthPicker) {
+                MonthPickerSheet(anchorDate: $anchorDate)
+                    .presentationDetents([.medium])
+            }
         }
     }
 
@@ -624,35 +639,15 @@ struct PlannerView: View {
     }
 
     private var calendarStage: some View {
-        VStack(spacing: 12) {
-            if !showsTaskShelf {
-                PlannerYearHeader(date: anchorDate)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            }
-
-            CalendarControls(
-                showsDeadlines: $showsDeadlines,
-                hasRoadmapMarkers: hasRoadmapMarkers,
-                anchorDate: anchorDate,
-                currentDate: Date(),
-                monthPicker: { showsMonthPicker = true },
-                today: { moveToToday() }
-            )
-
-            ZStack {
-                calendarBody
-                    .id(calendarPageID)
-                    .transition(pageTransition)
-            }
+        ZStack {
+            calendarBody
+                .id(calendarPageID)
+                .transition(pageTransition)
         }
         .frame(maxHeight: .infinity)
         .clipped()
         .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .cardStyle()
-        .sheet(isPresented: $showsMonthPicker) {
-            MonthPickerSheet(anchorDate: $anchorDate)
-                .presentationDetents([.medium])
-        }
     }
 
     private var calendarPageID: String {
@@ -771,7 +766,6 @@ struct CalendarControls: View {
     @Binding var showsDeadlines: Bool
     let hasRoadmapMarkers: Bool
     let anchorDate: Date
-    let currentDate: Date
     let monthPicker: () -> Void
     let today: () -> Void
 
@@ -780,10 +774,10 @@ struct CalendarControls: View {
             HStack(spacing: 10) {
                 Button(action: monthPicker) {
                     HStack(spacing: 8) {
-                        Text(monthDayLabel)
+                        Text(monthLabel)
                             .font(.subheadline.weight(.bold).monospacedDigit())
-                        Text(currentDate, format: .dateTime.weekday(.wide))
-                            .font(.caption.weight(.semibold))
+                        Image(systemName: "chevron.down")
+                            .font(.caption2.weight(.bold))
                             .foregroundStyle(.secondary)
                     }
                     .lineLimit(1)
@@ -820,8 +814,8 @@ struct CalendarControls: View {
         }
     }
 
-    private var monthDayLabel: String {
-        currentDate.formatted(.dateTime.month().day())
+    private var monthLabel: String {
+        anchorDate.formatted(.dateTime.month(.wide))
     }
 }
 
@@ -1572,81 +1566,6 @@ struct TodayHeader: View {
                 .font(.headline)
                 .foregroundStyle(.secondary)
         }
-    }
-}
-
-struct TodayPriorityCard: View {
-    @EnvironmentObject private var store: CevoaStore
-    let items: [ScheduledTask]
-    let onEdit: (ScheduledTask) -> Void
-
-    private var orderedItems: [ScheduledTask] {
-        items.sorted {
-            if $0.isDone != $1.isDone { return !$0.isDone && $1.isDone }
-            return $0.title < $1.title
-        }
-    }
-
-    private var topItem: ScheduledTask? {
-        orderedItems.first { !$0.isDone } ?? orderedItems.first
-    }
-
-    private var done: Int {
-        items.filter(\.isDone).count
-    }
-
-    private var progress: Double {
-        items.isEmpty ? 0 : Double(done) / Double(items.count)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("今日の一手")
-                    .font(.headline.weight(.bold))
-                Spacer()
-                Text(items.isEmpty ? "0件" : "\(done)/\(items.count)")
-                    .font(.caption.weight(.bold).monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-
-            if let topItem {
-                Button {
-                    onEdit(topItem)
-                } label: {
-                    HStack(spacing: 12) {
-                        Circle()
-                            .fill(Color(hex: store.goal(for: topItem.goalID)?.colorHex ?? "#2563EB"))
-                            .frame(width: 10, height: 10)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(topItem.title)
-                                .font(.title3.weight(.bold))
-                                .lineLimit(2)
-                            if let goal = store.goal(for: topItem.goalID) {
-                                Text(goal.title)
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
-                        Spacer()
-                        Image(systemName: topItem.isDone ? "checkmark.circle.fill" : "arrow.right.circle")
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(topItem.isDone ? Color.goalAccent : Color.secondary)
-                    }
-                }
-                .buttonStyle(.plain)
-            } else {
-                Text("予定タブで行動を置くと、ここに最優先が出ます")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
-            }
-
-            ProgressView(value: progress)
-                .tint(progress >= 1 ? .goalAccent : .primary)
-                .animation(.spring(response: 0.45, dampingFraction: 0.86), value: progress)
-        }
-        .cardStyle()
     }
 }
 
