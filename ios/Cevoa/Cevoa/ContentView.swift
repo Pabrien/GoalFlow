@@ -170,7 +170,6 @@ struct GoalsView: View {
                     .padding(.bottom, 32)
                 }
             }
-            .navigationTitle("目標")
         }
     }
 }
@@ -383,10 +382,6 @@ struct GoalDetailPanel: View {
         store.backcastPlan(for: goal.id)
     }
 
-    private var reachedMilestones: Int {
-        milestones.filter { $0.date.startOfDay <= Date().startOfDay }.count
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
@@ -398,7 +393,7 @@ struct GoalDetailPanel: View {
             HStack(spacing: 10) {
                 GoalDetailMetric(title: "予定", value: "\(items.count)件")
                 GoalDetailMetric(title: "完了", value: "\(doneItems.count)件")
-                GoalDetailMetric(title: "途中目標", value: "\(reachedMilestones)/\(milestones.count)")
+                GoalDetailMetric(title: "柱", value: "\(milestones.count)本")
             }
 
             if let latest = doneItems.first {
@@ -480,7 +475,6 @@ struct PlannerView: View {
     @State private var selectedTaskID: UUID?
     @State private var selectedGoalID: UUID?
     @State private var pulseDate: Date?
-    @State private var calendarDragOffset: CGFloat = 0
     @State private var calendarPageDirection = 1
     @State private var showsTaskShelf = false
     @State private var showsDeadlines = false
@@ -500,17 +494,9 @@ struct PlannerView: View {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
                 VStack(spacing: 12) {
-                    CalendarControls(
-                        showsDeadlines: $showsDeadlines,
-                        hasRoadmapMarkers: hasRoadmapMarkers,
-                        anchorDate: anchorDate,
-                        today: { moveToToday() }
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-
                     calendarStage
                         .padding(.horizontal, 16)
+                        .padding(.top, 8)
 
                     if showsTaskShelf {
                         TaskShelf(
@@ -548,8 +534,6 @@ struct PlannerView: View {
                     }
                 }
             }
-            .navigationTitle("予定")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .onAppear {
                 if selectedGoalID == nil {
@@ -585,21 +569,29 @@ struct PlannerView: View {
     }
 
     private var calendarStage: some View {
-        ZStack {
-            calendarBody
-                .id(calendarPageID)
-                .transition(pageTransition)
-            if !showsTaskShelf {
-                PlannerCurrentDateBadge(date: Date())
-                    .padding(12)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    .allowsHitTesting(false)
+        VStack(spacing: 12) {
+            CalendarControls(
+                showsDeadlines: $showsDeadlines,
+                hasRoadmapMarkers: hasRoadmapMarkers,
+                anchorDate: anchorDate,
+                today: { moveToToday() }
+            )
+
+            ZStack(alignment: .topLeading) {
+                calendarBody
+                    .id(calendarPageID)
+                    .transition(pageTransition)
+                if !showsTaskShelf {
+                    PlannerCurrentDateBadge(date: Date())
+                        .padding(.top, 8)
+                        .padding(.leading, 8)
+                        .transition(.opacity)
+                        .allowsHitTesting(false)
+                }
             }
         }
         .frame(maxHeight: .infinity)
         .clipped()
-        .offset(y: calendarDragOffset * 0.2)
         .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .highPriorityGesture(calendarSwipeGesture)
         .cardStyle()
@@ -629,16 +621,7 @@ struct PlannerView: View {
 
     private var calendarSwipeGesture: some Gesture {
         DragGesture(minimumDistance: 24)
-            .onChanged { value in
-                guard abs(value.translation.height) > abs(value.translation.width) * 1.25 else { return }
-                calendarDragOffset = value.translation.height
-            }
             .onEnded { value in
-                defer {
-                    withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
-                        calendarDragOffset = 0
-                    }
-                }
                 guard abs(value.translation.height) > abs(value.translation.width) * 1.25,
                       abs(value.translation.height) > 115
                 else { return }
@@ -1711,7 +1694,6 @@ struct ProgressScreen: View {
                     }
                 }
             }
-            .navigationTitle("進捗")
         }
     }
 
@@ -2647,13 +2629,6 @@ struct ScheduledEditor: View {
     }
 }
 
-struct BackcastTemplate: Identifiable {
-    let id: String
-    let title: String
-    let icon: String
-    let steps: [String]
-}
-
 struct BackcastEditor: View {
     @EnvironmentObject private var store: CevoaStore
     @Environment(\.dismiss) private var dismiss
@@ -2673,20 +2648,6 @@ struct BackcastEditor: View {
                         GoalBackcastHeader(goal: goal)
 
                         BackcastHintCard(goal: goal)
-
-                        BackcastProgressCard(goal: goal, steps: steps)
-
-                        BackcastTemplateGrid(
-                            color: Color(hex: goal.colorHex),
-                            templates: Self.templates(for: goal),
-                            onApply: applyTemplate
-                        )
-
-                        BackcastActionAssistCard(
-                            color: Color(hex: goal.colorHex),
-                            suggestions: Self.actionSuggestions(for: goal),
-                            onAddTask: addSuggestedTask
-                        )
 
                         ForEach($steps) { $step in
                             BackcastStepRow(
@@ -2738,21 +2699,9 @@ struct BackcastEditor: View {
     private func addStep() {
         let nextDate = steps.last?.date.addingDays(7) ?? Date().startOfDay
         withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
-            steps.append(BackcastStep(title: "途中目標", date: Self.minDate(nextDate, goal.deadline)))
+            steps.append(BackcastStep(title: "〇〇完成", date: Self.minDate(nextDate, goal.deadline)))
         }
         UISelectionFeedbackGenerator().selectionChanged()
-    }
-
-    private func applyTemplate(_ template: BackcastTemplate) {
-        withAnimation(.spring(response: 0.36, dampingFraction: 0.84)) {
-            steps = Self.steps(from: template.steps, goal: goal)
-        }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-    }
-
-    private func addSuggestedTask(_ title: String) {
-        store.addTask(goalID: goal.id, title: title, detail: "分解補助: \(goal.title)", estimatedMinutes: 25)
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     private func removeStep(_ step: BackcastStep) {
@@ -2763,7 +2712,7 @@ struct BackcastEditor: View {
     }
 
     private static func defaultSteps(for goal: Goal) -> [BackcastStep] {
-        steps(from: templates(for: goal).first?.steps ?? ["最初の一手", "途中確認", "達成ライン"], goal: goal)
+        steps(from: ["土台完成", "主要部分完成", "目標達成"], goal: goal)
     }
 
     private static func steps(from titles: [String], goal: Goal) -> [BackcastStep] {
@@ -2775,56 +2724,6 @@ struct BackcastEditor: View {
             let offset = count == 1 ? 0 : Int((Double(totalDays) * Double(index)) / Double(count - 1))
             return BackcastStep(title: title, date: minDate(today.addingDays(offset), deadline))
         }
-    }
-
-    private static func templates(for goal: Goal) -> [BackcastTemplate] {
-        let base = BackcastTemplate(
-            id: "base",
-            title: "標準",
-            icon: "point.topleft.down.curvedto.point.bottomright.up",
-            steps: ["最初の一手", "中間確認", "仕上げ", "達成"]
-        )
-        let study = BackcastTemplate(
-            id: "study",
-            title: "学習",
-            icon: "book.closed",
-            steps: ["範囲を決める", "毎日の型を作る", "弱点を潰す", "本番形式で確認", "達成"]
-        )
-        let creation = BackcastTemplate(
-            id: "creation",
-            title: "制作",
-            icon: "hammer",
-            steps: ["完成形を決める", "試作品を作る", "使って直す", "公開前に整える", "完成"]
-        )
-        let habit = BackcastTemplate(
-            id: "habit",
-            title: "習慣",
-            icon: "repeat",
-            steps: ["始める条件を決める", "小さく続ける", "負荷を少し上げる", "記録を見直す", "定着"]
-        )
-        if goal.category.contains("勉強") || goal.category.contains("資格") || goal.title.localizedCaseInsensitiveContains("TOEIC") {
-            return [study, base, creation, habit]
-        }
-        if goal.category.contains("制作") || goal.title.contains("アプリ") || goal.title.contains("作品") {
-            return [creation, base, study, habit]
-        }
-        if goal.category.contains("筋トレ") || goal.title.contains("筋") || goal.title.contains("体") {
-            return [habit, base, study, creation]
-        }
-        return [base, study, creation, habit]
-    }
-
-    private static func actionSuggestions(for goal: Goal) -> [String] {
-        if goal.category.contains("勉強") || goal.category.contains("資格") || goal.title.localizedCaseInsensitiveContains("TOEIC") {
-            return ["今日の範囲を15分だけ進める", "分からない箇所を3つ書き出す", "昨日の復習をする", "小テストを1回解く"]
-        }
-        if goal.category.contains("制作") || goal.title.contains("アプリ") || goal.title.contains("作品") {
-            return ["完成形を1画面で描く", "必要機能を3つに絞る", "一番小さい試作品を作る", "使いづらい箇所を1つ直す"]
-        }
-        if goal.category.contains("筋トレ") || goal.title.contains("筋") || goal.title.contains("体") {
-            return ["今日のメニューを決める", "フォームを確認する", "軽いセットを1回やる", "記録を残す"]
-        }
-        return ["最初の一手を書き出す", "10分だけ進める", "迷っている点を1つ決める", "次にやることを1つ予定へ置く"]
     }
 
     private static func minDate(_ lhs: Date, _ rhs: Date) -> Date {
@@ -2843,122 +2742,15 @@ struct BackcastHintCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.triangle.branch")
-                Text("ゴールから途中目標を置く")
+                Text("ゴールまでの柱を置く")
             }
             .font(.headline)
             .foregroundStyle(Color(hex: goal.colorHex))
 
-            Text("ここで作る項目は予定ではなく、目標の道筋です。必要な途中目標だけ残して、日々の行動は予定に置きます。")
+            Text("途中目標は日々のタスクではなく、達成までに完成させる大きな区切りです。例: 土台完成、主要部分完成、目標達成。")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-        }
-        .cardStyle()
-    }
-}
-
-struct BackcastProgressCard: View {
-    let goal: Goal
-    let steps: [BackcastStep]
-
-    private var reached: Int {
-        steps.filter { $0.date.startOfDay <= Date().startOfDay && !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.count
-    }
-
-    private var progress: Double {
-        steps.isEmpty ? 0 : Double(reached) / Double(steps.count)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label("途中目標の進み具合", systemImage: "flag.checkered")
-                    .font(.headline.weight(.bold))
-                Spacer()
-                Text("\(reached)/\(steps.count)")
-                    .font(.caption.weight(.bold).monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-            ProgressView(value: progress)
-                .tint(Color(hex: goal.colorHex))
-                .animation(.spring(response: 0.45, dampingFraction: 0.86), value: progress)
-        }
-        .cardStyle()
-    }
-}
-
-struct BackcastTemplateGrid: View {
-    let color: Color
-    let templates: [BackcastTemplate]
-    let onApply: (BackcastTemplate) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("テンプレート")
-                .font(.headline.weight(.bold))
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                ForEach(templates) { template in
-                    Button {
-                        onApply(template)
-                    } label: {
-                        HStack(spacing: 9) {
-                            Image(systemName: template.icon)
-                                .font(.headline.weight(.semibold))
-                            Text(template.title)
-                                .font(.subheadline.weight(.bold))
-                            Spacer(minLength: 0)
-                        }
-                        .padding(12)
-                        .frame(maxWidth: .infinity)
-                        .background(color.opacity(0.1))
-                        .foregroundStyle(color)
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .cardStyle()
-    }
-}
-
-struct BackcastActionAssistCard: View {
-    let color: Color
-    let suggestions: [String]
-    let onAddTask: (String) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("必要行動", systemImage: "square.stack.3d.up")
-                    .font(.headline.weight(.bold))
-                Spacer()
-                Text("＋で行動リストへ")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
-            }
-
-            VStack(spacing: 8) {
-                ForEach(suggestions, id: \.self) { suggestion in
-                    HStack(spacing: 10) {
-                        Text(suggestion)
-                            .font(.subheadline.weight(.semibold))
-                            .lineLimit(2)
-                        Spacer()
-                        Button {
-                            onAddTask(suggestion)
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title3.weight(.semibold))
-                                .foregroundStyle(color)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(11)
-                    .background(Color.primary.opacity(0.055))
-                    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
-                }
-            }
         }
         .cardStyle()
     }
