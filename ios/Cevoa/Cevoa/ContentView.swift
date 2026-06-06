@@ -618,6 +618,8 @@ struct PlannerView: View {
             onDropPayload: handleDrop
         )
         .padding(.vertical, 8)
+        .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .highPriorityGesture(calendarSwipeGesture)
     }
 
     private var calendarStage: some View {
@@ -626,26 +628,19 @@ struct PlannerView: View {
                 showsDeadlines: $showsDeadlines,
                 hasRoadmapMarkers: hasRoadmapMarkers,
                 anchorDate: anchorDate,
+                currentDate: Date(),
                 today: { moveToToday() }
             )
 
-            ZStack(alignment: .topLeading) {
+            ZStack {
                 calendarBody
                     .id(calendarPageID)
                     .transition(pageTransition)
-                if !showsTaskShelf {
-                    PlannerCurrentDateBadge(date: Date())
-                        .padding(.top, 8)
-                        .padding(.leading, 8)
-                        .transition(.opacity)
-                        .allowsHitTesting(false)
-                }
             }
         }
         .frame(maxHeight: .infinity)
         .clipped()
         .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .highPriorityGesture(calendarSwipeGesture)
         .cardStyle()
     }
 
@@ -765,64 +760,59 @@ struct CalendarControls: View {
     @Binding var showsDeadlines: Bool
     let hasRoadmapMarkers: Bool
     let anchorDate: Date
+    let currentDate: Date
     let today: () -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
-            Text(label)
-                .font(.subheadline.weight(.bold).monospacedDigit())
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .frame(maxWidth: .infinity)
-            Button {
-                showsDeadlines.toggle()
-                UISelectionFeedbackGenerator().selectionChanged()
-            } label: {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: showsDeadlines ? "flag.fill" : "flag")
-                        .font(.headline.weight(.semibold))
-                        .frame(width: 34, height: 34)
-                    if hasRoadmapMarkers && !showsDeadlines {
-                        Circle()
-                            .fill(Color.goalAccent)
-                            .frame(width: 6, height: 6)
-                            .offset(x: -4, y: 5)
+        VStack(spacing: 8) {
+            HStack(spacing: 10) {
+                Text(yearLabel)
+                    .font(.subheadline.weight(.bold).monospacedDigit())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .frame(maxWidth: .infinity)
+                Button {
+                    showsDeadlines.toggle()
+                    UISelectionFeedbackGenerator().selectionChanged()
+                } label: {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: showsDeadlines ? "flag.fill" : "flag")
+                            .font(.headline.weight(.semibold))
+                            .frame(width: 34, height: 34)
+                        if hasRoadmapMarkers && !showsDeadlines {
+                            Circle()
+                                .fill(Color.goalAccent)
+                                .frame(width: 6, height: 6)
+                                .offset(x: -4, y: 5)
+                        }
                     }
                 }
+                .foregroundStyle(showsDeadlines ? Color.goalAccent : Color.primary)
+                .accessibilityLabel(showsDeadlines ? "期限と途中目標を隠す" : "期限と途中目標を表示")
+                Button(action: today) {
+                    Image(systemName: "location.fill")
+                        .frame(width: 34, height: 34)
+                }
             }
-            .foregroundStyle(showsDeadlines ? Color.goalAccent : Color.primary)
-            .accessibilityLabel(showsDeadlines ? "期限と途中目標を隠す" : "期限と途中目標を表示")
-            Button(action: today) {
-                Text("今日")
+            .buttonStyle(.softPill)
+            .padding(6)
+            .background(.ultraThinMaterial)
+            .clipShape(Capsule())
+
+            HStack(spacing: 8) {
+                Text(currentDate, format: .dateTime.month().day())
+                    .font(.caption.weight(.bold).monospacedDigit())
+                Text(currentDate, format: .dateTime.weekday(.wide))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 10)
         }
-        .buttonStyle(.softPill)
-        .padding(6)
-        .background(.ultraThinMaterial)
-        .clipShape(Capsule())
     }
 
-    private var label: String {
+    private var yearLabel: String {
         anchorDate.formatted(.dateTime.year().month(.wide))
-    }
-}
-
-struct PlannerCurrentDateBadge: View {
-    let date: Date
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Text(date, format: .dateTime.month().day())
-                .font(.caption.weight(.bold).monospacedDigit())
-            Text(date, format: .dateTime.weekday(.wide))
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 11)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
-        .clipShape(Capsule())
-        .shadow(color: .black.opacity(0.08), radius: 14, y: 6)
     }
 }
 
