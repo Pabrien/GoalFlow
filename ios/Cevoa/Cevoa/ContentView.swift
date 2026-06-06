@@ -219,6 +219,10 @@ struct GoalCard: View {
         store.scheduled(for: goal.id)
     }
 
+    private var unscheduledCount: Int {
+        store.unscheduledTasks(for: goal.id).count
+    }
+
     private var progressMeaning: GoalProgressMeaning {
         GoalProgressMeaning(goal: goal, scheduled: scheduledItems)
     }
@@ -274,6 +278,10 @@ struct GoalCard: View {
 
             GoalMeaningRow(meaning: progressMeaning, color: goalColor)
 
+            if unscheduledCount > 0 {
+                GoalUnscheduledNotice(count: unscheduledCount, color: goalColor)
+            }
+
             if isExpanded {
                 GoalDetailPanel(goal: goal, items: scheduledItems, color: goalColor)
                     .transition(.move(edge: .top).combined(with: .opacity))
@@ -322,6 +330,27 @@ struct GoalCard: View {
 
     private var goalColor: Color {
         Color(hex: goal.colorHex)
+    }
+}
+
+struct GoalUnscheduledNotice: View {
+    let count: Int
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "tray.full")
+                .font(.caption.weight(.bold))
+            Text("予定に入れていない行動")
+                .font(.caption.weight(.bold))
+            Spacer()
+            Text("\(count)")
+                .font(.caption.weight(.bold).monospacedDigit())
+        }
+        .padding(10)
+        .foregroundStyle(color)
+        .background(color.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
@@ -382,6 +411,10 @@ struct GoalDetailPanel: View {
         store.backcastPlan(for: goal.id)
     }
 
+    private var unscheduledTasks: [ActionTask] {
+        store.unscheduledTasks(for: goal.id)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
@@ -393,7 +426,26 @@ struct GoalDetailPanel: View {
             HStack(spacing: 10) {
                 GoalDetailMetric(title: "予定", value: "\(items.count)件")
                 GoalDetailMetric(title: "完了", value: "\(doneItems.count)件")
-                GoalDetailMetric(title: "柱", value: "\(milestones.count)本")
+                GoalDetailMetric(title: "未配置", value: "\(unscheduledTasks.count)件")
+            }
+
+            if !unscheduledTasks.isEmpty {
+                VStack(alignment: .leading, spacing: 7) {
+                    ForEach(unscheduledTasks.prefix(3)) { task in
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(color)
+                                .frame(width: 6, height: 6)
+                            Text(task.title)
+                                .font(.caption.weight(.semibold))
+                                .lineLimit(1)
+                            Spacer()
+                        }
+                    }
+                }
+                .padding(10)
+                .background(color.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
 
             if let latest = doneItems.first {
@@ -1162,7 +1214,7 @@ struct TaskShelf: View {
                         VStack(spacing: 10) {
                             Image(systemName: searchText.isEmpty ? "plus.circle.fill" : "arrow.uturn.backward.circle.fill")
                                 .font(.system(size: 34, weight: .semibold))
-                            Text(searchText.isEmpty ? "行動を作る" : "検索を戻す")
+                            Text(searchText.isEmpty ? "この目標の行動を作る" : "検索を戻す")
                                 .font(.headline)
                         }
                         .frame(maxWidth: .infinity)
@@ -1320,9 +1372,20 @@ struct SavedTaskChip: View {
                 .fill(goalColor)
                 .frame(width: 6, height: 42)
             VStack(alignment: .leading, spacing: 4) {
-                Text(task.title)
-                    .font(.subheadline.weight(.bold))
-                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(task.title)
+                        .font(.subheadline.weight(.bold))
+                        .lineLimit(1)
+                    if isUnscheduled {
+                        Text("未配置")
+                            .font(.system(size: 10, weight: .bold))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(goalColor.opacity(0.13))
+                            .foregroundStyle(goalColor)
+                            .clipShape(Capsule())
+                    }
+                }
                 Text(store.goal(for: task.goalID)?.title ?? "")
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.secondary)
@@ -1354,6 +1417,10 @@ struct SavedTaskChip: View {
 
     private var goalColor: Color {
         Color(hex: store.goal(for: task.goalID)?.colorHex ?? "#2563EB")
+    }
+
+    private var isUnscheduled: Bool {
+        store.isTaskUnscheduled(task)
     }
 }
 

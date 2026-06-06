@@ -270,6 +270,14 @@ final class CevoaStore: ObservableObject {
         scheduled.filter { $0.goalID == goalID }
     }
 
+    func isTaskUnscheduled(_ task: ActionTask) -> Bool {
+        !scheduled.contains { $0.taskID == task.id }
+    }
+
+    func unscheduledTasks(for goalID: UUID) -> [ActionTask] {
+        tasks.filter { $0.goalID == goalID && isTaskUnscheduled($0) }
+    }
+
     func doneCount(for goalID: UUID) -> Int {
         scheduled(for: goalID).filter(\.isDone).count
     }
