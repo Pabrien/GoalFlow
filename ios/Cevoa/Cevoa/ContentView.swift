@@ -2038,8 +2038,8 @@ struct GoalEditor: View {
     @State private var colorHex = ""
     @State private var selectedColor = Color.goalAccent
     @State private var categoryDraft = ""
-    @State private var editsCategories = false
     @State private var showsDeleteConfirm = false
+    @State private var categoryPendingDelete: String?
     @FocusState private var titleFocused: Bool
 
     init(goal: Goal? = nil) {
@@ -2080,7 +2080,14 @@ struct GoalEditor: View {
                             .background(Color.primary.opacity(0.06))
                             .clipShape(Capsule())
 
-                            CategoryChipGrid(selectedCategory: $category, categories: store.categories, colorHex: colorHex)
+                            CategoryChipGrid(
+                                selectedCategory: $category,
+                                categories: store.categories,
+                                colorHex: colorHex,
+                                onDelete: { item in
+                                    categoryPendingDelete = item
+                                }
+                            )
 
                             HStack(spacing: 8) {
                                 TextField("新しいカテゴリ", text: $categoryDraft)
@@ -2097,29 +2104,6 @@ struct GoalEditor: View {
                             .background(Color.primary.opacity(0.06))
                             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                            Button {
-                                withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
-                                    editsCategories.toggle()
-                                }
-                            } label: {
-                                HStack {
-                                    Text("カテゴリを編集")
-                                    Spacer()
-                                    Image(systemName: editsCategories ? "chevron.up" : "chevron.down")
-                                }
-                                .font(.subheadline.weight(.bold))
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(.secondary)
-
-                            if editsCategories {
-                                VStack(spacing: 8) {
-                                    ForEach(store.categories, id: \.self) { item in
-                                        InlineCategoryRow(category: item, selectedCategory: $category, colorHex: colorHex)
-                                    }
-                                }
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                            }
                         }
 
                         EditorFieldCard(title: "色") {
@@ -2168,6 +2152,27 @@ struct GoalEditor: View {
                 }
                 Button("キャンセル", role: .cancel) {}
             }
+            .confirmationDialog("カテゴリを削除しますか？", isPresented: Binding(
+                get: { categoryPendingDelete != nil },
+                set: { if !$0 { categoryPendingDelete = nil } }
+            ), titleVisibility: .visible) {
+                if let categoryPendingDelete {
+                    Button("削除", role: .destructive) {
+                        store.deleteCategory(categoryPendingDelete)
+                        if category == categoryPendingDelete {
+                            category = store.categories.first ?? ""
+                        }
+                        self.categoryPendingDelete = nil
+                    }
+                }
+                Button("キャンセル", role: .cancel) {
+                    categoryPendingDelete = nil
+                }
+            } message: {
+                if let categoryPendingDelete {
+                    Text("「\(categoryPendingDelete)」を削除します。紐づく目標は別のカテゴリへ移ります。")
+                }
+            }
             .safeAreaInset(edge: .bottom) {
                 Button {
                     saveGoal()
@@ -2212,50 +2217,6 @@ struct GoalEditor: View {
 
 }
 
-struct InlineCategoryRow: View {
-    @EnvironmentObject private var store: CevoaStore
-    let category: String
-    @Binding var selectedCategory: String
-    let colorHex: String
-    @State private var draft = ""
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Circle()
-                .fill(selectedCategory == category ? Color(hex: colorHex) : Color.secondary.opacity(0.28))
-                .frame(width: 9, height: 9)
-            TextField(category, text: $draft)
-                .onAppear {
-                    draft = category
-                }
-                .onSubmit {
-                    commitRename()
-                }
-                .onDisappear {
-                    commitRename()
-                }
-            Button(role: .destructive) {
-                store.deleteCategory(category)
-                selectedCategory = store.categories.first ?? ""
-            } label: {
-                Image(systemName: "trash")
-            }
-            .buttonStyle(.plain)
-            .disabled(store.categories.count <= 1)
-        }
-    }
-
-    private func commitRename() {
-        let old = category
-        let clean = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty, clean != old else { return }
-        store.renameCategory(old, to: clean)
-        if selectedCategory == old {
-            selectedCategory = clean
-        }
-    }
-}
-
 struct EditorFieldCard<Content: View>: View {
     let title: String
     @ViewBuilder var content: Content
@@ -2276,6 +2237,7 @@ struct CategoryChipGrid: View {
     @Binding var selectedCategory: String
     let categories: [String]
     let colorHex: String
+    let onDelete: (String) -> Void
 
     var body: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 8)], alignment: .leading, spacing: 8) {
@@ -2299,6 +2261,20 @@ struct CategoryChipGrid: View {
                         }
                 }
                 .buttonStyle(.plain)
+                .onLongPressGesture(minimumDuration: 0.55) {
+                    guard categories.count > 1 else { return }
+                    onDelete(item)
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                }
+                .contextMenu {
+                    if categories.count > 1 {
+                        Button(role: .destructive) {
+                            onDelete(item)
+                        } label: {
+                            Label("削除", systemImage: "trash")
+                        }
+                    }
+                }
             }
         }
     }

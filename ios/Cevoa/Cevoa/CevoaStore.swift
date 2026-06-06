@@ -117,15 +117,6 @@ final class CevoaStore: ObservableObject {
         categories.append(clean)
     }
 
-    func renameCategory(_ oldName: String, to newName: String) {
-        let clean = newName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty, let index = categories.firstIndex(of: oldName) else { return }
-        categories[index] = clean
-        for goalIndex in goals.indices where goals[goalIndex].category == oldName {
-            goals[goalIndex].category = clean
-        }
-    }
-
     func deleteCategory(_ name: String) {
         guard categories.count > 1 else { return }
         categories.removeAll { $0 == name }
