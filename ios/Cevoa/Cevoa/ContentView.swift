@@ -530,6 +530,7 @@ struct PlannerView: View {
     @State private var calendarPageDirection = 1
     @State private var showsTaskShelf = false
     @State private var showsDeadlines = false
+    @State private var showsMonthPicker = false
 
     private var month: [Date] {
         let calendar = Calendar.current
@@ -619,16 +620,22 @@ struct PlannerView: View {
         )
         .padding(.vertical, 8)
         .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .highPriorityGesture(calendarSwipeGesture)
+        .gesture(calendarSwipeGesture)
     }
 
     private var calendarStage: some View {
         VStack(spacing: 12) {
+            if !showsTaskShelf {
+                PlannerYearHeader(date: anchorDate)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
             CalendarControls(
                 showsDeadlines: $showsDeadlines,
                 hasRoadmapMarkers: hasRoadmapMarkers,
                 anchorDate: anchorDate,
                 currentDate: Date(),
+                monthPicker: { showsMonthPicker = true },
                 today: { moveToToday() }
             )
 
@@ -642,6 +649,10 @@ struct PlannerView: View {
         .clipped()
         .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .cardStyle()
+        .sheet(isPresented: $showsMonthPicker) {
+            MonthPickerSheet(anchorDate: $anchorDate)
+                .presentationDetents([.medium])
+        }
     }
 
     private var calendarPageID: String {
@@ -761,16 +772,24 @@ struct CalendarControls: View {
     let hasRoadmapMarkers: Bool
     let anchorDate: Date
     let currentDate: Date
+    let monthPicker: () -> Void
     let today: () -> Void
 
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 10) {
-                Text(yearLabel)
-                    .font(.subheadline.weight(.bold).monospacedDigit())
+                Button(action: monthPicker) {
+                    HStack(spacing: 8) {
+                        Text(monthDayLabel)
+                            .font(.subheadline.weight(.bold).monospacedDigit())
+                        Text(currentDate, format: .dateTime.weekday(.wide))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
                     .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
                 Button {
                     showsDeadlines.toggle()
                     UISelectionFeedbackGenerator().selectionChanged()
@@ -798,21 +817,76 @@ struct CalendarControls: View {
             .padding(6)
             .background(.ultraThinMaterial)
             .clipShape(Capsule())
-
-            HStack(spacing: 8) {
-                Text(currentDate, format: .dateTime.month().day())
-                    .font(.caption.weight(.bold).monospacedDigit())
-                Text(currentDate, format: .dateTime.weekday(.wide))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 10)
         }
     }
 
-    private var yearLabel: String {
-        anchorDate.formatted(.dateTime.year().month(.wide))
+    private var monthDayLabel: String {
+        currentDate.formatted(.dateTime.month().day())
+    }
+}
+
+struct PlannerYearHeader: View {
+    let date: Date
+
+    var body: some View {
+        Text(date, format: .dateTime.year())
+            .font(.caption.weight(.bold).monospacedDigit())
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 8)
+    }
+}
+
+struct MonthPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var anchorDate: Date
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
+    private let months = Array(1...12)
+    private let monthSymbols = DateFormatter().shortMonthSymbols ?? []
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
+                LazyVGrid(columns: columns, spacing: 10) {
+                    ForEach(months, id: \.self) { month in
+                        Button {
+                            select(month)
+                        } label: {
+                            Text(monthSymbols.indices.contains(month - 1) ? monthSymbols[month - 1] : "\(month)")
+                                .font(.headline.weight(.bold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 18)
+                                .background(isSelected(month) ? Color.goalAccent.opacity(0.16) : Color.primary.opacity(0.06))
+                                .foregroundStyle(isSelected(month) ? Color.goalAccent : Color.primary)
+                                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(18)
+            }
+            .navigationTitle(anchorDate.formatted(.dateTime.year()))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("閉じる") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func isSelected(_ month: Int) -> Bool {
+        Calendar.current.component(.month, from: anchorDate) == month
+    }
+
+    private func select(_ month: Int) {
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: anchorDate)
+        anchorDate = calendar.date(from: DateComponents(year: year, month: month, day: 1)) ?? anchorDate
+        UISelectionFeedbackGenerator().selectionChanged()
+        dismiss()
     }
 }
 
